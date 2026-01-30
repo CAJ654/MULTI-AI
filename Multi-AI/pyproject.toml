@@ -1,0 +1,10 @@
+[project]
+name = "multi-ai"
+version = "0.1.0"
+description = "A small collection of AI model stubs for development"
+requires-python = ">=3.8"
+dependencies = ["gemma", "transformers", "openai", "torch>=2.0.0", "tensorflow"]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,8 @@
+README.md
+pyproject.toml
+src/multi_ai.egg-info/PKG-INFO
+src/multi_ai.egg-info/SOURCES.txt
+src/multi_ai.egg-info/dependency_links.txt
+src/multi_ai.egg-info/requires.txt
+src/multi_ai.egg-info/top_level.txt
+tests/test_imports.py

@@ -1,0 +1,8 @@
+# Add runtime dependencies here (one per line), e.g.:
+# torch>=2.0.0
+# numpy>=1.24.0
+torch>=2.0.0
+gemma
+transformers
+openai
+tensorflow
