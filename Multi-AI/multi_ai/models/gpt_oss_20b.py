@@ -1,0 +1,1 @@
+print("gpt-oss-20b model stub")

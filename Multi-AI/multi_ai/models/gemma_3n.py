@@ -1,0 +1,1 @@
+print("Gemma-3n model stub")

@@ -1,0 +1,1 @@
+print("Kimi-Instant-Edge model stub")
