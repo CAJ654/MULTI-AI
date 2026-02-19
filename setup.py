@@ -12,6 +12,7 @@ for root, dirs, files in os.walk("Multi-AI"):
 setup(
     name="Multi-AI",
     version="0.1",
-    packages=find_packages(),
+    packages=find_packages(where="Multi-AI"),
+    package_dir={"": "Multi-AI"},
     ext_modules=cythonize(pyx_files),
 )
