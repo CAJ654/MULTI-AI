@@ -7,8 +7,10 @@
   # Use https://search.nixos.org/packages to find packages
   packages = [
     # pkgs.go
-    # pkgs.python311
-    # pkgs.python311Packages.pip
+    pkgs.python311
+    pkgs.python311Packages.pip
+    pkgs.python311Packages.cython
+    pkgs.python311Packages.setuptools
     # pkgs.nodejs_20
     # pkgs.nodePackages.nodemon
   ];
