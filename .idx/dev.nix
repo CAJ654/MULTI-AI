@@ -12,6 +12,7 @@
     pkgs.python311Packages.cython
     pkgs.python311Packages.setuptools
     pkgs.gcc
+    pkgs.gnumake
     # pkgs.nodejs_20
     # pkgs.nodePackages.nodemon
   ];
