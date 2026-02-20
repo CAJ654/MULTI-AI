@@ -1,33 +1,21 @@
-# MULTI-AI
-A project with multiple AI models intended to run on a backend server with a frontend made in Flutter for web or native deployment.
+# bun-react-template
 
-# Multi-AI (project)
+To install dependencies:
 
-This repository contains several small model stubs and utilities organized as a
-Python package for development and testing.
-
-Structure
-- multi_ai/ - package
-  - models/ - model stubs (deepmind, qwen3, etc.)
-- tests/ - simple import tests
-
-Quick start
-
-1. Install editable package (optional):
-
-```powershell
-pip install -e .
+```bash
+bun install
 ```
 
-2. Run a module directly:
+To start a development server:
 
-```powershell
-python -m multi_ai.models.qwen3
+```bash
+bun dev
 ```
 
-3. Run tests (pytest):
+To run for production:
 
-```powershell
-pip install pytest
-pytest -q
+```bash
+bun start
 ```
+
+This project was created using `bun init` in bun v1.3.9. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
