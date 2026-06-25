@@ -87,11 +87,43 @@ Model files (`.gguf`, `.mlc`) are too large for SQLite. The solution is S3 linki
 
 > **Important:** Don't use PocketBase's proxied file URLs for large models — it will exhaust server RAM. Use S3 presigned URLs so the client downloads directly from the storage bucket.
 
+### On-Demand Model Downloads
+
+All 37 models are stored in R2 and only downloaded to the device when the user explicitly chooses to use one. This keeps the local footprint minimal while still giving access to the full model library.
+
+The model browser UI should surface the `requirements` JSON (RAM, disk space) from the PocketBase `models` collection **before** the user downloads, so they can confirm their device can handle it.
+
+Download experience goals:
+- **Background download queue** — downloads continue while the user does other things in the app
+- **Progress tracking** — show download progress per model
+- **Resumable downloads** — use HTTP range requests against R2 presigned URLs so an interrupted download can continue rather than restart
+- **Delete locally, keep access** — users can remove a model from device storage to free space; it remains in the library and can be re-downloaded anytime
+
 ### Workflow Customizer
 
 - Create a `workflows` PocketBase collection.
 - When a user saves a workflow in the React Flow editor, the JSON is persisted to this collection.
 - PocketBase's built-in Realtime Subscriptions sync changes across devices instantly — no custom sync code needed.
+
+### Model Council (AI Orchestration)
+
+Users can select multiple models, designate one as the **lead**, ask a question, and receive a synthesized answer. The models deliberate before the lead responds.
+
+**How it works:**
+
+1. User selects N models and picks one as the lead.
+2. All non-lead models receive the question and respond independently (or in sequence — see deliberation modes below).
+3. The lead model receives all responses alongside the original question and acts as a synthesizer/judge — identifying agreements, contradictions, and gaps before giving a final consolidated answer.
+
+**Deliberation modes (to be decided):**
+
+| Mode | Description | Trade-off |
+|---|---|---|
+| Parallel | All models answer independently; lead synthesizes | Fast, less interactive |
+| Sequential | Each model sees the previous answer before responding | Richer debate, slower |
+| Multi-round | Several back-and-forth rounds before final answer | Most thorough, highest latency |
+
+The lead model should receive a specific system prompt for its synthesizer role, distinct from its normal inference prompt.
 
 ### Why PocketBase over Dify
 
