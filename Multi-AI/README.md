@@ -31,6 +31,15 @@ pytest -q
 
 
 
+## TODO
+
+- [ ] Fix `.gitignore` — exclude `venv/`, `__pycache__/`, compiled `.so` binaries, and `.c` build artifacts
+- [ ] Flesh out at least 2–3 real model implementations end-to-end (currently most `.pyx` files are placeholder stubs)
+- [ ] Wire up the API layer so the React frontend (`APITester.tsx`) talks to a real backend handler
+- [ ] Fix `models/__init__.pyx` to export all 37 models, not just 8 (and remove the duplicate `deepseek_v3` import)
+
+---
+
 plan
 In this setup, PocketBase becomes your Control Plane, handling user authentication, model metadata, and workflow synchronization.
 Updated Text Stack (PocketBase Edition)
