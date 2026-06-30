@@ -44,8 +44,16 @@ pip install -e .
 Run a model directly:
 
 ```bash
-python -m multi_ai.models.qwen3
+python -m multi_ai.models.qwen3_8b
 ```
+
+Run the API server (serves `/api/hello` on `http://localhost:8000`, which the Flutter app's `ApiTester` widget calls):
+
+```bash
+python -m multi_ai.server
+```
+
+> Compiling the `.pyx` sources requires Cython and a C compiler (e.g. MSVC Build Tools on Windows, or `gcc`).
 
 Run tests:
 
@@ -58,7 +66,7 @@ pytest -q
 
 - [ ] Fix `.gitignore` — exclude `venv/`, `__pycache__/`, compiled `.so` binaries, and `.c` build artifacts
 - [ ] Flesh out at least 2–3 real model implementations end-to-end (currently most `.pyx` files are placeholder stubs)
-- [ ] Wire up the API layer so the Flutter frontend (`app/lib/api_tester.dart`) talks to a real backend handler
+- [x] Wire up the API layer so the Flutter frontend (`app/lib/api_tester.dart`) talks to a real backend handler — see `multi_ai.server`
 - [ ] Fix `models/__init__.pyx` to export all 37 models, not just 8 (and remove the duplicate `deepseek_v3` import)
 
 ---
