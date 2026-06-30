@@ -13,8 +13,7 @@
     pkgs.python311Packages.setuptools
     pkgs.gcc
     pkgs.gnumake
-    # pkgs.nodejs_20
-    # pkgs.nodePackages.nodemon
+    pkgs.flutter
   ];
 
   # Sets environment variables in the workspace

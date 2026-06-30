@@ -1,6 +1,6 @@
 # Multi-AI
 
-A hybrid Python/TypeScript edge computing platform for managing and running multiple AI models locally, with a React web frontend and planned mobile support via Capacitor.
+A hybrid Python/Dart edge computing platform for managing and running multiple AI models locally, with a Flutter mobile/desktop frontend.
 
 ## Structure
 
@@ -8,29 +8,29 @@ A hybrid Python/TypeScript edge computing platform for managing and running mult
 MULTI-AI/
 ├── Multi-AI/multi_ai/   # Python package — Cython model stubs and utilities
 │   └── models/          # 37 model stubs (deepmind, qwen3, falcon, llama, etc.)
-├── src/                 # React/TypeScript frontend
-├── my-python-app/       # Platformatic Python ASGI backend
+├── app/                 # Flutter frontend
 └── tests/               # Import validation tests
 ```
 
-## Frontend (Bun + React)
+## Frontend (Flutter)
 
 Install dependencies:
 
 ```bash
-bun install
+cd app
+flutter pub get
 ```
 
-Start dev server:
+Run:
 
 ```bash
-bun dev
+flutter run
 ```
 
-Run for production:
+Run tests:
 
 ```bash
-bun start
+flutter test
 ```
 
 ## Python Backend
@@ -58,7 +58,7 @@ pytest -q
 
 - [ ] Fix `.gitignore` — exclude `venv/`, `__pycache__/`, compiled `.so` binaries, and `.c` build artifacts
 - [ ] Flesh out at least 2–3 real model implementations end-to-end (currently most `.pyx` files are placeholder stubs)
-- [ ] Wire up the API layer so the React frontend (`APITester.tsx`) talks to a real backend handler
+- [ ] Wire up the API layer so the Flutter frontend (`app/lib/api_tester.dart`) talks to a real backend handler
 - [ ] Fix `models/__init__.pyx` to export all 37 models, not just 8 (and remove the duplicate `deepseek_v3` import)
 
 ---
@@ -102,7 +102,7 @@ Download experience goals:
 ### Workflow Customizer
 
 - Create a `workflows` PocketBase collection.
-- When a user saves a workflow in the React Flow editor, the JSON is persisted to this collection.
+- When a user saves a workflow in the Flutter flow-graph editor, the JSON is persisted to this collection.
 - PocketBase's built-in Realtime Subscriptions sync changes across devices instantly — no custom sync code needed.
 
 ### Model Council (AI Orchestration)
