@@ -5,7 +5,19 @@ _REPO_ID = "Qwen/Qwen3-8B"
 
 
 def get_info():
-    return {"name": "Qwen3 8B", "version": "0.1.0", "repo_id": _REPO_ID}
+    return {
+        "name": "Qwen3 8B",
+        "version": "0.1.0",
+        "repo_id": _REPO_ID,
+        "params": "8B",
+        "size_gb": 16.38,
+        "modality": "Text",
+        "context_tokens": 32768,
+        "license": "Apache 2.0",
+        "strengths": "Hybrid thinking/non-thinking model — can switch on step-by-step reasoning "
+        "for hard problems or answer directly for quick ones.",
+        "speed_profile": "Moderate speed, strong reasoning (hybrid think mode)",
+    }
 
 
 if __name__ == "__main__":

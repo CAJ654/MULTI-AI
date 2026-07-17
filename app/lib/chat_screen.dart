@@ -2,14 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'api_client.dart';
 import 'chat_store.dart';
+import 'model_detail_screen.dart';
 import 'on_device_engine.dart';
-
-// Dark surfaces tuned to match modern chatbot UIs (sidebar darker than the
-// conversation pane, cards/input one step lighter).
-const _sidebarColor = Color(0xFF0F1014);
-const _mainColor = Color(0xFF17181F);
-const _cardColor = Color(0xFF23252F);
-const _borderColor = Color(0x14FFFFFF);
+import 'theme.dart';
 
 class _Suggestion {
   const _Suggestion(this.title, this.subtitle);
@@ -26,6 +21,8 @@ const _suggestions = [
   _Suggestion('Help me study', 'vocabulary for a college entrance exam'),
   _Suggestion('Give me ideas', "for what to do with my kids' art"),
 ];
+
+enum _SidebarTab { models, chat }
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, ApiClient? apiClient}) : _apiClient = apiClient;
@@ -47,6 +44,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   final _sessions = <ChatSession>[ChatSession()];
   int _activeSession = 0;
+  _SidebarTab _sidebarTab = _SidebarTab.chat;
 
   List<ModelInfo> _models = [];
   ModelInfo? _selectedModel;
@@ -107,7 +105,17 @@ class _ChatScreenState extends State<ChatScreen> {
     });
     // The on-device model needs no server, so it's always available even if
     // the backend below can't be reached.
-    const onDeviceModel = ModelInfo(id: onDeviceModelId, name: onDeviceModelName);
+    const onDeviceModel = ModelInfo(
+      id: onDeviceModelId,
+      name: onDeviceModelName,
+      params: onDeviceModelParams,
+      sizeGb: onDeviceModelSizeGb,
+      modality: onDeviceModelModality,
+      contextTokens: onDeviceModelContextTokens,
+      license: onDeviceModelLicense,
+      strengths: onDeviceModelStrengths,
+      speedProfile: onDeviceModelSpeedProfile,
+    );
     try {
       final serverModels = await _api.fetchModels();
       setState(() => _models = [onDeviceModel, ...serverModels]);
@@ -155,7 +163,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final action = await showMenu<String>(
       context: context,
-      color: _cardColor,
+      color: cardColor,
       position: RelativeRect.fromRect(
         position & const Size(1, 1),
         Offset.zero & overlay.size,
@@ -261,7 +269,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _mainColor,
+      backgroundColor: mainColor,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -285,8 +293,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildSidebar() {
     return Container(
-      width: 260,
-      color: _sidebarColor,
+      width: 280,
+      color: sidebarColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -301,68 +309,196 @@ class _ChatScreenState extends State<ChatScreen> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: _cardColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: _newSession,
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('New Chat'),
-            ),
-          ),
+          _buildSidebarTabBar(),
           const SizedBox(height: 8),
           Expanded(
-            child: Builder(builder: (context) {
-              // A chat only appears here once it has a message; a freshly
-              // opened (still empty) chat stays hidden.
-              final visible = [
-                for (var i = 0; i < _sessions.length; i++)
-                  if (_sessions[i].messages.isNotEmpty) i,
-              ];
-              return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                itemCount: visible.length,
-                itemBuilder: (context, i) {
-                  final index = visible[i];
-                  final s = _sessions[index];
-                  final selected = index == _activeSession;
-                  return GestureDetector(
-                    // Right-click (or long-press on touch) opens the chat's
-                    // context menu with Delete.
-                    onSecondaryTapUp: (details) =>
-                        _showSessionMenu(details.globalPosition, index),
-                    child: Material(
-                      color: selected ? _cardColor : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                      child: ListTile(
-                        dense: true,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        leading: const Icon(Icons.chat_bubble_outline, size: 16, color: Colors.white54),
-                        title: Text(
-                          s.title ?? 'New chat',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 13, color: selected ? Colors.white : Colors.white70),
-                        ),
-                        onTap: () => setState(() => _activeSession = index),
-                        onLongPress: () {
-                          final box = context.findRenderObject() as RenderBox?;
-                          final origin = box?.localToGlobal(Offset.zero) ?? Offset.zero;
-                          _showSessionMenu(origin, index);
-                        },
-                      ),
-                    ),
-                  );
-                },
-              );
-            }),
+            child: _sidebarTab == _SidebarTab.models ? _buildModelsTab() : _buildChatTab(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarTabBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          Expanded(child: _buildSidebarTabButton('Models', _SidebarTab.models)),
+          const SizedBox(width: 8),
+          Expanded(child: _buildSidebarTabButton('Chat', _SidebarTab.chat)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarTabButton(String label, _SidebarTab tab) {
+    final selected = _sidebarTab == tab;
+    return Material(
+      color: selected ? cardColor : Colors.transparent,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () => setState(() => _sidebarTab = tab),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: selected ? Colors.white : Colors.white54,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChatTab() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: cardColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: _newSession,
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('New Chat'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: Builder(builder: (context) {
+            // A chat only appears here once it has a message; a freshly
+            // opened (still empty) chat stays hidden.
+            final visible = [
+              for (var i = 0; i < _sessions.length; i++)
+                if (_sessions[i].messages.isNotEmpty) i,
+            ];
+            return ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              itemCount: visible.length,
+              itemBuilder: (context, i) {
+                final index = visible[i];
+                final s = _sessions[index];
+                final selected = index == _activeSession;
+                return GestureDetector(
+                  // Right-click (or long-press on touch) opens the chat's
+                  // context menu with Delete.
+                  onSecondaryTapUp: (details) =>
+                      _showSessionMenu(details.globalPosition, index),
+                  child: Material(
+                    color: selected ? cardColor : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                    child: ListTile(
+                      dense: true,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      leading: const Icon(Icons.chat_bubble_outline, size: 16, color: Colors.white54),
+                      title: Text(
+                        s.title ?? 'New chat',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 13, color: selected ? Colors.white : Colors.white70),
+                      ),
+                      onTap: () => setState(() => _activeSession = index),
+                      onLongPress: () {
+                        final box = context.findRenderObject() as RenderBox?;
+                        final origin = box?.localToGlobal(Offset.zero) ?? Offset.zero;
+                        _showSessionMenu(origin, index);
+                      },
+                    ),
+                  ),
+                );
+              },
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  // ----------------------------------------------------------------- models tab
+
+  Widget _buildModelsTab() {
+    if (_loadingModels) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_models.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text('No models available', style: TextStyle(color: Colors.white54)),
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      itemCount: _models.length,
+      itemBuilder: (context, i) => _buildModelCard(_models[i]),
+    );
+  }
+
+  Widget _buildModelCard(ModelInfo m) {
+    // Everything here runs locally on this machine — there's no cloud call
+    // anywhere in this app. The distinction is *how*: in-app via llama.cpp
+    // (llamadart) vs. via the local Python backend process (transformers).
+    final inApp = m.id == onDeviceModelId || m.gguf != null;
+    final details = [
+      if (m.params != null) '${m.params} params',
+      if (m.sizeGb != null) '~${m.sizeGb!.toStringAsFixed(m.sizeGb! < 1 ? 2 : 1)} GB',
+    ].join(' • ');
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderColor),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => ModelDetailScreen(model: m, runsInApp: inApp),
+          )),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(inApp ? Icons.smartphone_outlined : Icons.dns_outlined,
+                    size: 18, color: Colors.deepPurple.shade200),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(m.name,
+                          style: const TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
+                      if (details.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(details, style: const TextStyle(fontSize: 12, color: Colors.white54)),
+                      ],
+                      const SizedBox(height: 2),
+                      Text(inApp ? 'In-app (llama.cpp)' : 'Local backend (Python)',
+                          style: const TextStyle(fontSize: 11, color: Colors.white38)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, size: 18, color: Colors.white24),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -372,7 +508,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildTopBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _borderColor))),
+      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: borderColor))),
       child: Row(
         children: [
           if (_loadingModels)
@@ -381,7 +517,7 @@ class _ChatScreenState extends State<ChatScreen> {
             DropdownButtonHideUnderline(
               child: DropdownButton<ModelInfo>(
                 value: _selectedModel,
-                dropdownColor: _cardColor,
+                dropdownColor: cardColor,
                 borderRadius: BorderRadius.circular(12),
                 icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
@@ -459,7 +595,7 @@ class _ChatScreenState extends State<ChatScreen> {
             right: 24,
             bottom: 16,
             child: FloatingActionButton.small(
-              backgroundColor: _cardColor,
+              backgroundColor: cardColor,
               foregroundColor: Colors.white,
               elevation: 2,
               onPressed: () => _scrollToBottom(),
@@ -517,8 +653,8 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: _borderColor),
-            color: _cardColor.withValues(alpha: 0.45),
+            border: Border.all(color: borderColor),
+            color: cardColor.withValues(alpha: 0.45),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Column(
@@ -631,8 +767,8 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Container(
               padding: const EdgeInsets.only(left: 20, right: 8),
               decoration: BoxDecoration(
-                color: _cardColor,
-                border: Border.all(color: _borderColor),
+                color: cardColor,
+                border: Border.all(color: borderColor),
                 borderRadius: BorderRadius.circular(28),
               ),
               child: Row(

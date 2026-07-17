@@ -7,7 +7,18 @@ import 'package:http/http.dart' as http;
 const String apiBaseUrl = 'http://localhost:8000';
 
 class ModelInfo {
-  const ModelInfo({required this.id, required this.name, this.gguf});
+  const ModelInfo({
+    required this.id,
+    required this.name,
+    this.gguf,
+    this.params,
+    this.sizeGb,
+    this.modality,
+    this.contextTokens,
+    this.license,
+    this.strengths,
+    this.speedProfile,
+  });
 
   final String id;
   final String name;
@@ -16,11 +27,46 @@ class ModelInfo {
   /// the app runs this model on-device instead of calling the server.
   final String? gguf;
 
+  /// Parameter count as a human label (e.g. `"7B"`, `"124M"`), for the
+  /// Models tab. Null for entries the backend hasn't annotated.
+  final String? params;
+
+  /// Approximate download size in GB, for the Models tab. Null for entries
+  /// the backend hasn't annotated.
+  final double? sizeGb;
+
+  /// What kinds of input the checkpoint accepts (e.g. `"Text"`,
+  /// `"Text + Image"`). Null for entries the backend hasn't annotated.
+  final String? modality;
+
+  /// Trained/native context window in tokens. Null for entries the backend
+  /// hasn't annotated.
+  final int? contextTokens;
+
+  /// Open-source (or custom-permissive) license name. Null for entries the
+  /// backend hasn't annotated.
+  final String? license;
+
+  /// Short editorial blurb on what the model is good at. Null for entries
+  /// the backend hasn't annotated.
+  final String? strengths;
+
+  /// Short qualitative intelligence-vs-speed tradeoff (e.g. `"Slow, deep
+  /// reasoning"`). Null for entries the backend hasn't annotated.
+  final String? speedProfile;
+
   factory ModelInfo.fromJson(Map<String, dynamic> json) {
     return ModelInfo(
       id: json['id'] as String,
       name: json['name'] as String,
       gguf: json['gguf'] as String?,
+      params: json['params'] as String?,
+      sizeGb: (json['size_gb'] as num?)?.toDouble(),
+      modality: json['modality'] as String?,
+      contextTokens: (json['context_tokens'] as num?)?.toInt(),
+      license: json['license'] as String?,
+      strengths: json['strengths'] as String?,
+      speedProfile: json['speed_profile'] as String?,
     );
   }
 }

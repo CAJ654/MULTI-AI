@@ -73,8 +73,10 @@ def _list_models() -> list[dict]:
             entries.append({"id": stem, "name": f"{stem} (broken)", "available": False})
             continue
         try:
-            name = module.get_info()["name"]
+            info = module.get_info()
+            name = info["name"]
         except Exception:
+            info = {}
             name = stem.replace("_", " ")
         repo_id = getattr(module, "_REPO_ID", None)
         gguf = getattr(module, "_GGUF_SOURCE", None)
@@ -86,6 +88,22 @@ def _list_models() -> list[dict]:
         }
         if gguf:
             entry["gguf"] = gguf
+        # Informational only (shown in the app's Models tab) — absent for any
+        # model file that hasn't been annotated yet, never required.
+        if info.get("params"):
+            entry["params"] = info["params"]
+        if info.get("size_gb"):
+            entry["size_gb"] = info["size_gb"]
+        if info.get("modality"):
+            entry["modality"] = info["modality"]
+        if info.get("context_tokens"):
+            entry["context_tokens"] = info["context_tokens"]
+        if info.get("license"):
+            entry["license"] = info["license"]
+        if info.get("strengths"):
+            entry["strengths"] = info["strengths"]
+        if info.get("speed_profile"):
+            entry["speed_profile"] = info["speed_profile"]
         entries.append(entry)
     return entries
 

@@ -8,7 +8,19 @@ _REPO_ID = "unsloth/Ministral-3-8B-Instruct-2512"
 
 
 def get_info():
-    return {"name": "Ministral 3 8B", "version": "0.1.0", "repo_id": _REPO_ID}
+    return {
+        "name": "Ministral 3 8B",
+        "version": "0.1.0",
+        "repo_id": _REPO_ID,
+        "params": "8B",
+        "size_gb": 17.84,
+        "modality": "Text + Image",
+        "context_tokens": 131072,
+        "license": "Apache 2.0",
+        "strengths": "Mistral's mid-size edge model — a step up in reasoning depth from the 3B "
+        "variant while staying vision-capable.",
+        "speed_profile": "Moderate speed, strong multimodal reasoning",
+    }
 
 
 if __name__ == "__main__":

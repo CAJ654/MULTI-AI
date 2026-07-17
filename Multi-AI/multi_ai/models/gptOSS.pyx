@@ -11,7 +11,19 @@ _GGUF_SOURCE = "hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf"
 
 
 def get_info():
-    return {"name": "GPT-OSS 20B (on-device)", "version": "0.1.0", "repo_id": None}
+    return {
+        "name": "GPT-OSS 20B",
+        "version": "0.1.0",
+        "repo_id": None,
+        "params": "20B",
+        "size_gb": 12.11,
+        "modality": "Text",
+        "context_tokens": 131072,
+        "license": "Apache 2.0",
+        "strengths": "OpenAI's open-weight reasoning model — Mixture-of-Experts with only ~3.6B "
+        "active parameters per token, so it reasons like a much bigger model while staying fast.",
+        "speed_profile": "Fast for its reasoning quality (sparse MoE), large download",
+    }
 
 
 if __name__ == "__main__":

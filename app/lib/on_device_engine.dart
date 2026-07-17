@@ -5,9 +5,18 @@ import 'package:llamadart/llamadart.dart';
 /// Built-in on-device model: small enough to download quickly and run on a
 /// phone. Always in the model list, even when the backend is unreachable.
 const String onDeviceModelId = '_on_device_qwen2_5_0_5b';
-const String onDeviceModelName = 'Qwen2.5 0.5B (on-device)';
+const String onDeviceModelName = 'Qwen2.5 0.5B';
 const String onDeviceModelSource =
     'hf://Qwen/Qwen2.5-0.5B-Instruct-GGUF/qwen2.5-0.5b-instruct-q4_k_m.gguf';
+const String onDeviceModelParams = '0.5B';
+const double onDeviceModelSizeGb = 0.49;
+const String onDeviceModelModality = 'Text';
+const int onDeviceModelContextTokens = 32768;
+const String onDeviceModelLicense = 'Apache 2.0';
+const String onDeviceModelStrengths =
+    "Alibaba's smallest Qwen2.5 chat model, quantized to run entirely on-device with no "
+    'network after the first download — lightest reasoning in the roster, built for speed.';
+const String onDeviceModelSpeedProfile = 'Very fast, lightweight intelligence';
 
 /// Runs GGUF models locally via llamadart/llama.cpp — no server, and no
 /// network after a model's first download. Server-roster models can opt in

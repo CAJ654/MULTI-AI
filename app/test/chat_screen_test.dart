@@ -29,8 +29,8 @@ void main() {
     _useDesktopSurface(tester);
 
     final fake = _FakeApiClient(const [
-      ModelInfo(id: 'gpt2', name: 'GPT-2 (base, no chat tuning)'),
-      ModelInfo(id: 'gptOSS', name: 'GPT-OSS 20B (on-device)', gguf: 'hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf'),
+      ModelInfo(id: 'gpt2', name: 'GPT-2'),
+      ModelInfo(id: 'gptOSS', name: 'GPT-OSS 20B', gguf: 'hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf'),
     ]);
 
     await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake)));
@@ -41,8 +41,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(onDeviceModelName), findsWidgets);
-    expect(find.text('GPT-2 (base, no chat tuning)'), findsWidgets);
-    expect(find.text('GPT-OSS 20B (on-device)'), findsWidgets);
+    expect(find.text('GPT-2'), findsWidgets);
+    expect(find.text('GPT-OSS 20B'), findsWidgets);
   });
 
   testWidgets('falls back to the on-device model only when the backend is unreachable', (tester) async {
@@ -57,5 +57,75 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(onDeviceModelName), findsOneWidget);
+  });
+
+  testWidgets('Models tab lists params/size and Chat tab keeps the New Chat button', (tester) async {
+    _useDesktopSurface(tester);
+
+    final fake = _FakeApiClient(const [
+      ModelInfo(id: 'gpt2', name: 'GPT-2', params: '124M', sizeGb: 0.55),
+    ]);
+
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake)));
+    await tester.pumpAndSettle();
+
+    // Chat tab is the default: New Chat button visible, no model metadata yet.
+    expect(find.widgetWithText(FilledButton, 'New Chat'), findsOneWidget);
+    expect(find.textContaining('params'), findsNothing);
+
+    await tester.tap(find.text('Models'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(FilledButton, 'New Chat'), findsNothing);
+    // The top-bar dropdown also shows the (unrelated) selected model's name
+    // in its closed state, so this may match more than just the tab's card.
+    expect(find.text(onDeviceModelName), findsWidgets);
+    expect(find.textContaining('$onDeviceModelParams params'), findsOneWidget);
+    expect(find.text('GPT-2'), findsOneWidget);
+    expect(find.textContaining('124M params'), findsOneWidget);
+
+    await tester.tap(find.text('Chat'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(FilledButton, 'New Chat'), findsOneWidget);
+  });
+
+  testWidgets('tapping a model card opens its detail page with the full spec', (tester) async {
+    _useDesktopSurface(tester);
+
+    final fake = _FakeApiClient(const [
+      ModelInfo(
+        id: 'gpt2',
+        name: 'GPT-2',
+        params: '124M',
+        sizeGb: 0.55,
+        modality: 'Text',
+        contextTokens: 1024,
+        license: 'MIT',
+        strengths: 'A raw base model, mostly useful as a speed baseline.',
+        speedProfile: 'Very fast, minimal intelligence',
+      ),
+    ]);
+
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Models'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('GPT-2'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Modality'), findsOneWidget);
+    expect(find.text('Text'), findsOneWidget);
+    expect(find.text('Core Strengths & Intelligence Profile'), findsOneWidget);
+    expect(find.text('A raw base model, mostly useful as a speed baseline.'), findsOneWidget);
+    expect(find.text('Intelligence-to-Speed Ratio'), findsOneWidget);
+    expect(find.text('Very fast, minimal intelligence'), findsOneWidget);
+    expect(find.text('Context Window'), findsOneWidget);
+    expect(find.textContaining('1K tokens'), findsWidgets);
+    expect(find.text('Open Source License'), findsOneWidget);
+    expect(find.text('MIT'), findsOneWidget);
+    expect(find.text('124M'), findsOneWidget);
   });
 }

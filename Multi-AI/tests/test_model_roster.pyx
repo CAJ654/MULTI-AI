@@ -51,6 +51,16 @@ def test_roster_matches_model_files():
         assert entry["available"] is True, f"{entry['id']} isn't available: {entry['name']}"
         if "gguf" in entry:
             assert entry["gguf"].startswith("hf://"), entry["gguf"]
+        # Every model is annotated for the app's Models tab (see chat_screen.dart
+        # and model_detail_screen.dart) — a missing value here means a new
+        # model file forgot one of these get_info() keys.
+        assert entry.get("params"), f"{entry['id']} has no params in get_info()"
+        assert entry.get("size_gb", 0) > 0, f"{entry['id']} has no size_gb in get_info()"
+        assert entry.get("modality"), f"{entry['id']} has no modality in get_info()"
+        assert entry.get("context_tokens", 0) > 0, f"{entry['id']} has no context_tokens in get_info()"
+        assert entry.get("license"), f"{entry['id']} has no license in get_info()"
+        assert entry.get("strengths"), f"{entry['id']} has no strengths in get_info()"
+        assert entry.get("speed_profile"), f"{entry['id']} has no speed_profile in get_info()"
 
 
 def test_api_models_endpoint_matches_roster():
