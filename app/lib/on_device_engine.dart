@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:llamadart/llamadart.dart';
 
 /// Built-in on-device model: small enough to download quickly and run on a
@@ -13,6 +15,7 @@ const String onDeviceModelSource =
 class OnDeviceEngine {
   LlamaEngine? _engine;
   String? _loadedSource;
+  void Function()? _cancelActive;
 
   Future<void> _ensureLoaded(String source) async {
     if (_engine != null && _loadedSource == source) return;
@@ -28,17 +31,42 @@ class OnDeviceEngine {
 
   Future<String> generate(String prompt, {String source = onDeviceModelSource}) async {
     await _ensureLoaded(source);
-    final reply = await _engine!
+    final buffer = StringBuffer();
+    final done = Completer<String>();
+    final sub = _engine!
         .create(
           [LlamaChatMessage.fromText(role: LlamaChatRole.user, text: prompt)],
           // A cap, not a target — generation still stops at end-of-turn, so
           // short replies stay fast; this just avoids truncating long ones.
           params: const GenerationParams(maxTokens: 1024, temp: 0.7),
         )
-        .map((chunk) => chunk.choices.first.delta.content ?? '')
-        .join();
-    return reply.trim().isEmpty ? '(model returned an empty response)' : reply.trim();
+        .listen(
+          null,
+          onDone: () {
+            if (!done.isCompleted) done.complete(buffer.toString());
+          },
+          onError: (Object e, StackTrace st) {
+            if (!done.isCompleted) done.completeError(e, st);
+          },
+        );
+    sub.onData((chunk) => buffer.write(chunk.choices.first.delta.content ?? ''));
+    // Cancelling the stream subscription stops the token loop; complete with
+    // whatever was generated so far so the pending future doesn't hang.
+    _cancelActive = () {
+      sub.cancel();
+      if (!done.isCompleted) done.complete(buffer.toString());
+    };
+    try {
+      final reply = (await done.future).trim();
+      return reply.isEmpty ? '(model returned an empty response)' : reply;
+    } finally {
+      _cancelActive = null;
+    }
   }
+
+  /// Stops the in-flight generation, if any. The pending [generate] future
+  /// completes with the partial text produced so far.
+  void stop() => _cancelActive?.call();
 
   Future<void> dispose() async {
     await _engine?.dispose();

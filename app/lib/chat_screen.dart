@@ -51,6 +51,11 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _sending = false;
   bool _showScrollToBottom = false;
 
+  // Bumped on every send and on stop; a reply whose generation no longer
+  // matches was stopped by the user and gets discarded on arrival.
+  int _sendGeneration = 0;
+  ChatSession? _pendingSession;
+
   ChatSession get _session => _sessions[_activeSession];
 
   @override
@@ -168,6 +173,8 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty || model == null || _sending) return;
 
     final session = _session;
+    final generation = ++_sendGeneration;
+    _pendingSession = session;
     setState(() {
       session.title ??= text;
       session.messages.add(ChatMessage(text: text, isUser: true));
@@ -184,15 +191,35 @@ class _ChatScreenState extends State<ChatScreen> {
       final reply = localSource != null
           ? await _onDeviceEngine.generate(text, source: localSource)
           : await _api.sendChat(model: model.id, message: text);
+      if (generation != _sendGeneration) return; // stopped by the user
       setState(() => session.messages.add(ChatMessage(text: reply, isUser: false, sender: model.name)));
     } catch (e) {
+      if (generation != _sendGeneration) return; // aborting throws; not a real error
       setState(() =>
           session.messages.add(ChatMessage(text: e.toString(), isUser: false, sender: model.name, isError: true)));
     } finally {
-      setState(() => _sending = false);
-      _scrollToBottom();
+      if (generation == _sendGeneration) {
+        _pendingSession = null;
+        setState(() => _sending = false);
+        _scrollToBottom();
+      }
       _store.save(_sessions);
     }
+  }
+
+  void _stopResponse() {
+    if (!_sending) return;
+    _sendGeneration++; // orphan the in-flight request so its reply is discarded
+    _api.cancelChat();
+    _onDeviceEngine.stop();
+    final session = _pendingSession;
+    _pendingSession = null;
+    setState(() {
+      _sending = false;
+      session?.messages.add(ChatMessage(
+          text: '(response stopped)', isUser: false, sender: _selectedModel?.name));
+    });
+    _store.save(_sessions);
   }
 
   void _scrollToBottom({bool animate = true}) {
@@ -612,13 +639,10 @@ class _ChatScreenState extends State<ChatScreen> {
                         backgroundColor: Colors.deepPurple.shade400,
                         disabledBackgroundColor: Colors.white10,
                       ),
-                      icon: _sending
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white54))
-                          : const Icon(Icons.arrow_upward, size: 20, color: Colors.white),
-                      onPressed: _sending ? null : _send,
+                      tooltip: _sending ? 'Stop response' : 'Send',
+                      icon: Icon(_sending ? Icons.stop_rounded : Icons.arrow_upward,
+                          size: 20, color: Colors.white),
+                      onPressed: _sending ? _stopResponse : _send,
                     ),
                   ),
                 ],

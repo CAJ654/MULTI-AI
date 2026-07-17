@@ -26,6 +26,8 @@ class ModelInfo {
 }
 
 class ApiClient {
+  http.Client? _chatClient;
+
   Future<List<ModelInfo>> fetchModels() async {
     final response = await http.get(Uri.parse('$apiBaseUrl/api/models'));
     final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -34,15 +36,31 @@ class ApiClient {
   }
 
   Future<String> sendChat({required String model, required String message}) async {
-    final response = await http.post(
-      Uri.parse('$apiBaseUrl/api/chat'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'model': model, 'message': message}),
-    );
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
-      throw Exception(data['error'] ?? 'request failed (${response.statusCode})');
+    // A dedicated client per chat request so cancelChat can abort it without
+    // touching anything else.
+    final client = http.Client();
+    _chatClient = client;
+    try {
+      final response = await client.post(
+        Uri.parse('$apiBaseUrl/api/chat'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'model': model, 'message': message}),
+      );
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode != 200) {
+        throw Exception(data['error'] ?? 'request failed (${response.statusCode})');
+      }
+      return data['reply'] as String;
+    } finally {
+      if (identical(_chatClient, client)) _chatClient = null;
+      client.close();
     }
-    return data['reply'] as String;
+  }
+
+  /// Aborts the in-flight chat request, if any. The server still finishes
+  /// generating on its side; the response just never reaches us.
+  void cancelChat() {
+    _chatClient?.close();
+    _chatClient = null;
   }
 }
