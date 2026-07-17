@@ -121,11 +121,16 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _newSession() {
-    // Reuse the current session if it's still empty.
-    if (_session.messages.isEmpty) return;
+    // Reuse an existing empty session (they're hidden from the sidebar, so
+    // stacking up duplicates would leak invisible entries).
+    final existing = _sessions.indexWhere((s) => s.messages.isEmpty);
     setState(() {
-      _sessions.insert(0, ChatSession());
-      _activeSession = 0;
+      if (existing >= 0) {
+        _activeSession = existing;
+      } else {
+        _sessions.insert(0, ChatSession());
+        _activeSession = 0;
+      }
     });
   }
 
@@ -308,40 +313,50 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              itemCount: _sessions.length,
-              itemBuilder: (context, i) {
-                final s = _sessions[i];
-                final selected = i == _activeSession;
-                return GestureDetector(
-                  // Right-click (or long-press on touch) opens the chat's
-                  // context menu with Delete.
-                  onSecondaryTapUp: (details) => _showSessionMenu(details.globalPosition, i),
-                  child: Material(
-                    color: selected ? _cardColor : Colors.transparent,
-                    borderRadius: BorderRadius.circular(10),
-                    child: ListTile(
-                      dense: true,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      leading: const Icon(Icons.chat_bubble_outline, size: 16, color: Colors.white54),
-                      title: Text(
-                        s.title ?? 'New chat',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13, color: selected ? Colors.white : Colors.white70),
+            child: Builder(builder: (context) {
+              // A chat only appears here once it has a message; a freshly
+              // opened (still empty) chat stays hidden.
+              final visible = [
+                for (var i = 0; i < _sessions.length; i++)
+                  if (_sessions[i].messages.isNotEmpty) i,
+              ];
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                itemCount: visible.length,
+                itemBuilder: (context, i) {
+                  final index = visible[i];
+                  final s = _sessions[index];
+                  final selected = index == _activeSession;
+                  return GestureDetector(
+                    // Right-click (or long-press on touch) opens the chat's
+                    // context menu with Delete.
+                    onSecondaryTapUp: (details) =>
+                        _showSessionMenu(details.globalPosition, index),
+                    child: Material(
+                      color: selected ? _cardColor : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                      child: ListTile(
+                        dense: true,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        leading: const Icon(Icons.chat_bubble_outline, size: 16, color: Colors.white54),
+                        title: Text(
+                          s.title ?? 'New chat',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 13, color: selected ? Colors.white : Colors.white70),
+                        ),
+                        onTap: () => setState(() => _activeSession = index),
+                        onLongPress: () {
+                          final box = context.findRenderObject() as RenderBox?;
+                          final origin = box?.localToGlobal(Offset.zero) ?? Offset.zero;
+                          _showSessionMenu(origin, index);
+                        },
                       ),
-                      onTap: () => setState(() => _activeSession = i),
-                      onLongPress: () {
-                        final box = context.findRenderObject() as RenderBox?;
-                        final origin = box?.localToGlobal(Offset.zero) ?? Offset.zero;
-                        _showSessionMenu(origin, i);
-                      },
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              );
+            }),
           ),
         ],
       ),
