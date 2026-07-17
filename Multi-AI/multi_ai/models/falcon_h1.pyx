@@ -12,7 +12,7 @@ def get_info():
         "params": "1.5B",
         "size_gb": 3.11,
         "modality": "Text",
-        "context_tokens": 262144,
+        "context_tokens": 131072,
         "license": "TII Falcon License 2.0",
         "strengths": "Hybrid Transformer+Mamba architecture — combines attention quality with "
         "state-space efficiency, so it handles very long context cheaply.",

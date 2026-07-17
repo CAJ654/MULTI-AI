@@ -12,7 +12,7 @@ def get_info():
         "params": "8B",
         "size_gb": 16.38,
         "modality": "Text",
-        "context_tokens": 32768,
+        "context_tokens": 40960,
         "license": "Apache 2.0",
         "strengths": "Hybrid thinking/non-thinking model — can switch on step-by-step reasoning "
         "for hard problems or answer directly for quick ones.",

@@ -14,8 +14,9 @@ def get_info():
         "modality": "Text",
         "context_tokens": 8192,
         "license": "TII Falcon License 2.0",
-        "strengths": "Pure state-space (Mamba) model, not a Transformer — constant memory per "
-        "token regardless of sequence length, so throughput doesn't degrade on long inputs.",
+        "strengths": "Pure state-space (Mamba) model, not a Transformer — trained at an "
+        "8192-token sequence length but, unlike attention models, has no hard context cap: "
+        "constant memory per token means throughput doesn't degrade on longer inputs.",
         "speed_profile": "Fast at long context, moderate raw intelligence",
     }
 

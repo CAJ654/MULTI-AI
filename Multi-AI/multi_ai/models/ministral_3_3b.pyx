@@ -15,7 +15,7 @@ def get_info():
         "params": "3B",
         "size_gb": 7.7,
         "modality": "Text + Image",
-        "context_tokens": 131072,
+        "context_tokens": 262144,
         "license": "Apache 2.0",
         "strengths": "Mistral's compact edge model — vision-capable and quick, the lightest "
         "of the Ministral 3 family.",

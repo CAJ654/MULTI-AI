@@ -15,7 +15,7 @@ def get_info():
         "params": "14B",
         "size_gb": 27.89,
         "modality": "Text + Image",
-        "context_tokens": 131072,
+        "context_tokens": 262144,
         "license": "Apache 2.0",
         "strengths": "Mistral's largest edge model — the deepest reasoning in the Ministral 3 "
         "family, at the cost of the slowest replies and biggest download.",

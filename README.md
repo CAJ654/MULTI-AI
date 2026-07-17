@@ -15,6 +15,20 @@ Run using
 cd app
 flutter run -d windows
 
+Restart backend - 1. Find the process ID using port 8000:
+
+
+Get-NetTCPConnection -LocalPort 8000 | Select-Object OwningProcess
+That prints a number (the PID).
+
+2. Stop it (replace <PID> with that number):
+
+
+Stop-Process -Id <PID> -Force
+
+
+restart with python Multi-AI/multi_ai/server.pyx
+
 A hybrid Python/Dart edge computing platform for managing and running multiple AI models locally, with a Flutter mobile/desktop frontend.
 
 ## Structure
@@ -39,7 +53,7 @@ flutter pub get
 Run:
 
 ```bash
-flutter run
+flutter run -d windows
 ```
 
 Run tests:

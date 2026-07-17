@@ -15,7 +15,7 @@ def get_info():
         "params": "8B",
         "size_gb": 17.84,
         "modality": "Text + Image",
-        "context_tokens": 131072,
+        "context_tokens": 262144,
         "license": "Apache 2.0",
         "strengths": "Mistral's mid-size edge model — a step up in reasoning depth from the 3B "
         "variant while staying vision-capable.",

@@ -15,7 +15,8 @@ def get_info():
         "context_tokens": 2048,
         "license": "Apache 2.0",
         "strengths": "TII's original instruction-tuned Falcon — capable general chat, but its "
-        "short context window limits long conversations.",
+        "config declares no fixed context cap and it was trained at a short 2048-token "
+        "sequence length, which limits long conversations.",
         "speed_profile": "Moderate speed, dated but competent",
     }
 
