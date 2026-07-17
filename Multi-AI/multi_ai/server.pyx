@@ -211,9 +211,20 @@ def _hf_generate(repo_id: str, prompt: str, max_new_tokens: int = 1024) -> str:
     tokenizer, model = _hf_model_cache[repo_id]
     inputs = _build_inputs(tokenizer, prompt).to(model.device)
     prompt_len = inputs["input_ids"].shape[1]
+    # Never generate past the model's context window. Models with absolute
+    # position embeddings (GPT-2: 1024) index off the end of the embedding
+    # table otherwise — a CUDA device-side assert that corrupts the whole
+    # process's GPU state, breaking every model until the server restarts.
+    config = model.config
+    max_pos = getattr(config, "max_position_embeddings", None)
+    if max_pos is None:
+        max_pos = getattr(getattr(config, "text_config", None), "max_position_embeddings", None)
+    token_budget = max_new_tokens if not max_pos else min(max_new_tokens, max_pos - prompt_len)
+    if token_budget <= 0:
+        return "(your message is too long for this model's context window)"
     output = model.generate(
         **inputs,
-        max_new_tokens=max_new_tokens,
+        max_new_tokens=token_budget,
         do_sample=True,
         temperature=0.7,
         pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
@@ -221,13 +232,17 @@ def _hf_generate(repo_id: str, prompt: str, max_new_tokens: int = 1024) -> str:
     new_tokens = output[0][prompt_len:]
     text = tokenizer.decode(new_tokens, skip_special_tokens=True)
     text = _strip_reasoning(text.strip())
+    ended_at_fake_turn = False
     if not getattr(tokenizer, "chat_template", None):
-        text = _truncate_fake_turns(text)
+        truncated = _truncate_fake_turns(text)
+        ended_at_fake_turn = truncated != text.strip()
+        text = truncated
     if not text:
         return "(model returned an empty response)"
     # If it stopped only because it hit the cap (no natural end-of-turn token),
-    # say so rather than ending mid-sentence with no explanation.
-    if len(new_tokens) >= max_new_tokens:
+    # say so rather than ending mid-sentence with no explanation. Not when the
+    # visible reply already ended cleanly at an invented User:/Assistant: turn.
+    if len(new_tokens) >= token_budget and not ended_at_fake_turn:
         text += "\n\n… (response reached the length limit and was cut off)"
     return text
 
@@ -242,7 +257,15 @@ def _chat_reply(model_id: str, message: str) -> str:
         try:
             return _hf_generate(repo_id, message)
         except Exception as exc:
-            return f"[{model_id}] failed to generate: {exc}"
+            reply = f"[{model_id}] failed to generate: {exc}"
+            if "CUDA error" in str(exc):
+                # A device-side assert corrupts the process's CUDA context;
+                # every model fails from then on until a clean restart.
+                reply += (
+                    "\n\nA CUDA error poisons the server's GPU state — restart the "
+                    "server before trying any model again."
+                )
+            return reply
     if gguf:
         return (
             f"[{model_id}] runs on-device in the app (via llama.cpp), not on this server — "

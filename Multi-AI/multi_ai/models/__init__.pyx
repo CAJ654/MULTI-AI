@@ -1,24 +1,8 @@
 """Models subpackage for multi_ai.
 
-This module imports and exposes the available model stubs.
+The model files here are plain-Python ``.pyx`` sources, which Python's import
+system won't load as submodules until they're actually Cython-compiled — so
+this package intentionally imports nothing. ``multi_ai.server`` loads model
+files directly by file path instead (see ``_load_model_module``), and
+``tests/test_imports.pyx`` validates them the same way.
 """
-
-from . import deepmind
-from . import deepseek_v3
-from . import deepseek_v3
-from . import deepseek_r1
-from . import kimi_k2
-from . import qwen3
-from . import pytorch
-from . import grok1
-
-__all__ = [
-    "deepmind",
-    "deepseek_v3",
-    "deepseek_v3",
-    "deepseek_r1",
-    "kimi_k2",
-    "qwen3",
-    "pytorch",
-    "grok1",
-]

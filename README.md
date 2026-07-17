@@ -1,3 +1,15 @@
+TODO: Add These for thinking as options inspired by other ais
+Accomplishing, Actioning, Actualizing, Architecting, Baking, Beaming, Beboppin', Befuddling, Billowing, Blanching, Bloviating, Boogieing, Boondoggling, Booping, Bootstrapping, Brewing, Burrowing, Calculating, Canoodling, Caramelizing, Cascading, Catapulting, Cerebrating, Channeling, Channelling, Choreographing, Churning, Clauding, Coalescing, Cogitating, Combobulating, Composing, Computing, Concocting, Considering, Contemplating, Cooking, Crafting, Creating, Crunching, Crystallizing, Cultivating, Deciphering, Deliberating, Determining, Dilly-dallying, Discombobulating, Doing, Doodling, Drizzling, Ebbing, Effecting, Elucidating, Embellishing, Enchanting, Envisioning, Evaporating, Fermenting, Fiddle-faddling, Finagling, Flambeing, Flibbertigibbeting, Flowing, Flummoxing, Fluttering, Forging, Forming, Frolicking, Frosting, Gallivanting, Galloping, Garnishing, Generating, Germinating, Gitifying, Grooving, Gusting, Harmonizing, Hashing, Hatching, Herding, Honking, Hullaballooing, Hyperspacing, Ideating, Imagining, Improvising, Incubating, Inferring, Infusing, Ionizing, Jitterbugging, Julienning, Kneading, Leavening, Levitating, Lollygagging, Manifesting, Marinating, Meandering, Metamorphosing, Misting, Moonwalking, Moseying, Mulling, Mustering, Musing, Nebulizing, Nesting, Newspapering, Noodling, Nucleating, Orbiting, Orchestrating, Osmosing, Perambulating, Percolating, Perusing, Philosophising, Photosynthesizing, Pollinating, Pondering, Pontificating, Pouncing, Precipitating, Prestidigitating, Processing, Proofing, Propagating, Puttering, Puzzling, Quantumizing, Razzle-dazzling, Razzmatazzing, Recombobulating, Reticulating, Roosting, Ruminating, Sauteing, Scampering, Schlepping, Scurrying, Seasoning, Shenaniganing, Shimmying, Simmering, Skedaddling, Sketching, Slithering, Smooshing, Sock-hopping, Spelunking, Spinning, Sprouting, Stewing, Sublimating, Swirling, Swooping, Symbioting, Synthesizing, Tempering, Thinking, Thundering, Tinkering, Tomfoolering, Topsy-turvying, Transfiguring, Transmuting, Twisting, Undulating, Unfurling, Unravelling, Vibing, Waddling, Wandering, Warping, Whatchamacalliting, Whirlpooling, Whirring, Whisking, Wibbling, Working, Wrangling, Zesting, Zigzagging
+
+show a raw, natural language summary of their actual inner monologue (e.g., "Let's double-check the physics constraints," "Re-evaluating step 3 for errors")
+
+The Action LogRather than trying to be funny or whimsical, Perplexity AI uses a high-utility, step-by-step transparency log. While it processes your prompt, you will see it dynamically display its actual cognitive steps in real time:"Searching for..." (lists the exact search terms it is firing into the web)"Reading..." (shows the URLs of the specific articles and domains it is scraping)"Synthesizing..." (indicates it is actively merging the information into a final answer)
+
+Frontend dev tools
+"Planning component layout...""Generating Tailwind styles...""Assembling React code...""Rendering preview..."
+
+The Sims: Famous for its incredibly bizarre loading messages like "Reticulating splines," "Generating emotional turbulence," and "Cajoling llamas."Slack: Rotates through uplifting quotes, community tips, or custom witty greetings added by your workplace workspace admin while loading the application.Discord: Rotates through quirky, millennial-humor status text like "Rerouting power to warp drive," "Knitting sweaters," and "Watering the digital plants."
+
 # Multi-AI
 Run using
 cd app
@@ -10,7 +22,7 @@ A hybrid Python/Dart edge computing platform for managing and running multiple A
 ```
 MULTI-AI/
 ├── Multi-AI/multi_ai/   # Python package — Cython model stubs and utilities
-│   └── models/          # 31 model entries (falcon, gemma, llama, mistral, qwen, etc.)
+│   └── models/          # 25 model entries (falcon, gemma, llama, mistral, qwen, etc.)
 ├── app/                 # Flutter frontend
 └── tests/               # Import validation tests
 ```
@@ -60,7 +72,7 @@ python Multi-AI/multi_ai/server.pyx
 
 > Compiling the `.pyx` sources into native extensions requires Cython and a C compiler (e.g. MSVC Build Tools on Windows, or `gcc`) — but none of that is required to run the server. Everything here is plain-Python source, so `python <file>.pyx` runs it directly via the interpreter without a compile step.
 
-Most models under `models/` point at a real Hugging Face checkpoint (see each file's `_REPO_ID`) and the server loads/generates with `transformers`. Selecting a model in the chat UI downloads its weights on first use (seconds for `gpt2`, much longer for multi-billion-parameter models) and keeps it cached in memory afterward. A few models aren't wired up (see `_UNSUPPORTED_REASON` in `deepseek_v3_2_speciale_7b.pyx`, `kimi_instant_edge.pyx`, `pixtral_12b.pyx`) because no safely-small/text-only checkpoint exists for them.
+Every model under `models/` points at a real Hugging Face checkpoint (see each file's `_REPO_ID`) and the server loads/generates with `transformers` — or, for `gptOSS`, declares a `_GGUF_SOURCE` and runs on-device in the app. Selecting a model in the chat UI downloads its weights on first use (seconds for `gpt2`, much longer for multi-billion-parameter models) and keeps it cached in memory afterward.
 
 Gated model families (Llama, Gemma) need a Hugging Face access token: run `huggingface-cli login`, or set `HF_TOKEN` in the environment, before chatting with one.
 
@@ -97,6 +109,14 @@ Verified working (each answered a test question correctly):
 - [x] `qwen3_8b` — regression-checked (17s)
 - [x] `gpt2` — responds, but it's a 124M base model from 2019: rambling is inherent, now labeled "(base, no chat tuning)"
 
+2026-07-17: "only the on-device Qwen works" root-caused — gpt2 generated past
+its 1024-token position-embedding table (`max_new_tokens=1024` regardless of
+context size), firing a CUDA device-side assert that corrupts the process's
+GPU state and makes **every** server model fail until restart. The server now
+clamps generation to each model's `max_position_embeddings` and flags
+CUDA-poisoned state in error replies. Verified: gpt2 → falcon3 →
+deepseek_r1_distill_1_5b all answer correctly in one server run.
+
 Fix applied, not yet run (weights download on first use):
 
 - [ ] `gemma1/2/3/3n/_3_4b/_3n` — swapped to ungated `unsloth` mirrors (same proven mechanism as Llama)
@@ -105,17 +125,17 @@ Fix applied, not yet run (weights download on first use):
 - [ ] `falcon_7b` — swapped to `falcon-7b-instruct` (base variant couldn't chat)
 - [ ] `gptOSS` (GPT-OSS 20B) — rerouted to run **on-device** via llama.cpp GGUF (native MXFP4, ~12.8GB download on first chat); via transformers it dequantizes to ~40GB, more than this machine's RAM. Duplicate `GPTOSSS20b.pyx` removed.
 
-Removed or intentionally unavailable:
+Removed (2026-07-17: all models previously marked "unavailable" were deleted from the project):
 
 - [x] `deepseek_v3_2_speciale_7b` — deleted per request (the real model is a huge MoE, not 7B)
-- [x] `falcon_40b` — marked unavailable: ~22GB at 4-bit > 12GB VRAM. Its ~78GB weight cache at `~/.cache/huggingface/hub/models--tiiuae--falcon-40b` can be deleted to reclaim disk
-- [x] `mixtral_8x7b` — marked unavailable: ~47B MoE, same problem
-- [x] `pixtral_12b` / `kimi_instant_edge` — unavailable with reasons (multimodal-only / no public small checkpoint); kimi's string-literal syntax error fixed
+- [x] `falcon_40b` — deleted: ~22GB at 4-bit > 12GB VRAM. Its ~78GB weight cache at `~/.cache/huggingface/hub` was deleted too (2026-07-17)
+- [x] `mixtral_8x7b` — deleted: ~47B MoE, same problem
+- [x] `pixtral_12b` / `kimi_instant_edge` — deleted (multimodal-only / no public small checkpoint)
 
 - [ ] Fix `.gitignore` — exclude `venv/`, `__pycache__/`, compiled `.so` binaries, and `.c` build artifacts
-- [x] Flesh out real model implementations end-to-end — 27 of 31 models now call real Hugging Face checkpoints via `transformers` (see `_REPO_ID` in each model file); 3 remain stubs for documented reasons (`_UNSUPPORTED_REASON`)
+- [x] Flesh out real model implementations end-to-end — all 25 remaining models call real Hugging Face checkpoints via `transformers` (see `_REPO_ID` in each model file) or run on-device via a `_GGUF_SOURCE`; unavailable stubs were deleted
 - [x] Wire up the API layer so the Flutter frontend (`app/lib/chat_screen.dart`) talks to a real backend handler — see `multi_ai.server`
-- [ ] `models/__init__.pyx` still doesn't import the current model set correctly (it's bypassed — `multi_ai.server` loads model files directly by path instead of through the package import system)
+- [x] `models/__init__.pyx` cleaned up — it intentionally imports nothing now (uncompiled `.pyx` files can't be imported as submodules); `multi_ai.server` loads model files by path, and `tests/test_imports.pyx` validates all of them the same way
 - [ ] Add a download-progress / "downloading model…" indicator in the chat UI — right now a first-time chat request just blocks until the weights finish downloading
 - [ ] Compile the `.pyx` sources for real (Cython + a C compiler) instead of running them as plain Python scripts
 - [x] Persist chat history to disk (`%APPDATA%\multi_ai\chat_sessions.json` on Windows) — chats survive restarts until deleted via right-click → Delete on a sidebar chat (see `app/lib/chat_store.dart`)
@@ -189,6 +209,6 @@ The lead model should receive a specific system prompt for its synthesizer role,
 
 ### Why PocketBase over Dify
 
-- **Minimal footprint**: One binary vs. a full Docker Compose stack (Postgres, Redis, etc.) — runs on a Raspberry Pi or a $4/month VPS.
+- **Minimal footprint**: One binary vs. a full Docker Compose stack (Postgres, Redis, etc.) — runs my already setup backend
 - **Flutter SDK**: Fetching model data is a one-liner: `pb.collection('models').getFullList()`
 - **Built-in auth**: Email/password and OAuth (Google, Apple) out of the box.
