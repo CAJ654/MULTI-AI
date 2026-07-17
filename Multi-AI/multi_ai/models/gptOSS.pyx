@@ -7,7 +7,7 @@ it locally through llamadart instead.
 """
 from __future__ import annotations
 
-_GGUF_SOURCE = "hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-mxfp4.gguf"
+_GGUF_SOURCE = "hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf"
 
 
 def get_info():

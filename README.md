@@ -85,6 +85,10 @@ pip install pytest
 pytest -q
 ```
 
+- `tests/test_imports.pyx` — every `models/*.pyx` file loads and declares `get_info()` plus a `_REPO_ID`/`_GGUF_SOURCE`.
+- `tests/test_model_roster.pyx` — the model list matches `models/*.pyx` both internally and through the live `GET /api/models` endpoint (what the Flutter dropdown actually calls).
+- `tests/test_model_downloads.pyx` — every declared `_REPO_ID`/`_GGUF_SOURCE` resolves on the Hugging Face Hub (metadata-only checks, no weights downloaded). Needs network; skips per-model on unreachable-Hub errors but fails on a genuinely broken/renamed source.
+
 ## TODO
 
 ### Model status after the 2026-06-30 fix round

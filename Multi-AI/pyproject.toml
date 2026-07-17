@@ -16,3 +16,10 @@ dependencies = [
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+# Model files and their tests are plain-Python `.pyx` sources (see
+# tests/test_imports.pyx) — pytest's default `test_*.py` glob would silently
+# collect zero tests otherwise.
+python_files = ["test_*.py", "test_*.pyx"]
+testpaths = ["tests"]

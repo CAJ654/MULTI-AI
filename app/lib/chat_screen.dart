@@ -28,14 +28,18 @@ const _suggestions = [
 ];
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({super.key, ApiClient? apiClient}) : _apiClient = apiClient;
+
+  // Injectable so widget tests can supply a fake instead of hitting the
+  // network; production code leaves this null and gets a real ApiClient.
+  final ApiClient? _apiClient;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final _api = ApiClient();
+  late final ApiClient _api = widget._apiClient ?? ApiClient();
   final _onDeviceEngine = OnDeviceEngine();
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
