@@ -1,11 +1,12 @@
-"""Falcon 2 Series (Released May 2024): A multilingual, and multimodal model series. Falcon 2 11B: A model that outperforms Meta’s Llama 3 8B and performs on par with Google’s Gemma 7B. Key Features: Includes vision-to-language capabilities."""
+"""Falcon2 11B: TII's multilingual, multimodal-capable Falcon 2 release."""
+from __future__ import annotations
 
-from transformers import AutoModelForCausalLM
+_REPO_ID = "tiiuae/falcon-11B"
 
-__version__ = "0.1.0"
 
 def get_info():
-    return {"name": "Falcon-2-11B", "version": __version__}
+    return {"name": "Falcon2 11B", "version": "0.1.0", "repo_id": _REPO_ID}
+
 
 if __name__ == "__main__":
     print(get_info())

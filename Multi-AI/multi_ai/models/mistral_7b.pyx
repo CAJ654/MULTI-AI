@@ -1,11 +1,12 @@
-"""Mistral 7B (v0.1, v0.2, v0.3): The first, highly efficient, 7-billion parameter foundational model."""
+"""Mistral 7B Instruct: Mistral AI's original efficient 7B foundation model."""
+from __future__ import annotations
 
-from transformers import AutoModelForCausalLM
+_REPO_ID = "mistralai/Mistral-7B-Instruct-v0.3"
 
-__version__ = "0.1.0"
 
 def get_info():
-    return {"name": "Mistral-7B", "version": __version__}
+    return {"name": "Mistral 7B Instruct", "version": "0.1.0", "repo_id": _REPO_ID}
+
 
 if __name__ == "__main__":
     print(get_info())

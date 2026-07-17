@@ -1,11 +1,13 @@
-"""Gemma 3 (270M, 1B, 4B, 12B, 27B): This is the latest version. It has multilingual support (over 140 languages), larger context windows (up to 128K tokens), and multimodal (text and image) capabilities for most sizes."""
+"""Gemma 3 1B: Google's third-generation Gemma release."""
+from __future__ import annotations
 
-from gemma import gm
+# unsloth mirror: the official repo is gated (needs HF login + license acceptance).
+_REPO_ID = "unsloth/gemma-3-1b-it"
 
-__version__ = "0.1.0"
 
 def get_info():
-    return {"name": "Gemma-3", "version": __version__}
+    return {"name": "Gemma 3 1B", "version": "0.1.0", "repo_id": _REPO_ID}
+
 
 if __name__ == "__main__":
     print(get_info())

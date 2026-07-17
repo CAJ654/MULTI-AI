@@ -14,7 +14,12 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'Multi-AI',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.dark,
+        ),
+      ),
       home: const ChatScreen(),
     );
   }

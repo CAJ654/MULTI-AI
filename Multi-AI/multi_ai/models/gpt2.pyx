@@ -1,13 +1,12 @@
-"""GPT-OSS stub inside package."""
-
+"""GPT-2 (base, no chat tuning): OpenAI's 2019 base model — continues text, expect rambling."""
 from __future__ import annotations
 
-from transformers import GPT2Model
+_REPO_ID = "gpt2"
 
-__version__ = "0.1.0"
 
 def get_info():
-    return {"name": "GPT-OSS", "version": __version__}
+    return {"name": "GPT-2 (base, no chat tuning)", "version": "0.1.0", "repo_id": _REPO_ID}
+
 
 if __name__ == "__main__":
     print(get_info())

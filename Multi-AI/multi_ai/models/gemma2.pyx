@@ -1,11 +1,13 @@
-"""Gemma 2 (2B, 9B, 27B): This version has architectural improvements and efficiency gains."""
+"""Gemma 2 2B: Google's second-generation Gemma release."""
+from __future__ import annotations
 
-from gemma import gm
+# unsloth mirror: the official repo is gated (needs HF login + license acceptance).
+_REPO_ID = "unsloth/gemma-2-2b-it"
 
-__version__ = "0.1.0"
 
 def get_info():
-    return {"name": "Gemma-2", "version": __version__}
+    return {"name": "Gemma 2 2B", "version": "0.1.0", "repo_id": _REPO_ID}
+
 
 if __name__ == "__main__":
     print(get_info())

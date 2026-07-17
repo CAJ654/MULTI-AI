@@ -3,7 +3,15 @@ name = "multi-ai"
 version = "0.1.0"
 description = "A small collection of AI model stubs for development"
 requires-python = ">=3.8"
-dependencies = ["gemma", "transformers", "openai", "torch>=2.0.0", "tensorflow"]
+dependencies = [
+    "torch>=2.0.0",
+    "transformers",
+    "accelerate",
+    "bitsandbytes",
+    "kernels>=0.12.0,<0.13",
+    "triton-windows; sys_platform == 'win32'",
+    "pip-system-certs",
+]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

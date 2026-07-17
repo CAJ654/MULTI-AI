@@ -1,11 +1,12 @@
-"""Falcon-H1 (Arabic/Multi-lingual): A specialized model focusing on high-performance reasoning and mathematics, optimized for Arab-centric tasks and integrated with NVIDIA NIM."""
+"""Falcon-H1 1.5B: TII's hybrid Transformer+Mamba architecture model."""
+from __future__ import annotations
 
-from transformers import AutoModelForCausalLM
+_REPO_ID = "tiiuae/Falcon-H1-1.5B-Instruct"
 
-__version__ = "0.1.0"
 
 def get_info():
-    return {"name": "Falcon-H1", "version": __version__}
+    return {"name": "Falcon-H1 1.5B", "version": "0.1.0", "repo_id": _REPO_ID}
+
 
 if __name__ == "__main__":
     print(get_info())

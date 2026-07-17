@@ -1,11 +1,13 @@
-"""Pixtral 12B (24.09): A 12-billion parameter multimodal model."""
+"""Pixtral 12B: Not wired up."""
+from __future__ import annotations
 
-from transformers import AutoModelForCausalLM
+# Not wired to a real checkpoint: Pixtral is a multimodal (image+text) model; this chat is text-only and can't drive its vision pipeline.
+_UNSUPPORTED_REASON = "Pixtral is a multimodal (image+text) model; this chat is text-only and can't drive its vision pipeline"
 
-__version__ = "0.1.0"
 
 def get_info():
-    return {"name": "Pixtral-12B", "version": __version__}
+    return {"name": "Pixtral 12B", "version": "0.1.0", "repo_id": None}
+
 
 if __name__ == "__main__":
     print(get_info())

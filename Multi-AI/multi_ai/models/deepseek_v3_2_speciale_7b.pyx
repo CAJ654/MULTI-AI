@@ -1,1 +1,0 @@
-print("DeepSeek-V3.2-Speciale (7B) model stub")

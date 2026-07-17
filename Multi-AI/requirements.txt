@@ -1,8 +1,12 @@
 # Add runtime dependencies here (one per line), e.g.:
 # torch>=2.0.0
 # numpy>=1.24.0
+# torch must be the CUDA build for GPU inference:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu128
 torch>=2.0.0
-gemma
 transformers
-openai
-tensorflow
+accelerate
+bitsandbytes            # 4-bit quantization so 7B+ models fit in laptop VRAM
+kernels>=0.12.0,<0.13   # range pinned by transformers; newer breaks FP8 loading
+triton-windows; sys_platform == 'win32'  # FP8/MXFP4 kernels on Windows
+pip-system-certs        # trust the Windows cert store (corporate TLS interception)

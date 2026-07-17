@@ -7,13 +7,21 @@ import 'package:http/http.dart' as http;
 const String apiBaseUrl = 'http://localhost:8000';
 
 class ModelInfo {
-  const ModelInfo({required this.id, required this.name});
+  const ModelInfo({required this.id, required this.name, this.gguf});
 
   final String id;
   final String name;
 
+  /// llama.cpp model source (e.g. `hf://owner/repo/file.gguf`). When set,
+  /// the app runs this model on-device instead of calling the server.
+  final String? gguf;
+
   factory ModelInfo.fromJson(Map<String, dynamic> json) {
-    return ModelInfo(id: json['id'] as String, name: json['name'] as String);
+    return ModelInfo(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      gguf: json['gguf'] as String?,
+    );
   }
 }
 
