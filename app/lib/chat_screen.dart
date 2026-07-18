@@ -25,7 +25,7 @@ const _suggestions = [
   _Suggestion('Give me ideas', "for what to do with my kids' art"),
 ];
 
-enum _SidebarTab { models, chat }
+enum _SidebarTab { models, chat, orchestration, code }
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, ApiClient? apiClient}) : _apiClient = apiClient;
@@ -365,9 +365,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             _buildSidebarTabBar(),
             const SizedBox(height: 8),
-            Expanded(
-              child: _sidebarTab == _SidebarTab.models ? _buildModelsTab() : _buildChatTab(),
-            ),
+            Expanded(child: _buildSidebarTabContent()),
           ],
         ),
       ),
@@ -375,14 +373,98 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildSidebarTabBar() {
+    // Two rows of two: "Orchestration" doesn't fit alongside three other
+    // labels in the 280px sidebar.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(child: _buildSidebarTabButton('Models', _SidebarTab.models)),
-          const SizedBox(width: 8),
-          Expanded(child: _buildSidebarTabButton('Chat', _SidebarTab.chat)),
+          Row(
+            children: [
+              Expanded(child: _buildSidebarTabButton('Models', _SidebarTab.models)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildSidebarTabButton('Chat', _SidebarTab.chat)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                  child: _buildSidebarTabButton('Orchestration', _SidebarTab.orchestration)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildSidebarTabButton('Code', _SidebarTab.code)),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarTabContent() {
+    switch (_sidebarTab) {
+      case _SidebarTab.models:
+        return _buildModelsTab();
+      case _SidebarTab.chat:
+        return _buildChatTab();
+      case _SidebarTab.orchestration:
+        return _buildUnderConstructionTab(
+          icon: Icons.account_tree_outlined,
+          title: 'Orchestration',
+          blurb: 'Routing a prompt across several models and combining their '
+              'answers will live here.',
+        );
+      case _SidebarTab.code:
+        return _buildUnderConstructionTab(
+          icon: Icons.code,
+          title: 'Code',
+          blurb: 'Code-focused workspace — snippets, files and runnable '
+              'output — will live here.',
+        );
+    }
+  }
+
+  Widget _buildUnderConstructionTab({
+    required IconData icon,
+    required String title,
+    required String blurb,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 34, color: Colors.deepPurple.shade200),
+            const SizedBox(height: 14),
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFF3A2E14),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.construction, size: 14, color: Colors.amber),
+                  SizedBox(width: 6),
+                  Text('Under construction',
+                      style: TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w600, color: Colors.amber)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              blurb,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, height: 1.4, color: Colors.white38),
+            ),
+          ],
+        ),
       ),
     );
   }
