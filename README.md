@@ -20,28 +20,68 @@ A hybrid Python/Dart edge computing platform for managing and running multiple A
 
 Mobile can't run the `transformers`/`torch`/`bitsandbytes` server backend (no CUDA, no mobile builds of those libs) — the on-device path is GGUF weights run through `llamadart`/llama.cpp, already proven with the built-in Qwen2.5 0.5B (`app/lib/on_device_engine.dart`). The `_GGUF_SOURCE` → `"gguf"` JSON field → `ModelInfo.gguf` routing in `chat_screen.dart` is already generic (any model with a `gguf` field auto-routes through `OnDeviceEngine`, no Dart changes needed) — only one model (`gptOSS.pyx`) currently uses it.
 
-- [ ] Add on-device sibling model files (declare `_GGUF_SOURCE` only, mirror `Multi-AI/multi_ai/models/gptOSS.pyx`'s shape) for verified-available GGUF quantizations, alongside their existing `_REPO_ID` file rather than replacing it (same pattern as the existing `llama3_2.pyx`/`llama_3_2_3b.pyx` duplication):
-  - [ ] `llama_3_2_1b_on_device.pyx` — `unsloth/Llama-3.2-1B-Instruct-GGUF`
-  - [ ] `llama_3_2_3b_on_device.pyx` — `unsloth/Llama-3.2-3B-Instruct-GGUF`
-  - [ ] `gemma_3_4b_on_device.pyx` — `unsloth/gemma-3-4b-it-GGUF`
-  - [ ] `deepseek_r1_distill_1_5b_on_device.pyx` — `unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF`
-  - [ ] `falcon3_on_device.pyx` — `tiiuae/Falcon3-3B-Instruct-GGUF`
-  - [ ] `ministral_3_3b_on_device.pyx` — `mistralai/Ministral-3-3B-Instruct-2512-GGUF`
-  - (confirm exact quant filenames against each repo's file listing before committing the `hf://` URI)
+- [x] Add on-device sibling model files (declare `_GGUF_SOURCE` only, mirror `Multi-AI/multi_ai/models/gptOSS.pyx`'s shape) for verified-available GGUF quantizations, alongside their existing `_REPO_ID` file rather than replacing it (same pattern as the existing `llama3_2.pyx`/`llama_3_2_3b.pyx` duplication):
+  - [x] `llama_3_2_1b_on_device.pyx` — `unsloth/Llama-3.2-1B-Instruct-GGUF`
+  - [x] `llama_3_2_3b_on_device.pyx` — `unsloth/Llama-3.2-3B-Instruct-GGUF`
+  - [x] `gemma_3_4b_on_device.pyx` — `unsloth/gemma-3-4b-it-GGUF`
+  - [x] `deepseek_r1_distill_1_5b_on_device.pyx` — `unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF`
+  - [x] `falcon3_on_device.pyx` — `tiiuae/Falcon3-3B-Instruct-GGUF`
+  - [x] `ministral_3_3b_on_device.pyx` — `mistralai/Ministral-3-3B-Instruct-2512-GGUF`
+  - (all use the `Q4_K_M` quant, confirmed against each repo's file listing; note Falcon3's file is lowercase `q4_k_m`)
 - [ ] Android: add `<uses-permission android:name="android.permission.INTERNET"/>` to `app/android/app/src/main/AndroidManifest.xml` (currently missing — needed for on-device GGUF downloads to work on a real device)
 - [ ] iOS: verify `Info.plist`/ATS on first real device build (huggingface.co is standard HTTPS, likely needs no changes)
 - [ ] Download progress UI: `llamadart` already exposes an `onProgress`/`ModelDownloadProgress.fraction` callback on `loadModelSource` (confirmed in the installed `llamadart-0.8.11` source) and already resumes partial downloads itself — just thread the callback from `OnDeviceEngine._ensureLoaded`/`generate` (`app/lib/on_device_engine.dart`) up into `chat_screen.dart`'s thinking-row UI (`_buildThinkingRow`, currently a static "Thinking…" string)
 - [ ] Verify: `pytest -q` (roster/import tests) → `flutter run -d windows` (desktop llamadart run, no phone needed) → real Android build (the one thing desktop testing can't catch is the missing `INTERNET` permission)
 
-## Structure
+## File Architecture
 
 ```
 MULTI-AI/
-├── Multi-AI/multi_ai/   # Python package — Cython model stubs and utilities
-│   └── models/          # 25 model entries (falcon, gemma, llama, mistral, qwen, etc.)
-├── app/                 # Flutter frontend
-└── tests/               # Import validation tests
+├── setup.py                       # Cython build entry — cythonize()s every .pyx under Multi-AI/
+├── Multi-AI/
+│   ├── pyproject.toml             # deps + pytest config (collects test_*.pyx too)
+│   ├── multi_ai/                  # the importable Python package
+│   │   ├── server.pyx             # stdlib HTTP backend: /api/models, /api/chat, /api/hello
+│   │   ├── __init__.pyx           # package marker (imports nothing on purpose — see below)
+│   │   ├── __init__.c             #   └─ Cython-generated C (build artifact)
+│   │   ├── __init__.cpython-311-…-linux-gnu.so   #   └─ compiled native module (build artifact)
+│   │   └── models/                # 31 model entries — one file per model
+│   │       ├── llama_3_2_3b.pyx           # server model: declares _REPO_ID (HF checkpoint)
+│   │       ├── llama_3_2_3b_on_device.pyx # on-device sibling: declares _GGUF_SOURCE
+│   │       └── …                          # falcon, gemma, mistral, qwen, deepseek, …
+│   └── tests/                     # test_imports / test_model_roster / test_model_downloads (.pyx)
+└── app/                           # Flutter frontend (lib/chat_screen.dart, on_device_engine.dart, …)
 ```
+
+### What the `.pyx`, `.c`, and `.so` files are
+
+The Python side is written in **Cython**, which is why you see three file types for what is conceptually one module. They're three stages of the same pipeline:
+
+| File | Stage | Role |
+|---|---|---|
+| **`.pyx`** | source | What you edit. Cython source — but here it's deliberately kept to a **plain-Python subset**, so it also runs as-is under CPython with no compile step. This is the source of truth. |
+| **`.c`** | generated | Cython transpiles each `.pyx` into equivalent C (`cythonize()` in [setup.py](setup.py)). A machine-generated build artifact — never edited by hand, safe to delete and regenerate. |
+| **`.so`** (`.pyd` on Windows) | compiled | A C compiler turns the `.c` into a native **CPython extension module**. The long suffix (`.cpython-311-x86_64-linux-gnu.so`) is the ABI tag — CPython 3.11, x86-64, Linux — so the interpreter only loads a binary built for its exact version and platform. This is the fast, importable end product. |
+
+**You don't need to compile anything to run this project.** Because the `.pyx` sources stay within plain-Python syntax, `python Multi-AI/multi_ai/server.pyx` and `python -m multi_ai.models.qwen3_8b` just run them through the interpreter directly. Compiling (`pip install -e .`, which invokes `setup.py`) is an optional optimization — it produces the `.c` and `.so` artifacts for speed but changes no behavior. (The checked-in `.so`/`.c` files are `linux-gnu` builds from CI; on Windows they're simply ignored and the `.pyx` runs as plain Python.)
+
+### Why models load by file path, not `import`
+
+CPython's import system only recognizes `.py`/`.pyd`/`.so` as submodules — an **uncompiled** `.pyx` can't be reached by `import multi_ai.models.llama_3_2_3b`. So the code that consumes models never imports them:
+
+- [server.pyx](Multi-AI/multi_ai/server.pyx)'s `_load_model_module()` loads each `models/<id>.pyx` **directly by file path** via `importlib.machinery.SourceFileLoader`.
+- The test suite ([tests/](Multi-AI/tests/)) and pytest's [conftest.py](Multi-AI/tests/conftest.py) do the same, so `pytest -q` can collect `.pyx` test files too.
+
+This is why [models/__init__.pyx](Multi-AI/multi_ai/models/__init__.pyx) intentionally imports nothing: there's nothing importable to re-export until the files are compiled.
+
+### How a model file is structured
+
+Each `models/*.pyx` is a tiny, declarative stub — a `get_info()` dict plus one module-level constant that says *how* it runs:
+
+- **`_REPO_ID`** → a Hugging Face checkpoint the **server** loads via `transformers` (4-bit quantized to fit laptop VRAM).
+- **`_GGUF_SOURCE`** → an `hf://…/*.gguf` URI the **Flutter app** runs **on-device** through `llamadart`/llama.cpp; the server never touches it. Surfaces as the `gguf` field on `/api/models`, which auto-routes through `OnDeviceEngine` in the app.
+
+A model can have both — a `_REPO_ID` file for the server and a parallel `_on_device.pyx` sibling declaring `_GGUF_SOURCE` — which is exactly the on-device roster added above.
 
 ## Frontend (Flutter)
 
