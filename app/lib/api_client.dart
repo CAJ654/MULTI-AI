@@ -1,10 +1,31 @@
 import 'dart:convert';
 
+// defaultTargetPlatform rather than dart:io's Platform: this file is also
+// compiled for web, where importing dart:io fails outright.
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:http/http.dart' as http;
 
 /// Backend host the app talks to. Relative paths like `/api/hello` only
 /// resolve in a browser; native builds need an absolute origin.
-const String apiBaseUrl = 'http://localhost:8000';
+///
+/// Defaults are per-platform because "localhost" means different machines on
+/// different targets. Override for a physical device — whose backend lives on
+/// the LAN, not on the phone — with:
+///
+///     flutter run --dart-define=MULTI_AI_API_BASE_URL=http://192.168.1.x:8000
+///
+/// (a LAN IP also needs adding to `network_security_config.xml`, since the
+/// backend is cleartext HTTP).
+final String apiBaseUrl = () {
+  const override = String.fromEnvironment('MULTI_AI_API_BASE_URL');
+  if (override.isNotEmpty) return override;
+  // 10.0.2.2 is the Android emulator's alias for the host machine's loopback;
+  // plain localhost there resolves to the emulated device itself.
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    return 'http://10.0.2.2:8000';
+  }
+  return 'http://localhost:8000';
+}();
 
 class ModelInfo {
   const ModelInfo({

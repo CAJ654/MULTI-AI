@@ -1,8 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- On-device models download their GGUF weights from huggingface.co on
+         first use, and the server-backed models call the backend over HTTP.
+         The debug/profile manifests declare this for the Flutter tool's own
+         use; release builds need it declared here or they get no network. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="multi_ai"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".MainActivity"
             android:exported="true"

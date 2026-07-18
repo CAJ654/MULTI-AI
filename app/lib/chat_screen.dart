@@ -293,55 +293,83 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  /// Below this width the fixed 280px sidebar would swallow most of the
+  /// screen — on a ~411dp phone it leaves the chat barely 130dp — so it moves
+  /// into a drawer instead and the conversation gets the full width.
+  static const double _sidebarBreakpoint = 720;
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: mainColor,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildSidebar(),
-          Expanded(
-            child: Column(
-              children: [
-                _buildTopBar(),
-                if (_loadError != null) _buildWarningBanner(),
-                Expanded(child: _buildBody()),
-                if (!_loadingModels && _models.isNotEmpty) _buildInputArea(),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < _sidebarBreakpoint;
+        final content = Column(
+          children: [
+            _buildTopBar(showMenuButton: narrow),
+            if (_loadError != null) _buildWarningBanner(),
+            Expanded(child: _buildBody()),
+            if (!_loadingModels && _models.isNotEmpty) _buildInputArea(),
+          ],
+        );
+        return Scaffold(
+          key: _scaffoldKey,
+          backgroundColor: mainColor,
+          drawer: narrow
+              ? Drawer(
+                  backgroundColor: sidebarColor,
+                  child: _buildSidebar(inDrawer: true),
+                )
+              : null,
+          body: narrow
+              // SafeArea only in the phone layout: it keeps the top bar clear
+              // of the status bar and the input clear of the gesture pill.
+              ? SafeArea(child: content)
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildSidebar(),
+                    Expanded(child: content),
+                  ],
+                ),
+        );
+      },
     );
   }
 
   // ---------------------------------------------------------------- sidebar
 
-  Widget _buildSidebar() {
+  /// [inDrawer] renders the same content for the phone layout's drawer, where
+  /// it fills the drawer's own width and needs its own status-bar inset (the
+  /// body's SafeArea doesn't cover the drawer overlay).
+  Widget _buildSidebar({bool inDrawer = false}) {
     return Container(
-      width: 280,
+      width: inDrawer ? null : 280,
       color: sidebarColor,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
-            child: Row(
-              children: [
-                Icon(Icons.auto_awesome, size: 20, color: Colors.deepPurple.shade200),
-                const SizedBox(width: 10),
-                const Text('Multi-AI',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-              ],
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
+              child: Row(
+                children: [
+                  Icon(Icons.auto_awesome, size: 20, color: Colors.deepPurple.shade200),
+                  const SizedBox(width: 10),
+                  const Text('Multi-AI',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                ],
+              ),
             ),
-          ),
-          _buildSidebarTabBar(),
-          const SizedBox(height: 8),
-          Expanded(
-            child: _sidebarTab == _SidebarTab.models ? _buildModelsTab() : _buildChatTab(),
-          ),
-        ],
+            _buildSidebarTabBar(),
+            const SizedBox(height: 8),
+            Expanded(
+              child: _sidebarTab == _SidebarTab.models ? _buildModelsTab() : _buildChatTab(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -532,26 +560,40 @@ class _ChatScreenState extends State<ChatScreen> {
 
   // ----------------------------------------------------------------- top bar
 
-  Widget _buildTopBar() {
+  Widget _buildTopBar({bool showMenuButton = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: showMenuButton ? 8 : 24, vertical: 12),
       decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: borderColor))),
       child: Row(
         children: [
+          if (showMenuButton)
+            IconButton(
+              tooltip: 'Chats and models',
+              icon: const Icon(Icons.menu, size: 22, color: Colors.white70),
+              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            ),
           if (_loadingModels)
             const Text('Loading models…', style: TextStyle(color: Colors.white54))
           else if (_models.isNotEmpty)
-            DropdownButtonHideUnderline(
-              child: DropdownButton<ModelInfo>(
-                value: _selectedModel,
-                dropdownColor: cardColor,
-                borderRadius: BorderRadius.circular(12),
-                icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
-                items: _models
-                    .map((m) => DropdownMenuItem(value: m, child: Text(m.name)))
-                    .toList(),
-                onChanged: _sending ? null : (m) => setState(() => _selectedModel = m),
+            // Flexible so a long model name ellipsizes instead of overflowing
+            // the row on a narrow screen.
+            Flexible(
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<ModelInfo>(
+                  value: _selectedModel,
+                  isExpanded: true,
+                  dropdownColor: cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                  items: _models
+                      .map((m) => DropdownMenuItem(
+                            value: m,
+                            child: Text(m.name, overflow: TextOverflow.ellipsis),
+                          ))
+                      .toList(),
+                  onChanged: _sending ? null : (m) => setState(() => _selectedModel = m),
+                ),
               ),
             ),
           const Spacer(),
@@ -639,37 +681,41 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.auto_awesome, size: 48, color: Colors.deepPurple.shade200),
-              const SizedBox(height: 20),
-              const Text(
-                'How can I help you today?',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Colors.white),
-              ),
-              const SizedBox(height: 36),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final twoColumns = constraints.maxWidth > 520;
-                  final cardWidth =
-                      twoColumns ? (constraints.maxWidth - 12) / 2 : constraints.maxWidth;
-                  return Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: _suggestions
-                        .map((s) => SizedBox(width: cardWidth, child: _buildSuggestionCard(s)))
-                        .toList(),
-                  );
-                },
-              ),
-            ],
+    // Scrollable because on a phone the suggestions stack one-per-row and run
+    // taller than the viewport — as a plain Column they overflowed instead.
+    return SingleChildScrollView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.auto_awesome, size: 48, color: Colors.deepPurple.shade200),
+                const SizedBox(height: 20),
+                const Text(
+                  'How can I help you today?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Colors.white),
+                ),
+                const SizedBox(height: 36),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final twoColumns = constraints.maxWidth > 520;
+                    final cardWidth =
+                        twoColumns ? (constraints.maxWidth - 12) / 2 : constraints.maxWidth;
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: _suggestions
+                          .map((s) => SizedBox(width: cardWidth, child: _buildSuggestionCard(s)))
+                          .toList(),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
