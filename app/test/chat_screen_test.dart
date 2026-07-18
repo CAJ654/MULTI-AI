@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,6 +15,11 @@ class _FakeApiClient extends ApiClient {
 
   @override
   Future<List<ModelInfo>> fetchModels() async => models;
+
+  // Never resolves, so a send leaves the UI in the "thinking" state for the
+  // test to inspect.
+  @override
+  Future<String> sendChat({required String model, required String message}) => Completer<String>().future;
 }
 
 /// Default test surface (800x600) is too short for the chat screen's
@@ -127,5 +134,32 @@ void main() {
     expect(find.text('Open Source License'), findsOneWidget);
     expect(find.text('MIT'), findsOneWidget);
     expect(find.text('124M'), findsOneWidget);
+  });
+
+  testWidgets('sending a message shows the thinking row without crashing', (tester) async {
+    _useDesktopSurface(tester);
+
+    final fake = _FakeApiClient(const [ModelInfo(id: 'gpt2', name: 'GPT-2')]);
+
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake)));
+    await tester.pumpAndSettle();
+
+    // The dropdown defaults to the on-device model; switch to the (never
+    // resolving) server model so the send goes through _api.sendChat.
+    await tester.tap(find.byType(DropdownButton<ModelInfo>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('GPT-2').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'hello');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    // The thinking row's rotating indicator starts a periodic timer, so
+    // settle with an explicit pump instead of pumpAndSettle (which would
+    // wait forever for a timer that never stops on its own).
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }

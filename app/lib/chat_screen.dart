@@ -5,6 +5,9 @@ import 'chat_store.dart';
 import 'model_detail_screen.dart';
 import 'on_device_engine.dart';
 import 'theme.dart';
+import 'thinking_indicator.dart';
+import 'thinking_settings.dart';
+import 'thinking_settings_dialog.dart';
 
 class _Suggestion {
   const _Suggestion(this.title, this.subtitle);
@@ -46,6 +49,9 @@ class _ChatScreenState extends State<ChatScreen> {
   int _activeSession = 0;
   _SidebarTab _sidebarTab = _SidebarTab.chat;
 
+  final _thinkingSettingsStore = ThinkingSettingsStore();
+  ThinkingSettings _thinkingSettings = ThinkingSettings.defaults();
+
   List<ModelInfo> _models = [];
   ModelInfo? _selectedModel;
   String? _loadError;
@@ -66,6 +72,26 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollController.addListener(_onScroll);
     _loadModels();
     _loadStoredSessions();
+    _loadThinkingSettings();
+  }
+
+  Future<void> _loadThinkingSettings() async {
+    final settings = await _thinkingSettingsStore.load();
+    if (!mounted) return;
+    setState(() => _thinkingSettings = settings);
+  }
+
+  void _openThinkingSettings() {
+    showDialog<void>(
+      context: context,
+      builder: (_) => ThinkingSettingsDialog(
+        initial: _thinkingSettings,
+        onChanged: (settings) {
+          setState(() => _thinkingSettings = settings);
+          _thinkingSettingsStore.save(settings);
+        },
+      ),
+    );
   }
 
   Future<void> _loadStoredSessions() async {
@@ -528,6 +554,11 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           const Spacer(),
+          IconButton(
+            tooltip: 'Thinking indicator settings',
+            icon: const Icon(Icons.tune, size: 20, color: Colors.white54),
+            onPressed: _openThinkingSettings,
+          ),
         ],
       ),
     );
@@ -729,15 +760,32 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           _buildAvatar(false),
           const SizedBox(width: 12),
-          const Padding(
-            padding: EdgeInsets.only(top: 6),
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                    width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
-                SizedBox(width: 10),
-                Text('Thinking… (first use of a model downloads its weights)',
-                    style: TextStyle(fontSize: 13, color: Colors.white54)),
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: SizedBox(
+                      width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ThinkingIndicator(
+                      words: _thinkingSettings.activeWords,
+                      // The thinking row only shows while _sending, and the
+                      // user's message is appended right before that flips
+                      // true (see _send), so it's always the last message.
+                      query: _session.messages.isNotEmpty ? _session.messages.last.text : null,
+                      modelName: _selectedModel?.name,
+                    ),
+                    const Text('(first use of a model downloads its weights)',
+                        style: TextStyle(fontSize: 11, color: Colors.white38)),
+                  ],
+                ),
               ],
             ),
           ),
