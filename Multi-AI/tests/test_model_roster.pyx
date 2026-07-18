@@ -7,31 +7,21 @@ Run directly: python Multi-AI/tests/test_model_roster.pyx
 """
 from __future__ import annotations
 
-import importlib.machinery
-import importlib.util
+import importlib
 import json
 import threading
 import urllib.request
 from pathlib import Path
 
-_SERVER_PATH = Path(__file__).resolve().parent.parent / "multi_ai" / "server.pyx"
-_MODELS_DIR = _SERVER_PATH.parent / "models"
+_MODELS_DIR = Path(__file__).resolve().parent.parent / "multi_ai" / "models"
 # Mirrors multi_ai.server._EXCLUDED_STEMS: framework helper stubs, not chat models.
 _EXCLUDED_STEMS = {"__init__", "TensorFlow", "pytorch"}
 
 
 def _load_server():
-    """Load multi_ai/server.pyx by path — same reason as _load_model_module
-    in server.pyx itself: uncompiled .pyx sources aren't importable as
-    `multi_ai.server` until Cython-compiled."""
-    name = "multi_ai.server"
-    loader = importlib.machinery.SourceFileLoader(name, str(_SERVER_PATH))
-    spec = importlib.util.spec_from_file_location(name, _SERVER_PATH, loader=loader)
-    if spec is None:
-        raise RuntimeError(f"could not load server module: {_SERVER_PATH}")
-    module = importlib.util.module_from_spec(spec)
-    loader.exec_module(module)
-    return module
+    """Import the compiled multi_ai.server extension module (built by
+    `pip install -e . --no-deps`)."""
+    return importlib.import_module("multi_ai.server")
 
 
 def test_roster_matches_model_files():

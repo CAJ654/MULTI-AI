@@ -11,8 +11,9 @@ That prints a number (the PID).
 2. Stop it (replace <PID> with that number):
 Stop-Process -Id <PID> -Force
 
-3. Resart It:
-python Multi-AI/multi_ai/server.pyx
+3. Restart it (the backend is compiled — run the entry point, not the .pyx):
+multi-ai-server
+(equivalently: `python -c "from multi_ai.server import run; run()"`. If you changed any .pyx, rebuild first — see Python Backend below.)
 
 A hybrid Python/Dart edge computing platform for managing and running multiple AI models locally, with a Flutter mobile/desktop frontend.
 
@@ -37,14 +38,14 @@ Mobile can't run the `transformers`/`torch`/`bitsandbytes` server backend (no CU
 
 ```
 MULTI-AI/
-├── setup.py                       # Cython build entry — cythonize()s every .pyx under Multi-AI/
+├── pyproject.toml                 # build-system: setuptools + Cython (so `pip install -e .` works)
+├── setup.py                       # Cython build — compiles every .pyx under Multi-AI/ to a .pyd/.so
 ├── Multi-AI/
-│   ├── pyproject.toml             # deps + pytest config (collects test_*.pyx too)
 │   ├── multi_ai/                  # the importable Python package
 │   │   ├── server.pyx             # stdlib HTTP backend: /api/models, /api/chat, /api/hello
-│   │   ├── __init__.pyx           # package marker (imports nothing on purpose — see below)
-│   │   ├── __init__.c             #   └─ Cython-generated C (build artifact)
-│   │   ├── __init__.cpython-311-…-linux-gnu.so   #   └─ compiled native module (build artifact)
+│   │   ├── server.c               #   └─ Cython-generated C (build input, regenerated)
+│   │   ├── server.cp314-win_amd64.pyd  #   └─ compiled module — what actually runs (git-ignored)
+│   │   ├── __init__.pyx           # package init (compiled like everything else)
 │   │   └── models/                # 31 model entries — one file per model
 │   │       ├── llama_3_2_3b.pyx           # server model: declares _REPO_ID (HF checkpoint)
 │   │       ├── llama_3_2_3b_on_device.pyx # on-device sibling: declares _GGUF_SOURCE
@@ -53,26 +54,24 @@ MULTI-AI/
 └── app/                           # Flutter frontend (lib/chat_screen.dart, on_device_engine.dart, …)
 ```
 
-### What the `.pyx`, `.c`, and `.so` files are
+### What the `.pyx`, `.c`, and `.pyd`/`.so` files are
 
-The Python side is written in **Cython**, which is why you see three file types for what is conceptually one module. They're three stages of the same pipeline:
+The Python backend is written in **Cython** and **must be compiled before it runs** — the runtime imports the compiled extension modules, never the `.pyx` source. You see three file types for what is conceptually one module because they're three stages of the same pipeline:
 
 | File | Stage | Role |
 |---|---|---|
-| **`.pyx`** | source | What you edit. Cython source — but here it's deliberately kept to a **plain-Python subset**, so it also runs as-is under CPython with no compile step. This is the source of truth. |
-| **`.c`** | generated | Cython transpiles each `.pyx` into equivalent C (`cythonize()` in [setup.py](setup.py)). A machine-generated build artifact — never edited by hand, safe to delete and regenerate. |
-| **`.so`** (`.pyd` on Windows) | compiled | A C compiler turns the `.c` into a native **CPython extension module**. The long suffix (`.cpython-311-x86_64-linux-gnu.so`) is the ABI tag — CPython 3.11, x86-64, Linux — so the interpreter only loads a binary built for its exact version and platform. This is the fast, importable end product. |
+| **`.pyx`** | source | What you edit. The source of truth — one file per model, plus `server.pyx`. Tracked in git. |
+| **`.c`** | generated | Cython transpiles each `.pyx` into equivalent C (`cythonize()` in [setup.py](setup.py)). A build input, regenerated from the `.pyx` — never edited by hand. |
+| **`.pyd`** (Windows) / **`.so`** (Linux/macOS) | compiled | A C compiler turns the `.c` into a native **CPython extension module** — the thing that's actually imported and run. The suffix (`.cp314-win_amd64.pyd`) is the ABI tag — CPython 3.14, win-amd64 — so the interpreter only loads a binary built for its exact version and platform. **Git-ignored**: platform/version-specific, so each machine rebuilds it. |
 
-**You don't need to compile anything to run this project.** Because the `.pyx` sources stay within plain-Python syntax, `python Multi-AI/multi_ai/server.pyx` and `python -m multi_ai.models.qwen3_8b` just run them through the interpreter directly. Compiling (`pip install -e .`, which invokes `setup.py`) is an optional optimization — it produces the `.c` and `.so` artifacts for speed but changes no behavior. (The checked-in `.so`/`.c` files are `linux-gnu` builds from CI; on Windows they're simply ignored and the `.pyx` runs as plain Python.)
+**You must compile before running.** `pip install -e . --no-deps` (from the repo root) invokes [setup.py](setup.py), which Cython-compiles every `.pyx` into a `.pyd`/`.so` next to its source and registers the package. This needs **Cython + a C compiler** (MSVC Build Tools on Windows, `gcc`/`clang` elsewhere). `--no-deps` builds the extensions without pulling the heavy chat-time deps (torch/transformers), which are lazy-imported only when you actually chat. Re-run it after adding or editing any `.pyx` — until you do, that model imports as `(broken)`.
 
-### Why models load by file path, not `import`
+### How models are loaded (compiled imports, no source fallback)
 
-CPython's import system only recognizes `.py`/`.pyd`/`.so` as submodules — an **uncompiled** `.pyx` can't be reached by `import multi_ai.models.llama_3_2_3b`. So the code that consumes models never imports them:
+Because the `.pyx` are compiled to real extension modules, the code that consumes them imports them normally:
 
-- [server.pyx](Multi-AI/multi_ai/server.pyx)'s `_load_model_module()` loads each `models/<id>.pyx` **directly by file path** via `importlib.machinery.SourceFileLoader`.
-- The test suite ([tests/](Multi-AI/tests/)) and pytest's [conftest.py](Multi-AI/tests/conftest.py) do the same, so `pytest -q` can collect `.pyx` test files too.
-
-This is why [models/__init__.pyx](Multi-AI/multi_ai/models/__init__.pyx) intentionally imports nothing: there's nothing importable to re-export until the files are compiled.
+- [server.pyx](Multi-AI/multi_ai/server.pyx)'s `_load_model_module()` does `importlib.import_module("multi_ai.models.<id>")`. It enumerates *which* models exist by scanning the directory for `*.pyx` (the source-of-truth list), then imports the compiled module for each. A `.pyx` with no matching `.pyd` raises `ImportError` and surfaces as an `(broken)`/unavailable entry — a "you forgot to recompile" signal, **not** a silent fallback to source.
+- The test suite ([tests/](Multi-AI/tests/)) imports the same compiled modules. The test *files* themselves stay plain-Python `.pyx` loaded by pytest's [conftest.py](Multi-AI/tests/conftest.py) — the harness is source-loaded even though the runtime it drives is compiled-only.
 
 ### How a model file is structured
 
@@ -108,25 +107,27 @@ The chat model dropdown always includes one **on-device** entry (currently Qwen2
 
 ## Python Backend
 
-Install the package (editable):
+The backend is compiled — build it once (and after any `.pyx` change) from the repo root:
 
 ```bash
-pip install -e .
+pip install -e . --no-deps
 ```
 
-Run a model directly:
+This Cython-compiles every `.pyx` under `Multi-AI/` into a native `.pyd`/`.so` next to its source and registers the package. It needs **Cython + a C compiler** (MSVC Build Tools on Windows; `gcc`/`clang` elsewhere). `--no-deps` skips the heavy chat-time deps (torch/transformers), which are imported lazily only when you chat — install them separately when you need them.
+
+Run a model directly (imports the compiled module and prints its metadata):
 
 ```bash
-python -m multi_ai.models.qwen3_8b
+python -c "import multi_ai.models.qwen3_8b as m; print(m.get_info())"
 ```
 
 Run the API server (serves `/api/hello`, `/api/models`, and `/api/chat` on `http://localhost:8000`, which the Flutter app's chat screen calls):
 
 ```bash
-python Multi-AI/multi_ai/server.pyx
+multi-ai-server
 ```
 
-> Compiling the `.pyx` sources into native extensions requires Cython and a C compiler (e.g. MSVC Build Tools on Windows, or `gcc`) — but none of that is required to run the server. Everything here is plain-Python source, so `python <file>.pyx` runs it directly via the interpreter without a compile step.
+> The `multi-ai-server` console script is created by the editable install. If its directory isn't on your PATH, use `python -c "from multi_ai.server import run; run()"` instead. A compiled extension module can't be launched as a script the way `python server.pyx` could, which is why there's a dedicated entry point.
 
 Every model under `models/` points at a real Hugging Face checkpoint (see each file's `_REPO_ID`) and the server loads/generates with `transformers` — or, for `gptOSS`, declares a `_GGUF_SOURCE` and runs on-device in the app. Selecting a model in the chat UI downloads its weights on first use (seconds for `gpt2`, much longer for multi-billion-parameter models) and keeps it cached in memory afterward.
 
@@ -134,14 +135,15 @@ Gated model families (Llama, Gemma) need a Hugging Face access token: run `huggi
 
 > If every HTTPS request fails with `CERTIFICATE_VERIFY_FAILED`, something on your machine (antivirus or a network proxy) is intercepting TLS with a non-standard root certificate. `pip install pip-system-certs` makes Python trust the Windows certificate store instead of its bundled list, which usually fixes it.
 
-Run tests:
+Run tests (from the `Multi-AI/` directory, where the pytest config and `conftest.py` live — and after building, since the tests import the compiled modules):
 
 ```bash
 pip install pytest
+cd Multi-AI
 pytest -q
 ```
 
-- `tests/test_imports.pyx` — every `models/*.pyx` file loads and declares `get_info()` plus a `_REPO_ID`/`_GGUF_SOURCE`.
+- `tests/test_imports.pyx` — every `models/*.pyx` file compiles, imports, and declares `get_info()` plus a `_REPO_ID`/`_GGUF_SOURCE`.
 - `tests/test_model_roster.pyx` — the model list matches `models/*.pyx` both internally and through the live `GET /api/models` endpoint (what the Flutter dropdown actually calls).
 - `tests/test_model_downloads.pyx` — every declared `_REPO_ID`/`_GGUF_SOURCE` resolves on the Hugging Face Hub (metadata-only checks, no weights downloaded). Needs network; skips per-model on unreachable-Hub errors but fails on a genuinely broken/renamed source.
 
@@ -192,12 +194,12 @@ Removed (2026-07-17: all models previously marked "unavailable" were deleted fro
 - [x] `mixtral_8x7b` — deleted: ~47B MoE, same problem
 - [x] `pixtral_12b` / `kimi_instant_edge` — deleted (multimodal-only / no public small checkpoint)
 
-- [ ] Fix `.gitignore` — exclude `venv/`, `__pycache__/`, compiled `.so` binaries, and `.c` build artifacts
+- [x] Fix `.gitignore` — excludes `venv/`, `__pycache__/`, `*.egg-info/`, `build/`, and the compiled `.pyd`/`.so` binaries (platform/version-specific, rebuilt per machine). The generated `.c` stays tracked as a build input.
 - [x] Flesh out real model implementations end-to-end — all 25 remaining models call real Hugging Face checkpoints via `transformers` (see `_REPO_ID` in each model file) or run on-device via a `_GGUF_SOURCE`; unavailable stubs were deleted
 - [x] Wire up the API layer so the Flutter frontend (`app/lib/chat_screen.dart`) talks to a real backend handler — see `multi_ai.server`
-- [x] `models/__init__.pyx` cleaned up — it intentionally imports nothing now (uncompiled `.pyx` files can't be imported as submodules); `multi_ai.server` loads model files by path, and `tests/test_imports.pyx` validates all of them the same way
+- [x] `models/__init__.pyx` cleaned up — it re-exports nothing; `multi_ai.server` imports each compiled model module by name (`importlib.import_module`), and `tests/test_imports.pyx` validates all of them the same way
 - [ ] Add a download-progress / "downloading model…" indicator in the chat UI — right now a first-time chat request just blocks until the weights finish downloading
-- [ ] Compile the `.pyx` sources for real (Cython + a C compiler) instead of running them as plain Python scripts
+- [x] Compile the `.pyx` sources for real (Cython + MSVC/`gcc`) — the backend is now compiled-only: `pip install -e . --no-deps` builds every `.pyx` to a `.pyd`/`.so` and the runtime imports the compiled modules (no plain-Python-script path)
 - [x] Persist chat history to disk (`%APPDATA%\multi_ai\chat_sessions.json` on Windows) — chats survive restarts until deleted via right-click → Delete on a sidebar chat (see `app/lib/chat_store.dart`)
 - [x] First on-device inference proof of concept (Qwen2.5 0.5B via `llamadart`/llama.cpp, no server needed) — see `app/lib/on_device_engine.dart`
 - [x] Configurable "thinking" status text (word/phrase groups inspired by other AI products' loaders — Classic, Dev Tools, Quirky, and a Transparency Log group), with a settings dialog to enable/disable each group or individual phrases — see `app/lib/thinking_words.dart`, `thinking_settings.dart`, `thinking_settings_dialog.dart`, `thinking_indicator.dart`, and the gear icon in the chat top bar

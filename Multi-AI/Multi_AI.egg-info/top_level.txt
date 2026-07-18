@@ -1,2 +1,1 @@
 multi_ai
-test_imports

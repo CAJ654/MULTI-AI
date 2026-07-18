@@ -15,8 +15,7 @@ Run directly: python Multi-AI/tests/test_model_downloads.pyx
 """
 from __future__ import annotations
 
-import importlib.machinery
-import importlib.util
+import importlib
 import os
 from pathlib import Path
 
@@ -27,13 +26,8 @@ _EXCLUDED_STEMS = {"__init__", "TensorFlow", "pytorch"}
 _TOKEN = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
 
 
-def _load_by_path(path: Path):
-    name = f"multi_ai.models.{path.stem}"
-    loader = importlib.machinery.SourceFileLoader(name, str(path))
-    spec = importlib.util.spec_from_file_location(name, path, loader=loader)
-    module = importlib.util.module_from_spec(spec)
-    loader.exec_module(module)
-    return module
+def _import_model(path: Path):
+    return importlib.import_module(f"multi_ai.models.{path.stem}")
 
 
 def _model_paths() -> list[Path]:
@@ -50,7 +44,7 @@ def _check_source(path: Path) -> None:
     from huggingface_hub import HfApi
     from huggingface_hub.utils import EntryNotFoundError, GatedRepoError, RepositoryNotFoundError
 
-    module = _load_by_path(path)
+    module = _import_model(path)
     repo_id = getattr(module, "_REPO_ID", None)
     gguf = getattr(module, "_GGUF_SOURCE", None)
     assert repo_id or gguf, f"{path.stem} declares neither _REPO_ID nor _GGUF_SOURCE"

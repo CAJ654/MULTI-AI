@@ -10,3 +10,18 @@
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+*.egg-info/
+
+# Cython / native build artifacts.
+# The .pyx sources (and their generated .c) are tracked; the compiled
+# extensions are platform- and Python-version-specific, so they're rebuilt
+# from source (`pip install -e . --no-deps`) rather than committed.
+build/
+*.pyd
+*.so

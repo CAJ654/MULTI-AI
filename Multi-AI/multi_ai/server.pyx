@@ -22,8 +22,7 @@ note about pip-system-certs.
 """
 from __future__ import annotations
 
-import importlib.machinery
-import importlib.util
+import importlib
 import json
 import os
 import re
@@ -39,24 +38,17 @@ _hf_model_cache: dict[str, tuple] = {}
 
 
 def _load_model_module(model_id: str):
-    """Load models/<id>.pyx directly by path.
+    """Import the compiled model extension module (models/<id>.pyd/.so).
 
-    These are plain-Python sources, not yet Cython-compiled, so a normal
-    `import multi_ai.models.x` won't find them (Python's import system only
-    recognizes .py/.pyd/.so). Loading by file path sidesteps that without
-    needing a C compiler.
+    Model files are Cython-compiled to native extension modules, so they load
+    through the normal import system. A model whose .pyx hasn't been compiled
+    raises ImportError here — surfaced as an unavailable/broken entry by
+    _list_models — rather than silently falling back to the .pyx source.
     """
     if model_id in _model_module_cache:
         return _model_module_cache[model_id]
 
-    path = _MODELS_DIR / f"{model_id}.pyx"
-    name = f"multi_ai.models.{model_id}"
-    loader = importlib.machinery.SourceFileLoader(name, str(path))
-    spec = importlib.util.spec_from_file_location(name, path, loader=loader)
-    if spec is None:
-        raise RuntimeError(f"could not load model module: {path}")
-    module = importlib.util.module_from_spec(spec)
-    loader.exec_module(module)
+    module = importlib.import_module(f"multi_ai.models.{model_id}")
     _model_module_cache[model_id] = module
     return module
 
