@@ -11,25 +11,39 @@ Frontend dev tools
 The Sims: Famous for its incredibly bizarre loading messages like "Reticulating splines," "Generating emotional turbulence," and "Cajoling llamas."Slack: Rotates through uplifting quotes, community tips, or custom witty greetings added by your workplace workspace admin while loading the application.Discord: Rotates through quirky, millennial-humor status text like "Rerouting power to warp drive," "Knitting sweaters," and "Watering the digital plants."
 
 # Multi-AI
-Run using
+## Run using
 cd app
 flutter run -d windows
 
-Restart backend - 1. Find the process ID using port 8000:
-
-
+## Restart backend
+1. Find the process ID using port 8000:
 Get-NetTCPConnection -LocalPort 8000 | Select-Object OwningProcess
 That prints a number (the PID).
 
 2. Stop it (replace <PID> with that number):
-
-
 Stop-Process -Id <PID> -Force
 
-
-restart with python Multi-AI/multi_ai/server.pyx
+3. Resart It:
+python Multi-AI/multi_ai/server.pyx
 
 A hybrid Python/Dart edge computing platform for managing and running multiple AI models locally, with a Flutter mobile/desktop frontend.
+
+## TODO: Extend on-device (GGUF/llama.cpp) model support
+
+Mobile can't run the `transformers`/`torch`/`bitsandbytes` server backend (no CUDA, no mobile builds of those libs) — the on-device path is GGUF weights run through `llamadart`/llama.cpp, already proven with the built-in Qwen2.5 0.5B (`app/lib/on_device_engine.dart`). The `_GGUF_SOURCE` → `"gguf"` JSON field → `ModelInfo.gguf` routing in `chat_screen.dart` is already generic (any model with a `gguf` field auto-routes through `OnDeviceEngine`, no Dart changes needed) — only one model (`gptOSS.pyx`) currently uses it.
+
+- [ ] Add on-device sibling model files (declare `_GGUF_SOURCE` only, mirror `Multi-AI/multi_ai/models/gptOSS.pyx`'s shape) for verified-available GGUF quantizations, alongside their existing `_REPO_ID` file rather than replacing it (same pattern as the existing `llama3_2.pyx`/`llama_3_2_3b.pyx` duplication):
+  - [ ] `llama_3_2_1b_on_device.pyx` — `unsloth/Llama-3.2-1B-Instruct-GGUF`
+  - [ ] `llama_3_2_3b_on_device.pyx` — `unsloth/Llama-3.2-3B-Instruct-GGUF`
+  - [ ] `gemma_3_4b_on_device.pyx` — `unsloth/gemma-3-4b-it-GGUF`
+  - [ ] `deepseek_r1_distill_1_5b_on_device.pyx` — `unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF`
+  - [ ] `falcon3_on_device.pyx` — `tiiuae/Falcon3-3B-Instruct-GGUF`
+  - [ ] `ministral_3_3b_on_device.pyx` — `mistralai/Ministral-3-3B-Instruct-2512-GGUF`
+  - (confirm exact quant filenames against each repo's file listing before committing the `hf://` URI)
+- [ ] Android: add `<uses-permission android:name="android.permission.INTERNET"/>` to `app/android/app/src/main/AndroidManifest.xml` (currently missing — needed for on-device GGUF downloads to work on a real device)
+- [ ] iOS: verify `Info.plist`/ATS on first real device build (huggingface.co is standard HTTPS, likely needs no changes)
+- [ ] Download progress UI: `llamadart` already exposes an `onProgress`/`ModelDownloadProgress.fraction` callback on `loadModelSource` (confirmed in the installed `llamadart-0.8.11` source) and already resumes partial downloads itself — just thread the callback from `OnDeviceEngine._ensureLoaded`/`generate` (`app/lib/on_device_engine.dart`) up into `chat_screen.dart`'s thinking-row UI (`_buildThinkingRow`, currently a static "Thinking…" string)
+- [ ] Verify: `pytest -q` (roster/import tests) → `flutter run -d windows` (desktop llamadart run, no phone needed) → real Android build (the one thing desktop testing can't catch is the missing `INTERNET` permission)
 
 ## Structure
 
