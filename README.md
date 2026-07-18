@@ -23,6 +23,8 @@ That prints a number (the PID).
 Stop-Process -Id <PID> -Force
 
 3. Restart it (the backend is compiled — run the entry point, not the .pyx):
+cd "c:/Users/cajga/Documents/GitHub/MULTI-AI/Multi-AI" && python -c "from multi_ai.server import run; run()"
+
 multi-ai-server
 (equivalently: `python -c "from multi_ai.server import run; run()"`. If you changed any .pyx, rebuild first — see Python Backend below.)
 
@@ -140,7 +142,7 @@ multi-ai-server
 
 > The `multi-ai-server` console script is created by the editable install. If its directory isn't on your PATH, use `python -c "from multi_ai.server import run; run()"` instead. A compiled extension module can't be launched as a script the way `python server.pyx` could, which is why there's a dedicated entry point.
 
-Every model under `models/` points at a real Hugging Face checkpoint (see each file's `_REPO_ID`) and the server loads/generates with `transformers` — or, for `gptOSS`, declares a `_GGUF_SOURCE` and runs on-device in the app. Selecting a model in the chat UI downloads its weights on first use (seconds for `gpt2`, much longer for multi-billion-parameter models) and keeps it cached in memory afterward.
+Every model under `models/` points at a real Hugging Face checkpoint: 24 declare a `_REPO_ID` and the server loads/generates with `transformers`, while 23 declare a `_GGUF_SOURCE` and run on-device in the app via llama.cpp instead. Most GGUF entries are `_on_device` siblings of a server model; `gptOSS` is the exception, GGUF-only, because the transformers path won't fit in RAM. Selecting a model in the chat UI downloads its weights on first use (seconds for `gpt2`, much longer for multi-billion-parameter models) and keeps it cached in memory afterward.
 
 Gated model families (Llama, Gemma) need a Hugging Face access token: run `huggingface-cli login`, or set `HF_TOKEN` in the environment, before chatting with one.
 
@@ -196,7 +198,7 @@ Fix applied, not yet run (weights download on first use):
 - [ ] `llama3` / `llama3_1` / `llama3_2` / `llama_3_2_3b` — ungated mirrors
 - [ ] `ministral_3_8b` / `ministral_3_14b` — bf16 mirrors (3B variant verified)
 - [ ] `falcon_7b` — swapped to `falcon-7b-instruct` (base variant couldn't chat)
-- [ ] `gptOSS` (GPT-OSS 20B) — rerouted to run **on-device** via llama.cpp GGUF (native MXFP4, ~12.8GB download on first chat); via transformers it dequantizes to ~40GB, more than this machine's RAM. Duplicate `GPTOSSS20b.pyx` removed.
+- [ ] `gptOSS` (GPT-OSS 20B) — rerouted to run **on-device** via llama.cpp GGUF (native MXFP4, 12.11GB download on first chat); via transformers it dequantizes to ~40GB, more than this machine's RAM. Duplicate `GPTOSSS20b.pyx` removed (2026-07-18: its orphaned `__pycache__/GPTOSSS20b.cpython-314.pyc` was still tracked in git; untracked and deleted). Server side verified 2026-07-18: roster lists it as available with `gguf` set and no `_REPO_ID`, `/api/chat` correctly defers to the app, and `ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf` resolves and is **ungated** (no `HF_TOKEN` needed). Still unrun: actual on-device generation through llamadart.
 
 Removed (2026-07-17: all models previously marked "unavailable" were deleted from the project):
 
