@@ -46,7 +46,7 @@ MULTI-AI/
 │   │   ├── server.c               #   └─ Cython-generated C (build input, regenerated)
 │   │   ├── server.cp314-win_amd64.pyd  #   └─ compiled module — what actually runs (git-ignored)
 │   │   ├── __init__.pyx           # package init (compiled like everything else)
-│   │   └── models/                # 31 model entries — one file per model
+│   │   └── models/                # 47 model entries — one file per model (server + on-device siblings)
 │   │       ├── llama_3_2_3b.pyx           # server model: declares _REPO_ID (HF checkpoint)
 │   │       ├── llama_3_2_3b_on_device.pyx # on-device sibling: declares _GGUF_SOURCE
 │   │       └── …                          # falcon, gemma, mistral, qwen, deepseek, …
@@ -205,7 +205,8 @@ Removed (2026-07-17: all models previously marked "unavailable" were deleted fro
 - [x] Configurable "thinking" status text (word/phrase groups inspired by other AI products' loaders — Classic, Dev Tools, Quirky, and a Transparency Log group), with a settings dialog to enable/disable each group or individual phrases — see `app/lib/thinking_words.dart`, `thinking_settings.dart`, `thinking_settings_dialog.dart`, `thinking_indicator.dart`, and the gear icon in the chat top bar
   - The Transparency Log phrases are templated (`{query}`/`{model}` placeholders filled via `fillThinkingTemplate()`) so they narrate the actual in-flight request — e.g. `Searching for "what's the capital of..."…` / `Assembling Qwen2.5 0.5B's response…` — instead of generic text; the settings dialog shows a generic filled-in preview since it has no live request to reference
   - Regression-tested: `late` fields whose initializer reads themselves (as the original phrase-picker did, to avoid repeating a phrase) don't throw — they silently corrupt the value — so `app/test/chat_screen_test.dart`'s "sending a message shows the thinking row without crashing" test drives an actual send to catch that class of bug
-- [ ] Expand on-device support to more/larger models with GGUF builds (mirroring the server's `_REPO_ID` roster), and add a model-download size/progress indicator before committing a phone's storage
+- [x] Expand on-device support to more/larger models with GGUF builds (mirroring the server's `_REPO_ID` roster) — 22 of the 24 server models now have an on-device `_GGUF_SOURCE` sibling (Q4_K_M). Skipped only where no clean llama.cpp GGUF exists: `gemma_3n`/`llama3_2` are duplicate stems already covered by `gemma3n`/`llama_3_2_3b`; every other model has a sibling.
+- [ ] Add a model-download size/progress indicator before committing a phone's storage — the roster now includes 8–14B on-device entries (Ministral 3 14B, Mistral Nemo 12B, Falcon2 11B) that are desktop-viable but too big for most phones, so surfacing size/device-fit before download matters more now
 - [ ] Decide if/how `multi_ai.server`'s model roster and the on-device roster should be unified (e.g. one config listing both a `_REPO_ID` for the server and a GGUF source for on-device, per model)
 
 ---

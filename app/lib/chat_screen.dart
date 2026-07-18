@@ -231,8 +231,9 @@ class _ChatScreenState extends State<ChatScreen> {
       // Models with a GGUF source run locally via llama.cpp; the rest go to
       // the Python backend.
       final localSource = model.id == onDeviceModelId ? onDeviceModelSource : model.gguf;
+      final localSizeGb = model.id == onDeviceModelId ? onDeviceModelSizeGb : model.sizeGb;
       final reply = localSource != null
-          ? await _onDeviceEngine.generate(text, source: localSource)
+          ? await _onDeviceEngine.generate(text, source: localSource, sizeGb: localSizeGb)
           : await _api.sendChat(model: model.id, message: text);
       if (generation != _sendGeneration) return; // stopped by the user
       setState(() => session.messages.add(ChatMessage(text: reply, isUser: false, sender: model.name)));
