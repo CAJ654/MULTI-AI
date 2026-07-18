@@ -220,6 +220,47 @@ Removed (2026-07-17: all models previously marked "unavailable" were deleted fro
 - [ ] Add a model-download size/progress indicator before committing a phone's storage — the roster now includes 8–14B on-device entries (Ministral 3 14B, Mistral Nemo 12B, Falcon2 11B) that are desktop-viable but too big for most phones, so surfacing size/device-fit before download matters more now
 - [ ] Decide if/how `multi_ai.server`'s model roster and the on-device roster should be unified (e.g. one config listing both a `_REPO_ID` for the server and a GGUF source for on-device, per model)
 
+## TODO: Core + add-on architecture
+ The Chat tab, the llama.cpp on-device path, and the model catalog's descriptive metadata all
+exist; **none of the Core infrastructure the add-ons are supposed to sit on
+does**. Ordering below follows the spec's own sequential action items — steps 3
+and 7 are the real unblockers, and the spec warns that retrofitting the plugin
+contract after an add-on is built is the expensive path.
+
+### Partially complete
+
+- [ ] **Model catalog audit** (spec #4/#8) — param counts and sizes are resolved for all 47 entries via `get_info()`, including the previously ambiguous ones (`gemma1`→2B, `gemma2`→2B, `falcon3`→3B, `gptOSS`→20B, `llama3`/`llama3_1`→8B). Still missing as *structured* fields: `quant_level` (only implicit in the GGUF filename/prose) and `architecture_type` (dense vs. MoE vs. Mamba-hybrid — matters because `falcon_mamba_7b`/`falcon_h1` have different compute characteristics than a standard transformer).
+- [ ] **Naming convention fix** (spec action item #2) — filenames still encode no size: `gemma1.pyx`, `gemma2.pyx`, `falcon3.pyx`, `llama3.pyx`. Rename to `gemma2_2b`-style so the variant can't go ambiguous again as the catalog grows.
+- [ ] **Resource management** — `OnDeviceEngine._ensureLoaded` (`app/lib/on_device_engine.dart`) enforces one resident model and evicts on switch, which covers "which model is loaded". There is no RAM/VRAM *budget* — just single-tenancy.
+- [ ] **Desktop vs. mobile catalog split** — models split by `_REPO_ID` (server, 4-bit GPU) vs. `_GGUF_SOURCE` (in-app), but that's a *where it runs* distinction, not the hardware-aware gating layer the spec describes. No `platform_support` field, no per-device labelling.
+- [ ] **Orchestration and Code tabs** — sidebar shells only, marked "under construction" (`_SidebarTab` in `app/lib/chat_screen.dart`). No behavior behind either.
+
+### Not started
+
+- [ ] **Plugin/add-on interface contract** (spec #3) — the two new tabs are hardcoded enum cases, not plugins. Needs the mandatory lifecycle (`onInstall`, `onEnable`, `onDisable`, `registerUI`) plus optional declared capabilities (`requires: ["model_pool", "memory"]`). Must land *before* either add-on is fleshed out.
+- [ ] **`model_registry` SQLite table** (spec #5) — no SQLite anywhere in the project; model metadata lives in per-file `.pyx` dicts. Missing every gating column: `quant_level`, `architecture_type`, `min_ram_mb`, `recommended_ram_mb`, `platform_support`, `role_tags`. Since `get_info()` already holds most of the descriptive fields, populating it is largely a migration script.
+- [ ] **Memory layer** (spec #2) — the four-table model (`raw_items`, `wiki_entries`, `outputs`, `memory_index`) doesn't exist. `app/lib/chat_store.dart` is a flat JSON file of chat sessions, not a queryable memory tier.
+- [ ] **Device × model compatibility estimator** (spec #6) — no device-spec probing, no predicted tokens/sec, no thermal/battery estimate. Ship the heuristic v1 but keep the input/output contract swappable for a trained regression later.
+- [ ] **Recommended / Possible but not ideal / Not Supported tiering** (spec #7) — every model appears in the dropdown regardless of device; a phone can currently select the 20B `gptOSS`. Overlaps with the existing "surface size/device-fit before download" TODO above — same problem, and the tiering layer is the real fix for it.
+- [ ] **Skill manifest format** (spec #1) — no `skill.json`/JSON Schema, no paired `skill.md` front matter, no MD↔JSON sync, no drag-and-drop editor.
+- [ ] **Agentic OS add-on** (all four levels) — no skill registry, no review/retry loop engine, no memory browser, no task view, no tab.
+- [ ] **Orchestration routing logic** — model choice is a manual dropdown. Routing must consume the Core tiering so it never picks a model flagged Not Supported on the device.
+- [ ] **Code add-on** — dedicated coding-assistant mode. Lightest lift of the three; introduces no new shared infrastructure.
+
+### Catalog cleanup surfaced while auditing
+
+- [ ] Duplicate/inconsistent stems: both `gemma3n` and `gemma_3n` exist, as do `llama3_2` alongside `llama_3_2_1b`/`llama_3_2_3b`. Some are stale duplicates (already noted as skipped for on-device siblings above). Resolve as part of the rename pass rather than after.
+- [ ] `gemma3n`'s `params` is `"E2B"` (effective-params notation) — won't parse into `model_registry.param_count INTEGER`, and it's the architecture case (MatFormer) the estimator most needs a real number for.
+
+### Unresolved: two competing architecture plans
+
+The spec above and the **Architecture Plan** section below describe different
+backends for overlapping features — SQLite + llama.cpp + local skill registry
+vs. PocketBase + R2 + MLC LLM. The spec's Orchestration add-on and the plan's
+"Model Council" are the same feature described twice. Pick one before building
+Core, or explicitly scope PocketBase as sync-only on top of the local SQLite
+registry.
+
 ---
 
 ## Architecture Plan
