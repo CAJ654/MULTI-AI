@@ -34,6 +34,28 @@ const double _hardStopMinSizeGb = 4.0;
 /// polls, and the reload cost is worth paying.
 const Duration _hardStopGrace = Duration(seconds: 3);
 
+/// GPU offload counts to try, in order, when loading a model.
+///
+/// llamadart defaults to `gpuLayers: 999` — offload everything — which is right
+/// for every model small enough to leave room beside its own weights. It isn't
+/// right for the ones that nearly fill VRAM on their own: gpt-oss-20b's MXFP4
+/// GGUF is ~11.3GB against ~11.7GB free on a 12GB card, so the weights fit and
+/// then `llama_init_from_model` has nothing left for the KV cache, the compute
+/// buffers, or the CUDA context. llama.cpp reports that as a context-creation
+/// failure *after* a successful model load, which reads like a broken file
+/// rather than an allocation that came up short.
+///
+/// There's no portable way to ask how much VRAM is free from here (0.8.11
+/// exposes no such query, and the answer would be wrong on the phone targets
+/// anyway), so this backs off instead of predicting: full offload, then
+/// three-quarters of a typical layer stack, then a third, then pure CPU.
+/// llama.cpp clamps a count above the model's layer count, so the first entry
+/// keeps small models on exactly the path they took before — they succeed on
+/// attempt one and never see the rest. Re-loading is cheap next to a hard
+/// failure: the GGUF is already in the download cache, so a retry is a local
+/// mmap, not a re-download.
+const List<int> _gpuLayerLadder = [999, 24, 12, 0];
+
 /// Roughly 4096 tokens of prior conversation, at ~4 characters per token.
 /// Matches the server's `_MAX_HISTORY_TOKENS` so a chat behaves the same
 /// whichever side answers it.
@@ -60,18 +82,35 @@ class OnDeviceEngine {
     await _engine?.dispose();
     _engine = null;
     _loadedMmproj = null;
-    final engine = LlamaEngine(LlamaBackend());
-    await engine.loadModelSource(ModelSource.parse(source));
-    if (mmproj != null) {
-      // The projector is a second GGUF that has to be on disk before
-      // loadMultimodalProjector can take it — it wants a local path, not a
-      // ModelSource, so the download goes through the engine's own manager.
-      final entry = await engine.modelDownloadManager.ensureModel(ModelSource.parse(mmproj));
-      await engine.loadMultimodalProjector(entry.filePath);
-      _loadedMmproj = mmproj;
+
+    Object? lastError;
+    StackTrace? lastStack;
+    for (final gpuLayers in _gpuLayerLadder) {
+      final engine = LlamaEngine(LlamaBackend());
+      try {
+        await engine.loadModelSource(
+          ModelSource.parse(source),
+          modelParams: ModelParams(gpuLayers: gpuLayers),
+        );
+        if (mmproj != null) {
+          // The projector is a second GGUF that has to be on disk before
+          // loadMultimodalProjector can take it — it wants a local path, not a
+          // ModelSource, so the download goes through the engine's own manager.
+          final entry = await engine.modelDownloadManager.ensureModel(ModelSource.parse(mmproj));
+          await engine.loadMultimodalProjector(entry.filePath);
+          _loadedMmproj = mmproj;
+        }
+        _engine = engine;
+        _loadedSource = source;
+        return;
+      } catch (e, st) {
+        lastError = e;
+        lastStack = st;
+        _loadedMmproj = null;
+        await engine.dispose();
+      }
     }
-    _engine = engine;
-    _loadedSource = source;
+    Error.throwWithStackTrace(lastError!, lastStack!);
   }
 
   Future<String> generate(
