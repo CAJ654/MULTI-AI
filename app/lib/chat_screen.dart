@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:llamadart/llamadart.dart' hide ChatSession;
 
 import 'api_client.dart';
 import 'chat_store.dart';
@@ -27,12 +28,34 @@ const _suggestions = [
 
 enum _SidebarTab { models, chat, orchestration, code }
 
+/// Chat UI model names always end in an explicit "(on-device)" / "(local
+/// server)" tag so it's clear which one is answering — the raw name from
+/// the backend isn't consistent about this (on-device sibling files bake in
+/// "(On-Device)", but the built-in Qwen2.5 0.5B and gguf-only entries like
+/// GPT-OSS don't have any suffix at all).
+String _modelDisplayName(ModelInfo m) {
+  final inApp = m.id == onDeviceModelId || m.gguf != null;
+  const rawSuffix = ' (On-Device)';
+  var base = m.name;
+  if (base.endsWith(rawSuffix)) {
+    base = base.substring(0, base.length - rawSuffix.length);
+  }
+  return inApp ? '$base (on-device)' : '$base (local server)';
+}
+
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, ApiClient? apiClient}) : _apiClient = apiClient;
+  const ChatScreen({super.key, ApiClient? apiClient, ModelDownloadManager? downloadManager})
+      : _apiClient = apiClient,
+        _downloadManager = downloadManager;
 
   // Injectable so widget tests can supply a fake instead of hitting the
   // network; production code leaves this null and gets a real ApiClient.
   final ApiClient? _apiClient;
+
+  // Injectable so widget tests can supply a fake instead of touching the
+  // real on-device model cache directory; production code leaves this null
+  // and gets a real DefaultModelDownloadManager.
+  final ModelDownloadManager? _downloadManager;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -52,12 +75,24 @@ class _ChatScreenState extends State<ChatScreen> {
   final _thinkingSettingsStore = ThinkingSettingsStore();
   ThinkingSettings _thinkingSettings = ThinkingSettings.defaults();
 
+  late final ModelDownloadManager _downloadManager =
+      widget._downloadManager ?? DefaultModelDownloadManager();
+
   List<ModelInfo> _models = [];
+  // Ids of models whose weights are actually present — on-device cache hit,
+  // or the backend's HF cache reports one. The chat picker only offers these:
+  // selecting an undownloaded model would otherwise silently kick off a
+  // multi-GB download on first send. The Models tab still shows everything.
+  Set<String> _downloadedModelIds = {};
+  bool _checkingDownloads = true;
   ModelInfo? _selectedModel;
   String? _loadError;
   bool _loadingModels = true;
   bool _sending = false;
   bool _showScrollToBottom = false;
+
+  List<ModelInfo> get _downloadedModels =>
+      _models.where((m) => _downloadedModelIds.contains(m.id)).toList();
 
   // Bumped on every send and on stop; a reply whose generation no longer
   // matches was stopped by the user and gets discarded on arrival.
@@ -152,11 +187,46 @@ class _ChatScreenState extends State<ChatScreen> {
         _loadError = 'Backend unreachable — only the on-device model is available.';
       });
     } finally {
-      setState(() {
-        _selectedModel = _models.isNotEmpty ? _models.first : null;
-        _loadingModels = false;
-      });
+      setState(() => _loadingModels = false);
     }
+    await _refreshDownloadedModels();
+  }
+
+  Future<bool> _isModelDownloaded(ModelInfo m) async {
+    if (!m.available) return false;
+    final source = m.id == onDeviceModelId ? onDeviceModelSource : m.gguf;
+    if (source != null) {
+      final entry = await _downloadManager.get(ModelSource.parse(source).cacheKey);
+      return entry != null;
+    }
+    try {
+      final status = await _api.getServerModelCacheStatus(m.id);
+      return status.cached;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Re-checks which models are actually downloaded — called after models
+  /// load and again whenever the user returns from a model's detail page
+  /// (where downloads/deletes happen), so the chat picker stays in sync.
+  Future<void> _refreshDownloadedModels() async {
+    setState(() => _checkingDownloads = true);
+    final models = _models;
+    final flags = await Future.wait(models.map(_isModelDownloaded));
+    if (!mounted) return;
+    final downloadedIds = {
+      for (var i = 0; i < models.length; i++)
+        if (flags[i]) models[i].id,
+    };
+    setState(() {
+      _downloadedModelIds = downloadedIds;
+      _checkingDownloads = false;
+      if (_selectedModel == null || !downloadedIds.contains(_selectedModel!.id)) {
+        final downloaded = models.where((m) => downloadedIds.contains(m.id));
+        _selectedModel = downloaded.isNotEmpty ? downloaded.first : null;
+      }
+    });
   }
 
   void _newSession() {
@@ -237,11 +307,12 @@ class _ChatScreenState extends State<ChatScreen> {
           ? await _onDeviceEngine.generate(text, source: localSource, sizeGb: localSizeGb)
           : await _api.sendChat(model: model.id, message: text);
       if (generation != _sendGeneration) return; // stopped by the user
-      setState(() => session.messages.add(ChatMessage(text: reply, isUser: false, sender: model.name)));
+      setState(() => session.messages
+          .add(ChatMessage(text: reply, isUser: false, sender: _modelDisplayName(model))));
     } catch (e) {
       if (generation != _sendGeneration) return; // aborting throws; not a real error
-      setState(() =>
-          session.messages.add(ChatMessage(text: e.toString(), isUser: false, sender: model.name, isError: true)));
+      setState(() => session.messages.add(
+          ChatMessage(text: e.toString(), isUser: false, sender: _modelDisplayName(model), isError: true)));
     } finally {
       if (generation == _sendGeneration) {
         _pendingSession = null;
@@ -262,7 +333,9 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _sending = false;
       session?.messages.add(ChatMessage(
-          text: '(response stopped)', isUser: false, sender: _selectedModel?.name));
+          text: '(response stopped)',
+          isUser: false,
+          sender: _selectedModel == null ? null : _modelDisplayName(_selectedModel!)));
     });
     _store.save(_sessions);
   }
@@ -311,7 +384,7 @@ class _ChatScreenState extends State<ChatScreen> {
             _buildTopBar(showMenuButton: narrow),
             if (_loadError != null) _buildWarningBanner(),
             Expanded(child: _buildBody()),
-            if (!_loadingModels && _models.isNotEmpty) _buildInputArea(),
+            if (!_loadingModels && !_checkingDownloads && _downloadedModels.isNotEmpty) _buildInputArea(),
           ],
         );
         return Scaffold(
@@ -604,14 +677,19 @@ class _ChatScreenState extends State<ChatScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => ModelDetailScreen(
-              model: m,
-              runsInApp: inApp,
-              source: inApp ? (m.id == onDeviceModelId ? onDeviceModelSource : m.gguf) : null,
-              api: inApp ? null : _api,
-            ),
-          )),
+          onTap: () async {
+            await Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => ModelDetailScreen(
+                model: m,
+                runsInApp: inApp,
+                source: inApp ? (m.id == onDeviceModelId ? onDeviceModelSource : m.gguf) : null,
+                api: inApp ? null : _api,
+              ),
+            ));
+            // The model's downloaded state may have changed (download/delete)
+            // while its detail page was open — keep the chat picker in sync.
+            if (mounted) _refreshDownloadedModels();
+          },
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -660,9 +738,9 @@ class _ChatScreenState extends State<ChatScreen> {
               icon: const Icon(Icons.menu, size: 22, color: Colors.white70),
               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
             ),
-          if (_loadingModels)
+          if (_loadingModels || _checkingDownloads)
             const Text('Loading models…', style: TextStyle(color: Colors.white54))
-          else if (_models.isNotEmpty)
+          else if (_downloadedModels.isNotEmpty)
             // Flexible so a long model name ellipsizes instead of overflowing
             // the row on a narrow screen.
             Flexible(
@@ -674,16 +752,18 @@ class _ChatScreenState extends State<ChatScreen> {
                   borderRadius: BorderRadius.circular(12),
                   icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
-                  items: _models
+                  items: _downloadedModels
                       .map((m) => DropdownMenuItem(
                             value: m,
-                            child: Text(m.name, overflow: TextOverflow.ellipsis),
+                            child: Text(_modelDisplayName(m), overflow: TextOverflow.ellipsis),
                           ))
                       .toList(),
                   onChanged: _sending ? null : (m) => setState(() => _selectedModel = m),
                 ),
               ),
-            ),
+            )
+          else
+            const Text('No models downloaded', style: TextStyle(color: Colors.white54)),
           const Spacer(),
           IconButton(
             tooltip: 'Thinking indicator settings',
@@ -714,7 +794,7 @@ class _ChatScreenState extends State<ChatScreen> {
   // ------------------------------------------------------------------- body
 
   Widget _buildBody() {
-    if (_loadingModels) {
+    if (_loadingModels || _checkingDownloads) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_models.isEmpty) {
@@ -727,6 +807,30 @@ class _ChatScreenState extends State<ChatScreen> {
             const SizedBox(height: 12),
             ElevatedButton(onPressed: _loadModels, child: const Text('Retry')),
           ],
+        ),
+      );
+    }
+    if (_downloadedModels.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.download_outlined, size: 40, color: Colors.white24),
+              const SizedBox(height: 12),
+              const Text('No models downloaded yet',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+              const SizedBox(height: 6),
+              const Text('Visit the Models tab to download one before chatting.',
+                  textAlign: TextAlign.center, style: TextStyle(color: Colors.white54)),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () => setState(() => _sidebarTab = _SidebarTab.models),
+                child: const Text('Go to Models'),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -917,8 +1021,6 @@ class _ChatScreenState extends State<ChatScreen> {
                       query: _session.messages.isNotEmpty ? _session.messages.last.text : null,
                       modelName: _selectedModel?.name,
                     ),
-                    const Text('(first use of a model downloads its weights)',
-                        style: TextStyle(fontSize: 11, color: Colors.white38)),
                   ],
                 ),
               ],

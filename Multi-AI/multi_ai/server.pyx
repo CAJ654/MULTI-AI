@@ -278,6 +278,14 @@ def _resolve_server_model(model_id: str):
     return repo_id, None
 
 
+# A from_pretrained() call that fails partway (gated repo denied, network
+# drop) still leaves config.json/tokenizer files in the HF cache — a few
+# hundred bytes, no actual weights. Only these extensions mean the model is
+# really usable; scan_cache_dir() alone can't tell a stray metadata-only
+# cache from a complete download.
+_WEIGHT_FILE_SUFFIXES = (".safetensors", ".bin", ".pt", ".pth", ".h5", ".msgpack", ".gguf")
+
+
 def _hf_cache_repo(repo_id: str):
     from huggingface_hub import scan_cache_dir
 
@@ -288,9 +296,17 @@ def _hf_cache_repo(repo_id: str):
     return cache_info, None
 
 
+def _repo_has_weights(repo) -> bool:
+    return any(
+        file.file_name.endswith(_WEIGHT_FILE_SUFFIXES)
+        for revision in repo.revisions
+        for file in revision.files
+    )
+
+
 def _model_cache_status(repo_id: str) -> dict:
     _, repo = _hf_cache_repo(repo_id)
-    if repo is None:
+    if repo is None or not _repo_has_weights(repo):
         return {"cached": False}
     return {"cached": True, "size_bytes": repo.size_on_disk}
 

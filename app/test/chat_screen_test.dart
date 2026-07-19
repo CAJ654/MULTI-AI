@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:llamadart/llamadart.dart';
 
 import 'package:multi_ai/api_client.dart';
 import 'package:multi_ai/chat_screen.dart';
@@ -9,9 +10,10 @@ import 'package:multi_ai/on_device_engine.dart';
 
 /// Returns canned models instead of calling the real backend.
 class _FakeApiClient extends ApiClient {
-  _FakeApiClient(this.models);
+  _FakeApiClient(this.models, {Set<String>? notCachedIds}) : _notCachedIds = notCachedIds ?? const {};
 
   final List<ModelInfo> models;
+  final Set<String> _notCachedIds;
 
   @override
   Future<List<ModelInfo>> fetchModels() async => models;
@@ -21,11 +23,40 @@ class _FakeApiClient extends ApiClient {
   @override
   Future<String> sendChat({required String model, required String message}) => Completer<String>().future;
 
-  // Model detail screens for server-backed models query cache status on
-  // open; stub it out so tests never make a real network call.
+  // The chat screen queries cache status for every server-backed model to
+  // decide whether to offer it in the picker; stub it out so tests never
+  // make a real network call. Every model defaults to "already downloaded"
+  // so existing assertions about what shows in the picker keep holding —
+  // pass notCachedIds to test the hidden-until-downloaded behavior.
   @override
   Future<ServerModelCacheStatus> getServerModelCacheStatus(String modelId) async =>
-      const ServerModelCacheStatus(cached: false);
+      ServerModelCacheStatus(cached: !_notCachedIds.contains(modelId));
+}
+
+/// Stands in for llamadart's real file-backed cache manager so tests never
+/// touch the actual on-device model cache directory. Every source defaults
+/// to "already downloaded"; pass isCached to test the opposite.
+class _FakeDownloadManager extends ThrowingModelDownloadManager {
+  const _FakeDownloadManager({this.isCached = _alwaysCached});
+
+  final bool Function(String cacheKey) isCached;
+
+  static bool _alwaysCached(String cacheKey) => true;
+
+  @override
+  Future<ModelCacheEntry?> get(String cacheKey, {String? cacheDirectory}) async {
+    if (!isCached(cacheKey)) return null;
+    final now = DateTime.now().toUtc();
+    return ModelCacheEntry(
+      sourceCanonicalKey: cacheKey,
+      cacheKey: cacheKey,
+      fileName: 'fake.gguf',
+      filePath: 'C:/fake-cache/fake.gguf',
+      createdAt: now,
+      updatedAt: now,
+      bytes: 1,
+    );
+  }
 }
 
 /// Default test surface (800x600) is too short for the chat screen's
@@ -46,16 +77,17 @@ void main() {
       ModelInfo(id: 'gptOSS', name: 'GPT-OSS 20B', gguf: 'hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf'),
     ]);
 
-    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake)));
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
     await tester.pumpAndSettle();
 
     // Open the dropdown so its (offstage-when-closed) menu items are findable.
     await tester.tap(find.byType(DropdownButton<ModelInfo>));
     await tester.pumpAndSettle();
 
-    expect(find.text(onDeviceModelName), findsWidgets);
-    expect(find.text('GPT-2'), findsWidgets);
-    expect(find.text('GPT-OSS 20B'), findsWidgets);
+    // Chat picker labels every entry with where it runs.
+    expect(find.text('$onDeviceModelName (on-device)'), findsWidgets);
+    expect(find.text('GPT-2 (local server)'), findsWidgets);
+    expect(find.text('GPT-OSS 20B (on-device)'), findsWidgets);
   });
 
   testWidgets('falls back to the on-device model only when the backend is unreachable', (tester) async {
@@ -66,10 +98,10 @@ void main() {
     // path; a real unreachable backend throws instead, which _loadModels
     // catches the same way — either way only the on-device entry should show.
 
-    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake)));
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
     await tester.pumpAndSettle();
 
-    expect(find.text(onDeviceModelName), findsOneWidget);
+    expect(find.text('$onDeviceModelName (on-device)'), findsOneWidget);
   });
 
   testWidgets('Models tab lists params/size and Chat tab keeps the New Chat button', (tester) async {
@@ -79,7 +111,7 @@ void main() {
       ModelInfo(id: 'gpt2', name: 'GPT-2', params: '124M', sizeGb: 0.55),
     ]);
 
-    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake)));
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
     await tester.pumpAndSettle();
 
     // Chat tab is the default: New Chat button visible, no model metadata yet.
@@ -120,7 +152,7 @@ void main() {
       ),
     ]);
 
-    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake)));
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Models'));
@@ -147,14 +179,14 @@ void main() {
 
     final fake = _FakeApiClient(const [ModelInfo(id: 'gpt2', name: 'GPT-2')]);
 
-    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake)));
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
     await tester.pumpAndSettle();
 
     // The dropdown defaults to the on-device model; switch to the (never
     // resolving) server model so the send goes through _api.sendChat.
     await tester.tap(find.byType(DropdownButton<ModelInfo>));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('GPT-2').last);
+    await tester.tap(find.text('GPT-2 (local server)').last);
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'hello');
@@ -167,5 +199,36 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('hides an undownloaded model from chat but keeps it in the Models tab', (tester) async {
+    _useDesktopSurface(tester);
+
+    const missingGguf = 'hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf';
+    final fake = _FakeApiClient(const [
+      ModelInfo(id: 'gpt2', name: 'GPT-2'),
+      ModelInfo(id: 'gptOSS', name: 'GPT-OSS 20B', gguf: missingGguf),
+    ]);
+    final missingCacheKey = ModelSource.parse(missingGguf).cacheKey;
+    final downloads = _FakeDownloadManager(isCached: (key) => key != missingCacheKey);
+
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: downloads)));
+    await tester.pumpAndSettle();
+
+    // Chat picker: downloaded models only.
+    await tester.tap(find.byType(DropdownButton<ModelInfo>));
+    await tester.pumpAndSettle();
+    expect(find.text('$onDeviceModelName (on-device)'), findsWidgets);
+    expect(find.text('GPT-2 (local server)'), findsWidgets);
+    expect(find.text('GPT-OSS 20B (on-device)'), findsNothing);
+
+    // Dismiss the still-open dropdown menu overlay before switching tabs.
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    // Models tab: every model, downloaded or not.
+    await tester.tap(find.text('Models'));
+    await tester.pumpAndSettle();
+    expect(find.text('GPT-OSS 20B'), findsOneWidget);
   });
 }
