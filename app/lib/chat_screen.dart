@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:llamadart/llamadart.dart' hide ChatSession;
 
@@ -19,12 +21,34 @@ class _Suggestion {
   String get prompt => '$title $subtitle';
 }
 
-const _suggestions = [
+// Shared pool the empty-state screen draws 4 suggestions from at random. Kept
+// larger than any one screenful so repeat visits to "New Chat" don't always
+// show the same four.
+const _suggestionPool = [
   _Suggestion('Tell me a fun fact', 'about the Roman Empire'),
   _Suggestion('Show me a code snippet', "of a website's sticky header"),
   _Suggestion('Help me study', 'vocabulary for a college entrance exam'),
   _Suggestion('Give me ideas', "for what to do with my kids' art"),
+  _Suggestion('Write a short story', 'about a lighthouse keeper'),
+  _Suggestion('Explain a concept', 'like quantum entanglement, simply'),
+  _Suggestion('Plan a trip', 'to Japan for two weeks'),
+  _Suggestion('Debug my code', 'for a Python off-by-one error'),
+  _Suggestion('Draft an email', 'declining a meeting politely'),
+  _Suggestion('Suggest a recipe', "using what's in my fridge"),
+  _Suggestion('Brainstorm names', 'for a new coffee shop'),
+  _Suggestion('Summarize an article', 'on climate policy'),
+  _Suggestion('Create a workout plan', 'for a beginner runner'),
+  _Suggestion('Explain the math', 'behind compound interest'),
+  _Suggestion('Give me a book recommendation', 'similar to Dune'),
+  _Suggestion('Help me practice', 'for a job interview'),
 ];
+
+const _suggestionCount = 4;
+
+List<_Suggestion> _pickRandomSuggestions() {
+  final pool = List<_Suggestion>.from(_suggestionPool)..shuffle(Random());
+  return pool.take(_suggestionCount).toList();
+}
 
 enum _SidebarTab { models, chat, orchestration, code }
 
@@ -100,6 +124,14 @@ class _ChatScreenState extends State<ChatScreen> {
   ChatSession? _pendingSession;
 
   ChatSession get _session => _sessions[_activeSession];
+
+  // Suggestions are randomized once per session and cached here, so they stay
+  // put across rebuilds (typing, dialogs closing, etc.) but reshuffle whenever
+  // a genuinely new chat screen is shown.
+  final _sessionSuggestions = <ChatSession, List<_Suggestion>>{};
+
+  List<_Suggestion> _suggestionsFor(ChatSession session) =>
+      _sessionSuggestions.putIfAbsent(session, _pickRandomSuggestions);
 
   @override
   void initState() {
@@ -245,6 +277,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _deleteSession(int index) {
     setState(() {
+      _sessionSuggestions.remove(_sessions[index]);
       _sessions.removeAt(index);
       if (_sessions.isEmpty) _sessions.add(ChatSession());
       if (_activeSession >= _sessions.length) {
@@ -900,7 +933,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     return Wrap(
                       spacing: 12,
                       runSpacing: 12,
-                      children: _suggestions
+                      children: _suggestionsFor(_session)
                           .map((s) => SizedBox(width: cardWidth, child: _buildSuggestionCard(s)))
                           .toList(),
                     );
