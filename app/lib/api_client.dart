@@ -31,7 +31,7 @@ class ModelInfo {
   const ModelInfo({
     required this.id,
     required this.name,
-    required this.available,
+    this.available = true,
     this.gguf,
     this.params,
     this.sizeGb,

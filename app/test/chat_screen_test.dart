@@ -20,6 +20,12 @@ class _FakeApiClient extends ApiClient {
   // test to inspect.
   @override
   Future<String> sendChat({required String model, required String message}) => Completer<String>().future;
+
+  // Model detail screens for server-backed models query cache status on
+  // open; stub it out so tests never make a real network call.
+  @override
+  Future<ServerModelCacheStatus> getServerModelCacheStatus(String modelId) async =>
+      const ServerModelCacheStatus(cached: false);
 }
 
 /// Default test surface (800x600) is too short for the chat screen's
