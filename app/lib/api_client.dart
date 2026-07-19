@@ -31,6 +31,7 @@ class ModelInfo {
   const ModelInfo({
     required this.id,
     required this.name,
+    required this.available,
     this.gguf,
     this.params,
     this.sizeGb,
@@ -43,6 +44,10 @@ class ModelInfo {
 
   final String id;
   final String name;
+
+  /// Whether this entry actually declares a `_REPO_ID` or `_GGUF_SOURCE` —
+  /// false for stub/broken model files, which can't run or manage weights.
+  final bool available;
 
   /// llama.cpp model source (e.g. `hf://owner/repo/file.gguf`). When set,
   /// the app runs this model on-device instead of calling the server.
@@ -80,6 +85,7 @@ class ModelInfo {
     return ModelInfo(
       id: json['id'] as String,
       name: json['name'] as String,
+      available: json['available'] as bool? ?? true,
       gguf: json['gguf'] as String?,
       params: json['params'] as String?,
       sizeGb: (json['size_gb'] as num?)?.toDouble(),
@@ -92,6 +98,22 @@ class ModelInfo {
   }
 }
 
+/// Disk-cache state of a server-backed (`_REPO_ID`) model's weights, as
+/// reported by the Python backend's Hugging Face cache.
+class ServerModelCacheStatus {
+  const ServerModelCacheStatus({required this.cached, this.sizeBytes});
+
+  final bool cached;
+  final int? sizeBytes;
+
+  factory ServerModelCacheStatus.fromJson(Map<String, dynamic> json) {
+    return ServerModelCacheStatus(
+      cached: json['cached'] as bool,
+      sizeBytes: (json['size_bytes'] as num?)?.toInt(),
+    );
+  }
+}
+
 class ApiClient {
   http.Client? _chatClient;
 
@@ -100,6 +122,35 @@ class ApiClient {
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     final models = data['models'] as List<dynamic>;
     return models.map((m) => ModelInfo.fromJson(m as Map<String, dynamic>)).toList();
+  }
+
+  /// Whether a server-backed model's weights are already in the backend
+  /// machine's Hugging Face cache.
+  Future<ServerModelCacheStatus> getServerModelCacheStatus(String modelId) async {
+    final response = await http.get(Uri.parse('$apiBaseUrl/api/models/$modelId/cache'));
+    return _decodeCacheStatus(response);
+  }
+
+  /// Downloads (and warms up) a server-backed model's weights. Blocks until
+  /// the backend finishes fetching them — can take a while for large models.
+  Future<ServerModelCacheStatus> downloadServerModel(String modelId) async {
+    final response = await http.post(Uri.parse('$apiBaseUrl/api/models/$modelId/download'));
+    return _decodeCacheStatus(response);
+  }
+
+  /// Deletes a server-backed model's cached weights from the backend
+  /// machine's disk (and evicts it from memory if resident).
+  Future<ServerModelCacheStatus> deleteServerModel(String modelId) async {
+    final response = await http.delete(Uri.parse('$apiBaseUrl/api/models/$modelId/cache'));
+    return _decodeCacheStatus(response);
+  }
+
+  ServerModelCacheStatus _decodeCacheStatus(http.Response response) {
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode != 200) {
+      throw Exception(data['error'] ?? 'request failed (${response.statusCode})');
+    }
+    return ServerModelCacheStatus.fromJson(data);
   }
 
   Future<String> sendChat({required String model, required String message}) async {

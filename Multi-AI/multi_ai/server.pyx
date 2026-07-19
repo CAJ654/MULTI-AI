@@ -154,71 +154,79 @@ def _evict_loaded_models() -> None:
         pass
 
 
+def _get_or_load_hf_model(repo_id: str) -> tuple:
+    """Load (and disk-cache) the tokenizer/model for repo_id, or return the
+    already-resident pair. Shared by chat generation and the standalone
+    download endpoint, which just wants the weights fetched and warmed."""
+    if repo_id in _hf_model_cache:
+        return _hf_model_cache[repo_id]
+
+    try:
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+    except ImportError as exc:
+        raise RuntimeError(
+            "transformers/torch aren't installed — run: pip install torch transformers accelerate"
+        ) from exc
+
+    _evict_loaded_models()
+
+    token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
+    load_kwargs = {"token": token, "low_cpu_mem_usage": True, "device_map": "auto"}
+    if torch.cuda.is_available():
+        # 4-bit quantization so 7B+ models actually fit in laptop-GPU VRAM
+        # instead of getting silently split across CPU/GPU (much slower).
+        load_kwargs["quantization_config"] = BitsAndBytesConfig(
+            load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_quant_type="nf4"
+        )
+    else:
+        load_kwargs["torch_dtype"] = "auto"
+
+    def _load_with(cls, kwargs):
+        # Cached models load offline — also dodges hub 429 rate limits.
+        try:
+            return cls.from_pretrained(repo_id, local_files_only=True, **kwargs)
+        except OSError:
+            return cls.from_pretrained(repo_id, **kwargs)
+
+    def _load_model(kwargs):
+        try:
+            return _load_with(AutoModelForCausalLM, kwargs)
+        except ValueError as exc:
+            if "Unrecognized configuration class" not in str(exc):
+                raise
+            # Multimodal checkpoints (e.g. Ministral 3) use vision-language
+            # configs that AutoModelForCausalLM refuses; they still chat
+            # fine text-only through the image-text class.
+            from transformers import AutoModelForImageTextToText
+
+            return _load_with(AutoModelForImageTextToText, kwargs)
+
+    try:
+        tokenizer = _load_with(AutoTokenizer, {"token": token})
+        try:
+            model = _load_model(load_kwargs)
+        except ValueError as exc:
+            if "quantized" not in str(exc) or "quantization_config" not in load_kwargs:
+                raise
+            # Checkpoint ships pre-quantized (e.g. Ministral 3 is FP8);
+            # stacking our 4-bit config on top is rejected — load as-is.
+            retry_kwargs = {k: v for k, v in load_kwargs.items() if k != "quantization_config"}
+            model = _load_model(retry_kwargs)
+    except Exception as exc:
+        raise RuntimeError(
+            f"could not load {repo_id}: {exc}. Gated repos need a Hugging Face access "
+            "token — run `huggingface-cli login` or set HF_TOKEN."
+        ) from exc
+    _hf_model_cache[repo_id] = (tokenizer, model)
+    return _hf_model_cache[repo_id]
+
+
 # A cap, not a target: the model still stops early at its end-of-turn token,
 # so short answers stay fast. This just keeps long ones (lists, code) from
 # being truncated mid-sentence.
 def _hf_generate(repo_id: str, prompt: str, max_new_tokens: int = 1024) -> str:
-    if repo_id not in _hf_model_cache:
-        try:
-            import torch
-            from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-        except ImportError as exc:
-            raise RuntimeError(
-                "transformers/torch aren't installed — run: pip install torch transformers accelerate"
-            ) from exc
-
-        _evict_loaded_models()
-
-        token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
-        load_kwargs = {"token": token, "low_cpu_mem_usage": True, "device_map": "auto"}
-        if torch.cuda.is_available():
-            # 4-bit quantization so 7B+ models actually fit in laptop-GPU VRAM
-            # instead of getting silently split across CPU/GPU (much slower).
-            load_kwargs["quantization_config"] = BitsAndBytesConfig(
-                load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_quant_type="nf4"
-            )
-        else:
-            load_kwargs["torch_dtype"] = "auto"
-
-        def _load_with(cls, kwargs):
-            # Cached models load offline — also dodges hub 429 rate limits.
-            try:
-                return cls.from_pretrained(repo_id, local_files_only=True, **kwargs)
-            except OSError:
-                return cls.from_pretrained(repo_id, **kwargs)
-
-        def _load_model(kwargs):
-            try:
-                return _load_with(AutoModelForCausalLM, kwargs)
-            except ValueError as exc:
-                if "Unrecognized configuration class" not in str(exc):
-                    raise
-                # Multimodal checkpoints (e.g. Ministral 3) use vision-language
-                # configs that AutoModelForCausalLM refuses; they still chat
-                # fine text-only through the image-text class.
-                from transformers import AutoModelForImageTextToText
-
-                return _load_with(AutoModelForImageTextToText, kwargs)
-
-        try:
-            tokenizer = _load_with(AutoTokenizer, {"token": token})
-            try:
-                model = _load_model(load_kwargs)
-            except ValueError as exc:
-                if "quantized" not in str(exc) or "quantization_config" not in load_kwargs:
-                    raise
-                # Checkpoint ships pre-quantized (e.g. Ministral 3 is FP8);
-                # stacking our 4-bit config on top is rejected — load as-is.
-                retry_kwargs = {k: v for k, v in load_kwargs.items() if k != "quantization_config"}
-                model = _load_model(retry_kwargs)
-        except Exception as exc:
-            raise RuntimeError(
-                f"could not load {repo_id}: {exc}. Gated repos need a Hugging Face access "
-                "token — run `huggingface-cli login` or set HF_TOKEN."
-            ) from exc
-        _hf_model_cache[repo_id] = (tokenizer, model)
-
-    tokenizer, model = _hf_model_cache[repo_id]
+    tokenizer, model = _get_or_load_hf_model(repo_id)
     inputs = _build_inputs(tokenizer, prompt).to(model.device)
     prompt_len = inputs["input_ids"].shape[1]
     # Never generate past the model's context window. Models with absolute
@@ -255,6 +263,50 @@ def _hf_generate(repo_id: str, prompt: str, max_new_tokens: int = 1024) -> str:
     if len(new_tokens) >= token_budget and not ended_at_fake_turn:
         text += "\n\n… (response reached the length limit and was cut off)"
     return text
+
+
+def _resolve_server_model(model_id: str):
+    """Return (repo_id, None) or (None, (message, status)) for a model_id
+    that should have server-managed weights (i.e. declares _REPO_ID)."""
+    try:
+        module = _load_model_module(model_id)
+    except Exception:
+        return None, ("unknown model", 404)
+    repo_id = getattr(module, "_REPO_ID", None)
+    if not repo_id:
+        return None, ("model has no server-side weights to manage", 400)
+    return repo_id, None
+
+
+def _hf_cache_repo(repo_id: str):
+    from huggingface_hub import scan_cache_dir
+
+    cache_info = scan_cache_dir()
+    for repo in cache_info.repos:
+        if repo.repo_id == repo_id and repo.repo_type == "model":
+            return cache_info, repo
+    return cache_info, None
+
+
+def _model_cache_status(repo_id: str) -> dict:
+    _, repo = _hf_cache_repo(repo_id)
+    if repo is None:
+        return {"cached": False}
+    return {"cached": True, "size_bytes": repo.size_on_disk}
+
+
+def _download_hf_weights(repo_id: str) -> dict:
+    _get_or_load_hf_model(repo_id)
+    return _model_cache_status(repo_id)
+
+
+def _delete_hf_weights(repo_id: str) -> dict:
+    _hf_model_cache.pop(repo_id, None)
+    cache_info, repo = _hf_cache_repo(repo_id)
+    if repo is not None:
+        revisions = {rev.commit_hash for rev in repo.revisions}
+        cache_info.delete_revisions(*revisions).execute()
+    return _model_cache_status(repo_id)
 
 
 def _chat_reply(model_id: str, message: str) -> str:
@@ -301,37 +353,60 @@ class _Handler(BaseHTTPRequestHandler):
         return json.loads(raw) if raw else {}
 
     def do_GET(self) -> None:
+        cache_match = re.fullmatch(r"/api/models/([^/]+)/cache", self.path)
         if self.path == "/api/hello":
             self._send_json(200, {"message": "Hello from the Multi-AI Cython backend"})
         elif self.path == "/api/models":
             self._send_json(200, {"models": _list_models()})
+        elif cache_match:
+            self._handle_model_route(cache_match.group(1), _model_cache_status)
         else:
             self._send_json(404, {"error": "not found"})
 
     def do_POST(self) -> None:
-        if self.path != "/api/chat":
+        download_match = re.fullmatch(r"/api/models/([^/]+)/download", self.path)
+        if self.path == "/api/chat":
+            try:
+                body = self._read_json_body()
+            except json.JSONDecodeError:
+                self._send_json(400, {"error": "invalid JSON body"})
+                return
+
+            model = body.get("model")
+            message = body.get("message", "")
+            valid_ids = {m["id"] for m in _list_models()}
+
+            if model not in valid_ids:
+                self._send_json(400, {"error": f"unknown model: {model!r}"})
+                return
+
+            try:
+                reply = _chat_reply(model, message)
+            except Exception as exc:
+                reply = f"[{model}] unexpected error: {exc}"
+            self._send_json(200, {"reply": reply})
+        elif download_match:
+            self._handle_model_route(download_match.group(1), _download_hf_weights)
+        else:
             self._send_json(404, {"error": "not found"})
-            return
 
+    def do_DELETE(self) -> None:
+        cache_match = re.fullmatch(r"/api/models/([^/]+)/cache", self.path)
+        if cache_match:
+            self._handle_model_route(cache_match.group(1), _delete_hf_weights)
+        else:
+            self._send_json(404, {"error": "not found"})
+
+    def _handle_model_route(self, model_id: str, action) -> None:
+        repo_id, error = _resolve_server_model(model_id)
+        if error:
+            message, status = error
+            self._send_json(status, {"error": message})
+            return
         try:
-            body = self._read_json_body()
-        except json.JSONDecodeError:
-            self._send_json(400, {"error": "invalid JSON body"})
-            return
-
-        model = body.get("model")
-        message = body.get("message", "")
-        valid_ids = {m["id"] for m in _list_models()}
-
-        if model not in valid_ids:
-            self._send_json(400, {"error": f"unknown model: {model!r}"})
-            return
-
-        try:
-            reply = _chat_reply(model, message)
+            self._send_json(200, action(repo_id))
         except Exception as exc:
-            reply = f"[{model}] unexpected error: {exc}"
-        self._send_json(200, {"reply": reply})
+            self._send_json(500, {"error": str(exc)})
 
     def log_message(self, format: str, *args) -> None:
         pass

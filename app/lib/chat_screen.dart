@@ -134,6 +134,7 @@ class _ChatScreenState extends State<ChatScreen> {
     const onDeviceModel = ModelInfo(
       id: onDeviceModelId,
       name: onDeviceModelName,
+      available: true,
       params: onDeviceModelParams,
       sizeGb: onDeviceModelSizeGb,
       modality: onDeviceModelModality,
@@ -604,7 +605,12 @@ class _ChatScreenState extends State<ChatScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => ModelDetailScreen(model: m, runsInApp: inApp),
+            builder: (_) => ModelDetailScreen(
+              model: m,
+              runsInApp: inApp,
+              source: inApp ? (m.id == onDeviceModelId ? onDeviceModelSource : m.gguf) : null,
+              api: inApp ? null : _api,
+            ),
           )),
           child: Padding(
             padding: const EdgeInsets.all(12),

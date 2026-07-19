@@ -1,20 +1,46 @@
 # Multi-AI
 ## Run using
+
+```powershell
+.\scripts\run-windows.ps1
+```
+
+equivalent to:
+
+```powershell
 cd app
 flutter run -d windows
+```
 
 OR
 
-(If using norton must fuirst go to security -> network -> and disable smart firewall)
+(If using norton must first go to security -> network -> and disable smart firewall)
 
+Or run the emulator + app in one go (boots Pixel_9, waits for it to come online, then `flutter run`s onto it):
+
+```powershell
+.\scripts\run-app.ps1
+```
+
+That's equivalent to, in order:
+
+```powershell
 # 1. start the emulator (takes ~60s to boot)
 flutter emulators --launch Pixel_9
 
 # 2. once it shows as a device, run
 cd app
 flutter run -d emulator-5554
+```
 
 ## Restart backend
+
+```powershell
+.\scripts\restart-backend.ps1
+```
+
+That finds and kills whatever holds port 8000, then restarts the compiled backend's entry point — equivalent to, in order:
+
 1. Find the process ID using port 8000:
 Get-NetTCPConnection -LocalPort 8000 | Select-Object OwningProcess
 That prints a number (the PID).
