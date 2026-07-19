@@ -9,7 +9,15 @@ Each models/<id>.pyx declares how it runs:
                     (4-bit quantized on GPU so 7B+ models fit in laptop VRAM)
   _GGUF_SOURCE    — llama.cpp GGUF source; the Flutter app runs these
                     on-device via llamadart, the server never loads them
+  _GGUF_MMPROJ_SOURCE — companion multimodal-projector GGUF for a vision
+                    GGUF. llama.cpp encodes images through this separate
+                    file (libmtmd), so a GGUF entry without one is text-only
+                    even when the underlying checkpoint has vision.
   _UNSUPPORTED_REASON — not runnable here; /api/chat explains why
+  _INPUT_MODALITIES — what the checkpoint accepts beyond text ("image",
+                    "audio"). Surfaced as input_modalities on /api/models,
+                    which is what gates the app's attachment buttons; a
+                    model that doesn't declare a modality rejects it here.
 
 Prompts go through the tokenizer's chat template when it has one — feeding
 raw text to an instruct model makes it "continue" your sentence instead of
@@ -22,10 +30,13 @@ note about pip-system-certs.
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import importlib
 import json
 import os
 import re
+import tempfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -33,8 +44,12 @@ _MODELS_DIR = Path(__file__).resolve().parent / "models"
 # TensorFlow/pytorch are framework helper stubs, not chat models.
 _EXCLUDED_STEMS = {"__init__", "TensorFlow", "pytorch"}
 
+# Every model takes text; only the extras need declaring.
+_DEFAULT_INPUT_MODALITIES = ("text",)
+
 _model_module_cache: dict[str, object] = {}
 _hf_model_cache: dict[str, tuple] = {}
+_processor_cache: dict[str, object] = {}
 
 
 def _load_model_module(model_id: str):
@@ -51,6 +66,13 @@ def _load_model_module(model_id: str):
     module = importlib.import_module(f"multi_ai.models.{model_id}")
     _model_module_cache[model_id] = module
     return module
+
+
+def _input_modalities(module) -> tuple:
+    """What this model accepts as input. Always includes "text"; a model file
+    opts into more by declaring _INPUT_MODALITIES."""
+    declared = getattr(module, "_INPUT_MODALITIES", None) or _DEFAULT_INPUT_MODALITIES
+    return tuple(dict.fromkeys(("text",) + tuple(declared)))
 
 
 def _list_models() -> list[dict]:
@@ -72,14 +94,22 @@ def _list_models() -> list[dict]:
             name = stem.replace("_", " ")
         repo_id = getattr(module, "_REPO_ID", None)
         gguf = getattr(module, "_GGUF_SOURCE", None)
+        mmproj = getattr(module, "_GGUF_MMPROJ_SOURCE", None)
         available = bool(repo_id or gguf)
         entry = {
             "id": stem,
             "name": name if available else f"{name} (unavailable)",
             "available": available,
+            # What the app's attachment buttons gate on. A GGUF entry only
+            # earns a non-text modality by declaring _GGUF_MMPROJ_SOURCE too:
+            # llama.cpp does vision through a separate projector file, so the
+            # text weights alone can chat but not see.
+            "input_modalities": list(_input_modalities(module)),
         }
         if gguf:
             entry["gguf"] = gguf
+        if mmproj:
+            entry["mmproj"] = mmproj
         # Informational only (shown in the app's Models tab) — absent for any
         # model file that hasn't been annotated yet, never required.
         if info.get("params"):
@@ -113,6 +143,123 @@ def _build_inputs(tokenizer, prompt: str):
     return tokenizer(f"User: {prompt}\nAssistant:", return_tensors="pt")
 
 
+# ------------------------------------------------------------- attachments
+
+_ATTACHMENT_KINDS = ("image", "audio")
+# Decoded in memory before hitting disk, so a runaway upload can't fill it.
+_MAX_ATTACHMENT_BYTES = 32 * 1024 * 1024
+
+
+class AttachmentError(ValueError):
+    """A malformed or not-permitted attachment — reported to the user as-is."""
+
+
+def _attachment_suffix(attachment: dict) -> str:
+    """Extension for the temp file. Processors sniff audio/image format from
+    the file, but librosa/PIL pick their decoder by extension first, so a
+    wrong (or missing) one turns a valid file into an unreadable one."""
+    name = attachment.get("name") or ""
+    suffix = Path(name).suffix
+    if suffix:
+        return suffix
+    subtype = (attachment.get("mime_type") or "").rsplit("/", 1)[-1]
+    return f".{subtype}" if subtype.isalnum() else ".bin"
+
+
+def _decode_attachments(attachments: list, allowed: tuple) -> list[tuple[str, str]]:
+    """Write each attachment to a temp file, returning (kind, path) pairs.
+
+    Files rather than in-memory objects because transformers' multimodal chat
+    templates accept a path for every modality — one code path for image and
+    audio, and PIL/librosa do the decoding instead of us. The caller is
+    responsible for deleting them (see _cleanup_attachments).
+    """
+    decoded: list[tuple[str, str]] = []
+    try:
+        for attachment in attachments:
+            if not isinstance(attachment, dict):
+                raise AttachmentError("each attachment must be a JSON object")
+            kind = attachment.get("kind")
+            if kind not in _ATTACHMENT_KINDS:
+                raise AttachmentError(f"unsupported attachment kind: {kind!r}")
+            if kind not in allowed:
+                raise AttachmentError(
+                    f"this model doesn't accept {kind} input (it accepts: {', '.join(allowed)})"
+                )
+            try:
+                raw = base64.b64decode(attachment.get("data") or "", validate=True)
+            except (binascii.Error, ValueError) as exc:
+                raise AttachmentError(f"attachment data isn't valid base64: {exc}") from exc
+            if not raw:
+                raise AttachmentError("attachment is empty")
+            if len(raw) > _MAX_ATTACHMENT_BYTES:
+                raise AttachmentError(
+                    f"attachment is {len(raw) // (1024 * 1024)}MB — the limit is "
+                    f"{_MAX_ATTACHMENT_BYTES // (1024 * 1024)}MB"
+                )
+            handle, path = tempfile.mkstemp(prefix="multi_ai_", suffix=_attachment_suffix(attachment))
+            with os.fdopen(handle, "wb") as fh:
+                fh.write(raw)
+            decoded.append((kind, path))
+    except Exception:
+        _cleanup_attachments(decoded)
+        raise
+    return decoded
+
+
+def _cleanup_attachments(decoded: list[tuple[str, str]]) -> None:
+    for _, path in decoded:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+
+
+def _get_or_load_processor(repo_id: str):
+    """The multimodal counterpart to the tokenizer — it applies the chat
+    template *and* preprocesses images/audio into the tensors the model wants."""
+    if repo_id in _processor_cache:
+        return _processor_cache[repo_id]
+    from transformers import AutoProcessor
+
+    token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
+    try:
+        processor = AutoProcessor.from_pretrained(repo_id, token=token, local_files_only=True)
+    except OSError:
+        processor = AutoProcessor.from_pretrained(repo_id, token=token)
+    _processor_cache[repo_id] = processor
+    return processor
+
+
+def _compute_dtype(model):
+    """The float dtype the model actually computes in.
+
+    Not `model.dtype`: under 4-bit quantization the weights are packed uint8
+    and that reports the wrong thing. The embedding table is never quantized,
+    so its dtype is the one the towers' outputs have to match.
+    """
+    import torch
+
+    try:
+        return model.get_input_embeddings().weight.dtype
+    except Exception:
+        return torch.bfloat16
+
+
+def _build_multimodal_inputs(processor, prompt: str, decoded: list[tuple[str, str]]):
+    """Build one user turn whose content interleaves the attachments and the
+    text, in the structured form multimodal chat templates expect."""
+    content = [{"type": kind, kind: path} for kind, path in decoded]
+    content.append({"type": "text", "text": prompt})
+    return processor.apply_chat_template(
+        [{"role": "user", "content": content}],
+        add_generation_prompt=True,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt",
+    )
+
+
 def _strip_reasoning(text: str) -> str:
     """Reasoning models (DeepSeek R1, Qwen) wrap deliberation in <think> tags."""
     if "</think>" in text:
@@ -144,6 +291,9 @@ def _evict_loaded_models() -> None:
     import gc
 
     _hf_model_cache.clear()
+    # Processors are small and CPU-side, but a stale one paired with a
+    # different model's weights would preprocess to the wrong tensor shapes.
+    _processor_cache.clear()
     gc.collect()
     try:
         import torch
@@ -152,6 +302,43 @@ def _evict_loaded_models() -> None:
             torch.cuda.empty_cache()
     except ImportError:
         pass
+
+
+# Optional per-model deps transformers imports lazily. Its own message already
+# names the package; this maps it to the install line that fits this project.
+_MISSING_DEP_HINTS = {
+    "timm": "pip install timm  (Gemma 3n's vision tower is a timm model)",
+    "torchvision": "pip install torchvision --index-url https://download.pytorch.org/whl/cu128",
+    "librosa": "pip install librosa soundfile",
+    "soundfile": "pip install librosa soundfile",
+    "PIL": "pip install pillow",
+    "Pillow": "pip install pillow",
+}
+
+
+def _load_failure_hint(exc: Exception) -> str:
+    """Advice matched to why the load actually failed.
+
+    This used to append the gated-repo/HF_TOKEN hint unconditionally, which
+    sent people hunting for an auth problem when the real cause was a missing
+    optional dependency (Gemma 3n needs timm) — the misleading half of the
+    message was the part that looked most actionable.
+    """
+    text = str(exc)
+    # Case-insensitively: transformers title-cases the package in its own
+    # message ("requires the Torchvision library") while the import error
+    # spells it as the module ("No module named 'torchvision'").
+    lowered = text.lower()
+    for package, install in _MISSING_DEP_HINTS.items():
+        name = package.lower()
+        if f"requires the {name} library" in lowered or f"no module named '{name}'" in lowered:
+            return f" Install the missing dependency: {install}."
+    if any(marker in text for marker in ("gated", "401", "403", "restricted", "authorized")):
+        return (
+            " Gated repos need a Hugging Face access token — run `huggingface-cli login` "
+            "or set HF_TOKEN."
+        )
+    return ""
 
 
 def _get_or_load_hf_model(repo_id: str) -> tuple:
@@ -214,10 +401,7 @@ def _get_or_load_hf_model(repo_id: str) -> tuple:
             retry_kwargs = {k: v for k, v in load_kwargs.items() if k != "quantization_config"}
             model = _load_model(retry_kwargs)
     except Exception as exc:
-        raise RuntimeError(
-            f"could not load {repo_id}: {exc}. Gated repos need a Hugging Face access "
-            "token — run `huggingface-cli login` or set HF_TOKEN."
-        ) from exc
+        raise RuntimeError(f"could not load {repo_id}: {exc}.{_load_failure_hint(exc)}") from exc
     _hf_model_cache[repo_id] = (tokenizer, model)
     return _hf_model_cache[repo_id]
 
@@ -225,9 +409,27 @@ def _get_or_load_hf_model(repo_id: str) -> tuple:
 # A cap, not a target: the model still stops early at its end-of-turn token,
 # so short answers stay fast. This just keeps long ones (lists, code) from
 # being truncated mid-sentence.
-def _hf_generate(repo_id: str, prompt: str, max_new_tokens: int = 1024) -> str:
+def _hf_generate(
+    repo_id: str,
+    prompt: str,
+    max_new_tokens: int = 1024,
+    decoded_attachments: list | None = None,
+) -> str:
     tokenizer, model = _get_or_load_hf_model(repo_id)
-    inputs = _build_inputs(tokenizer, prompt).to(model.device)
+    if decoded_attachments:
+        # The processor owns both the chat template and the image/audio
+        # preprocessing, so the text-only tokenizer path can't be reused here.
+        processor = _get_or_load_processor(repo_id)
+        decoder = processor if hasattr(processor, "decode") else tokenizer
+        inputs = _build_multimodal_inputs(processor, prompt, decoded_attachments)
+        # Pixel/audio values come out of the processor as float32; the vision
+        # and audio towers run in the model's compute dtype and reject a
+        # mismatch. BatchFeature.to casts only floating tensors, so token ids
+        # stay integral.
+        inputs = inputs.to(model.device, dtype=_compute_dtype(model))
+    else:
+        decoder = tokenizer
+        inputs = _build_inputs(tokenizer, prompt).to(model.device)
     prompt_len = inputs["input_ids"].shape[1]
     # Never generate past the model's context window. Models with absolute
     # position embeddings (GPT-2: 1024) index off the end of the embedding
@@ -248,7 +450,7 @@ def _hf_generate(repo_id: str, prompt: str, max_new_tokens: int = 1024) -> str:
         pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
     )
     new_tokens = output[0][prompt_len:]
-    text = tokenizer.decode(new_tokens, skip_special_tokens=True)
+    text = decoder.decode(new_tokens, skip_special_tokens=True)
     text = _strip_reasoning(text.strip())
     ended_at_fake_turn = False
     if not getattr(tokenizer, "chat_template", None):
@@ -325,15 +527,24 @@ def _delete_hf_weights(repo_id: str) -> dict:
     return _model_cache_status(repo_id)
 
 
-def _chat_reply(model_id: str, message: str) -> str:
+def _chat_reply(model_id: str, message: str, attachments: list | None = None) -> str:
     module = _load_model_module(model_id)
     repo_id = getattr(module, "_REPO_ID", None)
     gguf = getattr(module, "_GGUF_SOURCE", None)
     unsupported_reason = getattr(module, "_UNSUPPORTED_REASON", None)
 
+    if attachments and not repo_id:
+        return f"[{model_id}] doesn't accept attachments — it only takes text."
+
     if repo_id:
+        decoded = []
+        if attachments:
+            try:
+                decoded = _decode_attachments(attachments, _input_modalities(module))
+            except AttachmentError as exc:
+                return f"[{model_id}] {exc}"
         try:
-            return _hf_generate(repo_id, message)
+            return _hf_generate(repo_id, message, decoded_attachments=decoded)
         except Exception as exc:
             reply = f"[{model_id}] failed to generate: {exc}"
             if "CUDA error" in str(exc):
@@ -344,6 +555,8 @@ def _chat_reply(model_id: str, message: str) -> str:
                     "server before trying any model again."
                 )
             return reply
+        finally:
+            _cleanup_attachments(decoded)
     if gguf:
         return (
             f"[{model_id}] runs on-device in the app (via llama.cpp), not on this server — "
@@ -390,14 +603,18 @@ class _Handler(BaseHTTPRequestHandler):
 
             model = body.get("model")
             message = body.get("message", "")
+            attachments = body.get("attachments") or []
             valid_ids = {m["id"] for m in _list_models()}
 
             if model not in valid_ids:
                 self._send_json(400, {"error": f"unknown model: {model!r}"})
                 return
+            if not isinstance(attachments, list):
+                self._send_json(400, {"error": "attachments must be a list"})
+                return
 
             try:
-                reply = _chat_reply(model, message)
+                reply = _chat_reply(model, message, attachments)
             except Exception as exc:
                 reply = f"[{model}] unexpected error: {exc}"
             self._send_json(200, {"reply": reply})

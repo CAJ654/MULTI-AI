@@ -19,7 +19,10 @@ def get_info():
         "modality": "Text + Image + Audio",
         "context_tokens": 32768,
         "license": "Gemma Terms of Use",
-        "strengths": "Natively multimodal (text, image, audio) and designed to run efficiently on-device — 'E2B' denotes ~2B effective inference cost despite more raw parameters. Q4_K_M GGUF build runs fully on-device. On-device runs the text GGUF (llama.cpp doesn't cover its audio path).",
+        "strengths": "Designed to run efficiently on-device — 'E2B' denotes ~2B effective "
+        "inference cost despite more raw parameters. Q4_K_M GGUF build runs fully on-device. "
+        "Text only here: the checkpoint is natively multimodal, but llama.cpp runs just its "
+        "text path — pick the server-backed 'Gemma 3n E2B' entry for image and audio input.",
         "speed_profile": "Fast for a multimodal model, good general intelligence",
     }
 

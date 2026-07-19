@@ -4,6 +4,10 @@ from __future__ import annotations
 # unsloth mirror: the official repo is gated (needs HF login + license acceptance).
 _REPO_ID = "unsloth/gemma-3-4b-it"
 
+# Vision-language: the app's chat input enables its image (+) button for
+# exactly the modalities listed here.
+_INPUT_MODALITIES = ("text", "image")
+
 
 def get_info():
     return {

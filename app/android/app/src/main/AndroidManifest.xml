@@ -4,6 +4,11 @@
          The debug/profile manifests declare this for the Flutter tool's own
          use; release builds need it declared here or they get no network. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- The chat input's mic button (shown only for audio-capable models like
+         Gemma 3n) records a clip to send as an attachment. Declared here, but
+         still requested at runtime — the button reports a denial rather than
+         arming. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="multi_ai"
         android:name="${applicationName}"

@@ -1,9 +1,11 @@
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:llamadart/llamadart.dart' hide ChatSession;
 
 import 'api_client.dart';
+import 'attachment_input.dart';
 import 'chat_store.dart';
 import 'model_detail_screen.dart';
 import 'on_device_engine.dart';
@@ -68,9 +70,14 @@ String _modelDisplayName(ModelInfo m) {
 }
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, ApiClient? apiClient, ModelDownloadManager? downloadManager})
-      : _apiClient = apiClient,
-        _downloadManager = downloadManager;
+  const ChatScreen({
+    super.key,
+    ApiClient? apiClient,
+    ModelDownloadManager? downloadManager,
+    AttachmentSource? attachmentSource,
+  })  : _apiClient = apiClient,
+        _downloadManager = downloadManager,
+        _attachmentSource = attachmentSource;
 
   // Injectable so widget tests can supply a fake instead of hitting the
   // network; production code leaves this null and gets a real ApiClient.
@@ -80,6 +87,10 @@ class ChatScreen extends StatefulWidget {
   // real on-device model cache directory; production code leaves this null
   // and gets a real DefaultModelDownloadManager.
   final ModelDownloadManager? _downloadManager;
+
+  // Injectable so widget tests can drive the attach/mic buttons without
+  // opening a real file dialog or recording from a real microphone.
+  final AttachmentSource? _attachmentSource;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -101,6 +112,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
   late final ModelDownloadManager _downloadManager =
       widget._downloadManager ?? DefaultModelDownloadManager();
+  late final AttachmentSource _attachments =
+      widget._attachmentSource ?? DefaultAttachmentSource();
+
+  /// Staged for the next send, cleared once it goes out. Rendered as a strip
+  /// of thumbnails/chips above the text field.
+  final _pendingAttachments = <Attachment>[];
+  bool _recording = false;
 
   List<ModelInfo> _models = [];
   // Ids of models whose weights are actually present — on-device cache hit,
@@ -188,6 +206,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _onDeviceEngine.dispose();
+    _attachments.dispose();
     super.dispose();
   }
 
@@ -229,7 +248,15 @@ class _ChatScreenState extends State<ChatScreen> {
     final source = m.id == onDeviceModelId ? onDeviceModelSource : m.gguf;
     if (source != null) {
       final entry = await _downloadManager.get(ModelSource.parse(source).cacheKey);
-      return entry != null;
+      if (entry == null) return false;
+      // A vision model whose projector is missing would load and chat but
+      // silently fail to see, after the + button had already been offered —
+      // so it doesn't count as downloaded until both files are present.
+      final mmproj = m.mmproj;
+      if (mmproj != null) {
+        return await _downloadManager.get(ModelSource.parse(mmproj).cacheKey) != null;
+      }
+      return true;
     }
     try {
       final status = await _api.getServerModelCacheStatus(m.id);
@@ -317,14 +344,23 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _send([String? preset]) async {
     final text = (preset ?? _controller.text).trim();
     final model = _selectedModel;
-    if (text.isEmpty || model == null || _sending) return;
+    // Attachments are only staged while a model that accepts them is picked,
+    // but the picker can change between staging and sending — drop anything
+    // the current model can't take rather than having the backend reject it.
+    final attachments = _usableAttachments(model);
+    if (model == null || _sending) return;
+    // An attachment alone is a valid message ("what's in this picture?" is
+    // implied); text alone still isn't when there's nothing attached.
+    if (text.isEmpty && attachments.isEmpty) return;
 
     final session = _session;
     final generation = ++_sendGeneration;
     _pendingSession = session;
     setState(() {
-      session.title ??= text;
-      session.messages.add(ChatMessage(text: text, isUser: true));
+      session.title ??= text.isEmpty ? _attachmentSummary(attachments) : text;
+      session.messages
+          .add(ChatMessage(text: text, isUser: true, attachments: attachments));
+      _pendingAttachments.clear();
       _sending = true;
     });
     _controller.clear();
@@ -337,8 +373,14 @@ class _ChatScreenState extends State<ChatScreen> {
       final localSource = model.id == onDeviceModelId ? onDeviceModelSource : model.gguf;
       final localSizeGb = model.id == onDeviceModelId ? onDeviceModelSizeGb : model.sizeGb;
       final reply = localSource != null
-          ? await _onDeviceEngine.generate(text, source: localSource, sizeGb: localSizeGb)
-          : await _api.sendChat(model: model.id, message: text);
+          ? await _onDeviceEngine.generate(
+              text,
+              source: localSource,
+              sizeGb: localSizeGb,
+              mmproj: model.mmproj,
+              attachments: attachments,
+            )
+          : await _api.sendChat(model: model.id, message: text, attachments: attachments);
       if (generation != _sendGeneration) return; // stopped by the user
       setState(() => session.messages
           .add(ChatMessage(text: reply, isUser: false, sender: _modelDisplayName(model))));
@@ -354,6 +396,103 @@ class _ChatScreenState extends State<ChatScreen> {
       }
       _store.save(_sessions);
     }
+  }
+
+  // ------------------------------------------------------------ attachments
+
+  /// The staged attachments [model] can actually accept. Empty for a
+  /// text-only model, or when nothing is staged.
+  List<Attachment> _usableAttachments(ModelInfo? model) {
+    if (model == null || _pendingAttachments.isEmpty) return const [];
+    return [
+      for (final a in _pendingAttachments)
+        if (_modelAccepts(model, a.kind)) a,
+    ];
+  }
+
+  bool _modelAccepts(ModelInfo model, AttachmentKind kind) => switch (kind) {
+        AttachmentKind.image => model.acceptsImages,
+        AttachmentKind.audio => model.acceptsAudio,
+      };
+
+  /// Sidebar title for a chat opened with attachments and no text.
+  String _attachmentSummary(List<Attachment> attachments) {
+    final images = attachments.where((a) => a.kind == AttachmentKind.image).length;
+    final audio = attachments.length - images;
+    return [
+      if (images > 0) '$images image${images == 1 ? '' : 's'}',
+      if (audio > 0) '$audio recording${audio == 1 ? '' : 's'}',
+    ].join(' + ');
+  }
+
+  /// Switches models, dropping anything staged that the new one can't accept.
+  /// Silently carrying them to the send — where they'd be filtered out — would
+  /// leave the user thinking an image went along when it never did.
+  void _selectModel(ModelInfo? model) {
+    final dropped = model == null
+        ? _pendingAttachments.length
+        : _pendingAttachments.where((a) => !_modelAccepts(model, a.kind)).length;
+    setState(() {
+      _selectedModel = model;
+      if (model != null) {
+        _pendingAttachments.removeWhere((a) => !_modelAccepts(model, a.kind));
+      } else {
+        _pendingAttachments.clear();
+      }
+    });
+    if (dropped > 0) {
+      _showAttachmentError(
+          '${model?.name ?? 'This model'} doesn\'t accept those inputs — '
+          '$dropped attachment${dropped == 1 ? '' : 's'} removed.');
+    }
+  }
+
+  Future<void> _pickImages() async {
+    try {
+      final picked = await _attachments.pickImages();
+      if (!mounted || picked.isEmpty) return;
+      setState(() => _pendingAttachments.addAll(picked));
+    } catch (e) {
+      _showAttachmentError('Could not attach that image: $e');
+    }
+  }
+
+  Future<void> _toggleRecording() async {
+    if (_recording) {
+      // Flip the flag first: stopRecording awaits the encoder flushing, and
+      // the button must not look armed for another tap in the meantime.
+      setState(() => _recording = false);
+      try {
+        final recorded = await _attachments.stopRecording();
+        if (!mounted || recorded == null) return;
+        setState(() => _pendingAttachments.add(recorded));
+      } catch (e) {
+        _showAttachmentError('Could not save that recording: $e');
+      }
+      return;
+    }
+    try {
+      if (!await _attachments.hasMicPermission()) {
+        _showAttachmentError('Microphone access was denied.');
+        return;
+      }
+      await _attachments.startRecording();
+      if (!mounted) {
+        // The screen went away mid-start; don't leave the mic held open.
+        await _attachments.cancelRecording();
+        return;
+      }
+      setState(() => _recording = true);
+    } catch (e) {
+      _showAttachmentError('Could not start recording: $e');
+    }
+  }
+
+  void _showAttachmentError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: const Color(0xFF3A1B1B)),
+    );
   }
 
   void _stopResponse() {
@@ -791,7 +930,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             child: Text(_modelDisplayName(m), overflow: TextOverflow.ellipsis),
                           ))
                       .toList(),
-                  onChanged: _sending ? null : (m) => setState(() => _selectedModel = m),
+                  onChanged: _sending ? null : _selectModel,
                 ),
               ),
             )
@@ -989,8 +1128,28 @@ class _ChatScreenState extends State<ChatScreen> {
             color: Colors.deepPurple.shade400,
             borderRadius: BorderRadius.circular(18),
           ),
-          child: SelectableText(message.text,
-              style: const TextStyle(color: Colors.white, height: 1.4)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (message.attachments.isNotEmpty) ...[
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.end,
+                  children: [
+                    for (final a in message.attachments) _buildAttachmentChip(a),
+                  ],
+                ),
+                // Only pad away from the text when there is text — an
+                // image-only message shouldn't carry a trailing gap.
+                if (message.text.isNotEmpty) const SizedBox(height: 8),
+              ],
+              if (message.text.isNotEmpty)
+                SelectableText(message.text,
+                    style: const TextStyle(color: Colors.white, height: 1.4)),
+            ],
+          ),
         ),
       );
     }
@@ -1076,50 +1235,76 @@ class _ChatScreenState extends State<ChatScreen> {
   // ------------------------------------------------------------------ input
 
   Widget _buildInputArea() {
+    final model = _selectedModel;
+    final canAttachImages = model != null && model.acceptsImages;
+    final canRecordAudio = model != null && model.acceptsAudio;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 4, 24, 14),
       child: Column(
         children: [
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 820),
-            child: Container(
-              padding: const EdgeInsets.only(left: 20, right: 8),
-              decoration: BoxDecoration(
-                color: cardColor,
-                border: Border.all(color: borderColor),
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      enabled: !_sending,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: 'Send a message',
-                        hintStyle: TextStyle(color: Colors.white38),
-                        border: InputBorder.none,
-                      ),
-                      onSubmitted: (_) => _send(),
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_pendingAttachments.isNotEmpty) _buildPendingAttachments(),
+                Container(
+                  padding: EdgeInsets.only(left: canAttachImages ? 6 : 20, right: 8),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    border: Border.all(color: borderColor),
+                    borderRadius: BorderRadius.circular(28),
                   ),
-                  const SizedBox(width: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: IconButton.filled(
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.deepPurple.shade400,
-                        disabledBackgroundColor: Colors.white10,
+                  child: Row(
+                    children: [
+                      // Gated on the selected model: a text-only checkpoint has
+                      // nowhere to put an image, so the button isn't offered
+                      // rather than being shown and failing on send.
+                      if (canAttachImages)
+                        IconButton(
+                          tooltip: 'Attach an image',
+                          icon: const Icon(Icons.add, size: 22, color: Colors.white70),
+                          onPressed: _sending || _recording ? null : _pickImages,
+                        ),
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          enabled: !_sending,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: _recording ? 'Recording…' : 'Send a message',
+                            hintStyle: const TextStyle(color: Colors.white38),
+                            border: InputBorder.none,
+                          ),
+                          onSubmitted: (_) => _send(),
+                        ),
                       ),
-                      tooltip: _sending ? 'Stop response' : 'Send',
-                      icon: Icon(_sending ? Icons.stop_rounded : Icons.arrow_upward,
-                          size: 20, color: Colors.white),
-                      onPressed: _sending ? _stopResponse : _send,
-                    ),
+                      if (canRecordAudio)
+                        IconButton(
+                          tooltip: _recording ? 'Stop recording' : 'Record audio',
+                          icon: Icon(_recording ? Icons.stop_circle_outlined : Icons.mic_none,
+                              size: 22,
+                              color: _recording ? Colors.redAccent : Colors.white70),
+                          onPressed: _sending ? null : _toggleRecording,
+                        ),
+                      const SizedBox(width: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: IconButton.filled(
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.deepPurple.shade400,
+                            disabledBackgroundColor: Colors.white10,
+                          ),
+                          tooltip: _sending ? 'Stop response' : 'Send',
+                          icon: Icon(_sending ? Icons.stop_rounded : Icons.arrow_upward,
+                              size: 20, color: Colors.white),
+                          onPressed: _sending ? _stopResponse : _send,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 8),
@@ -1127,6 +1312,83 @@ class _ChatScreenState extends State<ChatScreen> {
             'LLMs can make mistakes. Verify important information.',
             style: TextStyle(fontSize: 12, color: Colors.white38),
           ),
+
+        ],
+      ),
+    );
+  }
+
+  /// Strip of thumbnails/chips above the text field for what's staged but not
+  /// yet sent, each removable via its own ×.
+  Widget _buildPendingAttachments() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (var i = 0; i < _pendingAttachments.length; i++)
+            _buildAttachmentChip(
+              _pendingAttachments[i],
+              onRemove: () => setState(() => _pendingAttachments.removeAt(i)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttachmentChip(Attachment attachment, {VoidCallback? onRemove}) {
+    final isImage = attachment.kind == AttachmentKind.image;
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor,
+        border: Border.all(color: borderColor),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: EdgeInsets.fromLTRB(isImage ? 6 : 12, 6, onRemove == null ? 12 : 6, 6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isImage)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.memory(
+                Uint8List.fromList(attachment.bytes),
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+                // A file that picked cleanly can still fail to decode (wrong
+                // extension, truncated); show the chip rather than a red box.
+                errorBuilder: (_, _, _) => const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Icon(Icons.broken_image_outlined, size: 18, color: Colors.white38),
+                ),
+              ),
+            )
+          else
+            const Icon(Icons.graphic_eq, size: 18, color: Colors.white70),
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 140),
+            child: Text(
+              attachment.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, color: Colors.white70),
+            ),
+          ),
+          if (onRemove != null) ...[
+            const SizedBox(width: 4),
+            IconButton(
+              tooltip: 'Remove',
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(),
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.close, size: 16, color: Colors.white54),
+              onPressed: onRemove,
+            ),
+          ],
         ],
       ),
     );

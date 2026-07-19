@@ -6,6 +6,10 @@ from __future__ import annotations
 # quantizes cleanly with bitsandbytes instead.
 _REPO_ID = "unsloth/Ministral-3-14B-Instruct-2512"
 
+# Vision-language: the app's chat input enables its image (+) button for
+# exactly the modalities listed here.
+_INPUT_MODALITIES = ("text", "image")
+
 
 def get_info():
     return {

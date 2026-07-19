@@ -172,6 +172,48 @@ Every model under `models/` points at a real Hugging Face checkpoint: 24 declare
 
 Gated model families (Llama, Gemma) need a Hugging Face access token: run `huggingface-cli login`, or set `HF_TOKEN` in the environment, before chatting with one.
 
+### Image and audio input (multimodal models)
+
+Five models accept more than text, declared per-model via `_INPUT_MODALITIES` and surfaced as `input_modalities` on `/api/models`:
+
+| Model | Accepts |
+|---|---|
+| `gemma3n` / `gemma_3n` (Gemma 3n E2B) | text, image, **audio** |
+| `gemma_3_4b` (Gemma 3 4B) | text, image |
+| `ministral_3_3b` / `_8b` / `_14b` | text, image |
+
+The app gates its input buttons on that field: a **+** button left of the text box appears only for image-capable models, and a **microphone** button between the text box and Send appears only for audio-capable ones. A text-only model shows neither. Switching to a model that can't take what's staged drops those attachments and says so, rather than silently discarding them at send time.
+
+Attachments ride along on `POST /api/chat` as base64 (`attachments: [{kind, mime_type, name, data}]`, 32MB each), get written to temp files, and go through the model's `AutoProcessor` chat template — the text-only tokenizer path is untouched. A model that doesn't declare a modality rejects it server-side, so the gate holds even if a client ignores it.
+
+**On-device image input works too, via a second GGUF.** llama.cpp encodes images through a separate *multimodal projector* file (`libmtmd`), so a vision GGUF needs both the text weights and an `mmproj-*.gguf`. A model file declares that companion with `_GGUF_MMPROJ_SOURCE`, surfaced as `mmproj` on `/api/models`; `OnDeviceEngine` downloads it and calls `loadMultimodalProjector()` before generating. Four on-device entries have one:
+
+| On-device entry | Projector |
+|---|---|
+| `gemma_3_4b_on_device` | `mmproj-F16.gguf` |
+| `ministral_3_8b_on_device` / `_14b_on_device` | `mmproj-F16.gguf` |
+| `ministral_3_3b_on_device` | `…-BF16-mmproj.gguf` (mistralai's repo ships only BF16) |
+
+A GGUF entry earns a non-text modality **only** by declaring a projector — text weights alone load and chat but silently can't see. `gemma3n_on_device` is the one multimodal checkpoint with no projector published anywhere (llama.cpp doesn't implement Gemma 3n's vision/audio towers), so it stays text-only; use the server-backed `gemma3n` for its image and audio input.
+
+Downloading a vision model fetches both files, and neither the Models tab nor the chat picker counts it as downloaded until both are cached — otherwise the + button would appear against a model that can't actually see. Deleting removes both.
+
+**On-device audio is not available at all.** The four projector-equipped models are vision-only; the one audio-capable checkpoint (Gemma 3n) has no llama.cpp projector. Audio input means the server.
+
+Multimodal generation needs extra chat-time deps beyond `torch`/`transformers`:
+
+```bash
+pip install pillow torchvision          # image input
+pip install librosa soundfile           # audio input (Gemma 3n)
+pip install timm                        # Gemma 3n specifically — its vision tower is a timm model
+```
+
+When a model fails to load, the reply names the specific missing dependency. (It used to append "gated repos need HF_TOKEN" to *every* load failure, which sent you hunting for an auth problem when the real cause was a missing package.)
+
+`torchvision` must match your torch build — on CUDA 12.8, `pip install torchvision --index-url https://download.pytorch.org/whl/cu128`. Without it, image sends fail with "PixtralProcessor requires the Torchvision library".
+
+> **The Flutter app now needs Windows Developer Mode.** The image picker (`file_picker`) and recorder (`record`) are plugins, and Flutter's Windows desktop build symlinks plugin sources — so `flutter run -d windows` fails with "Building with plugins requires symlink support" until you run `start ms-settings:developers` and turn Developer Mode on (one-time). This is a change from before: the app previously avoided all plugins for exactly this reason (see the note in `chat_store.dart` about not using `path_provider`). Android/iOS builds are unaffected.
+
 > If every HTTPS request fails with `CERTIFICATE_VERIFY_FAILED`, something on your machine (antivirus or a network proxy) is intercepting TLS with a non-standard root certificate. `pip install pip-system-certs` makes Python trust the Windows certificate store instead of its bundled list, which usually fixes it.
 
 Run tests (from the `Multi-AI/` directory, where the pytest config and `conftest.py` live — and after building, since the tests import the compiled modules):

@@ -4,6 +4,10 @@ from __future__ import annotations
 # unsloth mirror: the official repo is gated (needs HF login + license acceptance).
 _REPO_ID = "unsloth/gemma-3n-E2B-it"
 
+# Natively multimodal: the app's chat input enables its image (+) and mic
+# buttons for exactly the modalities listed here.
+_INPUT_MODALITIES = ("text", "image", "audio")
+
 
 def get_info():
     return {

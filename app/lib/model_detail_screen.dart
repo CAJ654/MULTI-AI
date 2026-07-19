@@ -65,6 +65,15 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
     return ModelSource.parse(source);
   }
 
+  /// The vision model's companion projector, when it has one. Downloaded and
+  /// deleted alongside the weights — on its own it's useless, and without it
+  /// the weights load but can't see.
+  ModelSource? get _parsedMmproj {
+    final mmproj = widget.model.mmproj;
+    if (mmproj == null || !widget.runsInApp) return null;
+    return ModelSource.parse(mmproj);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -85,7 +94,13 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
       setState(() => _checkingCache = false);
       return;
     }
-    final entry = await _downloadManager.get(source.cacheKey);
+    var entry = await _downloadManager.get(source.cacheKey);
+    // Same rule the chat picker applies: a vision model missing its projector
+    // isn't downloaded, so this page keeps offering Download until both land.
+    final mmproj = _parsedMmproj;
+    if (entry != null && mmproj != null) {
+      if (await _downloadManager.get(mmproj.cacheKey) == null) entry = null;
+    }
     if (!mounted) return;
     setState(() {
       _cacheEntry = entry;
@@ -180,6 +195,12 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
     });
     try {
       final entry = await controller.start(source);
+      // Then the projector, if this is a vision model. It's a fraction of the
+      // weights' size and has no separate progress UI — the download simply
+      // isn't reported complete until both files are in the cache, so the
+      // chat picker can't offer image input against a half-downloaded model.
+      final mmproj = _parsedMmproj;
+      if (mmproj != null) await _downloadManager.ensureModel(mmproj);
       if (!mounted) return;
       setState(() {
         _cacheEntry = entry;
@@ -222,6 +243,10 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
     );
     if (confirmed != true) return;
     await _downloadManager.remove(source.cacheKey);
+    // The projector is dead weight without its model — leaving it behind
+    // would silently keep hundreds of MB on a device the user just freed.
+    final mmproj = _parsedMmproj;
+    if (mmproj != null) await _downloadManager.remove(mmproj.cacheKey);
     if (!mounted) return;
     setState(() => _cacheEntry = null);
   }
@@ -254,7 +279,7 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
                 const SizedBox(height: 24),
                 _buildInstallSection(),
                 _buildServerInstallSection(),
-                _buildSection(Icons.category_outlined, 'Modality', model.modality ?? _unknown),
+                _buildSection(Icons.category_outlined, 'Modality', model.modalityLabel),
                 _buildSection(
                   Icons.auto_awesome_outlined,
                   'Core Strengths & Intelligence Profile',

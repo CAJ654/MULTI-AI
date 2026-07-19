@@ -33,9 +33,11 @@ class ModelInfo {
     required this.name,
     this.available = true,
     this.gguf,
+    this.mmproj,
     this.params,
     this.sizeGb,
     this.modality,
+    this.inputModalities = const ['text'],
     this.contextTokens,
     this.license,
     this.strengths,
@@ -53,6 +55,11 @@ class ModelInfo {
   /// the app runs this model on-device instead of calling the server.
   final String? gguf;
 
+  /// Companion multimodal-projector source for a vision [gguf]. llama.cpp
+  /// encodes images through this separate file, so on-device image input
+  /// needs both downloaded — see [OnDeviceEngine.generate].
+  final String? mmproj;
+
   /// Parameter count as a human label (e.g. `"7B"`, `"124M"`), for the
   /// Models tab. Null for entries the backend hasn't annotated.
   final String? params;
@@ -63,7 +70,31 @@ class ModelInfo {
 
   /// What kinds of input the checkpoint accepts (e.g. `"Text"`,
   /// `"Text + Image"`). Null for entries the backend hasn't annotated.
+  ///
+  /// Prose, for the Models tab only — [inputModalities] is the machine-
+  /// readable version the chat input actually gates on.
   final String? modality;
+
+  /// Input kinds this model accepts, as backend-declared tokens: always
+  /// `'text'`, plus `'image'` and/or `'audio'` for multimodal checkpoints.
+  /// Gates the chat input's attach (+) and mic buttons.
+  final List<String> inputModalities;
+
+  bool get acceptsImages => inputModalities.contains('image');
+  bool get acceptsAudio => inputModalities.contains('audio');
+
+  /// Human-readable modality label, derived from [inputModalities] rather
+  /// than the prose [modality] field.
+  ///
+  /// The two used to be able to disagree: an on-device GGUF sibling inherits
+  /// its `modality` string from the checkpoint it mirrors ("Text + Image +
+  /// Audio" for Gemma 3n), but llama.cpp only runs its text path — so the
+  /// Models tab advertised image input the chat input then refused to offer.
+  /// Deriving both from one field keeps that from drifting apart again.
+  String get modalityLabel => [
+        for (final m in inputModalities)
+          if (m.isNotEmpty) '${m[0].toUpperCase()}${m.substring(1)}',
+      ].join(' + ');
 
   /// Trained/native context window in tokens. Null for entries the backend
   /// hasn't annotated.
@@ -87,15 +118,61 @@ class ModelInfo {
       name: json['name'] as String,
       available: json['available'] as bool? ?? true,
       gguf: json['gguf'] as String?,
+      mmproj: json['mmproj'] as String?,
       params: json['params'] as String?,
       sizeGb: (json['size_gb'] as num?)?.toDouble(),
       modality: json['modality'] as String?,
+      // An older backend omits this; text-only is the safe assumption.
+      inputModalities:
+          (json['input_modalities'] as List<dynamic>?)?.cast<String>() ?? const ['text'],
       contextTokens: (json['context_tokens'] as num?)?.toInt(),
       license: json['license'] as String?,
       strengths: json['strengths'] as String?,
       speedProfile: json['speed_profile'] as String?,
     );
   }
+}
+
+/// Kind of non-text input a message carries. The wire values match the
+/// backend's `_INPUT_MODALITIES` tokens.
+enum AttachmentKind {
+  image('image'),
+  audio('audio');
+
+  const AttachmentKind(this.wireName);
+
+  final String wireName;
+
+  static AttachmentKind? fromWireName(String name) {
+    for (final kind in AttachmentKind.values) {
+      if (kind.wireName == name) return kind;
+    }
+    return null;
+  }
+}
+
+/// One image or audio clip attached to an outgoing message. Held in memory as
+/// bytes rather than a path: a recording lives in a temp file the OS may clear,
+/// and the chat history needs to still render it afterwards.
+class Attachment {
+  const Attachment({
+    required this.kind,
+    required this.bytes,
+    required this.mimeType,
+    required this.name,
+  });
+
+  final AttachmentKind kind;
+  final List<int> bytes;
+  final String mimeType;
+  final String name;
+
+  Map<String, dynamic> toWireJson() => {
+        'kind': kind.wireName,
+        'mime_type': mimeType,
+        'name': name,
+        'data': base64Encode(bytes),
+      };
 }
 
 /// Disk-cache state of a server-backed (`_REPO_ID`) model's weights, as
@@ -153,7 +230,11 @@ class ApiClient {
     return ServerModelCacheStatus.fromJson(data);
   }
 
-  Future<String> sendChat({required String model, required String message}) async {
+  Future<String> sendChat({
+    required String model,
+    required String message,
+    List<Attachment> attachments = const [],
+  }) async {
     // A dedicated client per chat request so cancelChat can abort it without
     // touching anything else.
     final client = http.Client();
@@ -162,7 +243,12 @@ class ApiClient {
       final response = await client.post(
         Uri.parse('$apiBaseUrl/api/chat'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'model': model, 'message': message}),
+        body: jsonEncode({
+          'model': model,
+          'message': message,
+          if (attachments.isNotEmpty)
+            'attachments': [for (final a in attachments) a.toWireJson()],
+        }),
       );
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       if (response.statusCode != 200) {

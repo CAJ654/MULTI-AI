@@ -2197,8 +2197,9 @@ typedef struct {
   PyObject *__pyx_empty_unicode;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_items;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_values;
+  PyObject *__pyx_tuple[1];
   PyObject *__pyx_codeobj_tab[1];
-  PyObject *__pyx_string_tab[40];
+  PyObject *__pyx_string_tab[45];
   PyObject *__pyx_number_tab[2];
 /* #### Code section: module_state_contents ### */
 /* CommonTypesMetaclass.module_state_decls */
@@ -2250,36 +2251,41 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_kp_u_Multi_AI_multi_ai_models_ministr __pyx_string_tab[7]
 #define __pyx_kp_u_Text_Image __pyx_string_tab[8]
 #define __pyx_kp_u_hf_mistralai_Ministral_3_3B_Inst __pyx_string_tab[9]
-#define __pyx_n_u_GGUF_SOURCE __pyx_string_tab[10]
-#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[11]
-#define __pyx_n_u_annotate __pyx_string_tab[12]
-#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[13]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[14]
-#define __pyx_n_u_context_tokens __pyx_string_tab[15]
-#define __pyx_n_u_func __pyx_string_tab[16]
-#define __pyx_n_u_get_info __pyx_string_tab[17]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[18]
-#define __pyx_n_u_items __pyx_string_tab[19]
-#define __pyx_n_u_license __pyx_string_tab[20]
-#define __pyx_n_u_main __pyx_string_tab[21]
-#define __pyx_n_u_modality __pyx_string_tab[22]
-#define __pyx_n_u_module __pyx_string_tab[23]
-#define __pyx_n_u_multi_ai_models_ministral_3_3b_o __pyx_string_tab[24]
-#define __pyx_n_u_name __pyx_string_tab[25]
-#define __pyx_n_u_name_2 __pyx_string_tab[26]
-#define __pyx_n_u_params __pyx_string_tab[27]
-#define __pyx_n_u_print __pyx_string_tab[28]
-#define __pyx_n_u_qualname __pyx_string_tab[29]
-#define __pyx_n_u_repo_id __pyx_string_tab[30]
-#define __pyx_n_u_set_name __pyx_string_tab[31]
-#define __pyx_n_u_setdefault __pyx_string_tab[32]
-#define __pyx_n_u_size_gb __pyx_string_tab[33]
-#define __pyx_n_u_speed_profile __pyx_string_tab[34]
-#define __pyx_n_u_strengths __pyx_string_tab[35]
-#define __pyx_n_u_test __pyx_string_tab[36]
-#define __pyx_n_u_values __pyx_string_tab[37]
-#define __pyx_n_u_version __pyx_string_tab[38]
-#define __pyx_kp_b_iso88591_1_1_1_A_1_Q __pyx_string_tab[39]
+#define __pyx_kp_u_hf_mistralai_Ministral_3_3B_Inst_2 __pyx_string_tab[10]
+#define __pyx_n_u_GGUF_MMPROJ_SOURCE __pyx_string_tab[11]
+#define __pyx_n_u_GGUF_SOURCE __pyx_string_tab[12]
+#define __pyx_n_u_INPUT_MODALITIES __pyx_string_tab[13]
+#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[14]
+#define __pyx_n_u_annotate __pyx_string_tab[15]
+#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[16]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[17]
+#define __pyx_n_u_context_tokens __pyx_string_tab[18]
+#define __pyx_n_u_func __pyx_string_tab[19]
+#define __pyx_n_u_get_info __pyx_string_tab[20]
+#define __pyx_n_u_image __pyx_string_tab[21]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[22]
+#define __pyx_n_u_items __pyx_string_tab[23]
+#define __pyx_n_u_license __pyx_string_tab[24]
+#define __pyx_n_u_main __pyx_string_tab[25]
+#define __pyx_n_u_modality __pyx_string_tab[26]
+#define __pyx_n_u_module __pyx_string_tab[27]
+#define __pyx_n_u_multi_ai_models_ministral_3_3b_o __pyx_string_tab[28]
+#define __pyx_n_u_name __pyx_string_tab[29]
+#define __pyx_n_u_name_2 __pyx_string_tab[30]
+#define __pyx_n_u_params __pyx_string_tab[31]
+#define __pyx_n_u_print __pyx_string_tab[32]
+#define __pyx_n_u_qualname __pyx_string_tab[33]
+#define __pyx_n_u_repo_id __pyx_string_tab[34]
+#define __pyx_n_u_set_name __pyx_string_tab[35]
+#define __pyx_n_u_setdefault __pyx_string_tab[36]
+#define __pyx_n_u_size_gb __pyx_string_tab[37]
+#define __pyx_n_u_speed_profile __pyx_string_tab[38]
+#define __pyx_n_u_strengths __pyx_string_tab[39]
+#define __pyx_n_u_test __pyx_string_tab[40]
+#define __pyx_n_u_text __pyx_string_tab[41]
+#define __pyx_n_u_values __pyx_string_tab[42]
+#define __pyx_n_u_version __pyx_string_tab[43]
+#define __pyx_kp_b_iso88591_1_1_1_A_1_Q __pyx_string_tab[44]
 #define __pyx_float_2_15 __pyx_number_tab[0]
 #define __pyx_int_262144 __pyx_number_tab[1]
 /* #### Code section: module_state_clear ### */
@@ -2296,8 +2302,9 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   #if CYTHON_PEP489_MULTI_PHASE_INIT
   __Pyx_State_RemoveModule(NULL);
   #endif
+  for (int i=0; i<1; ++i) { Py_CLEAR(clear_module_state->__pyx_tuple[i]); }
   for (int i=0; i<1; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<40; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<45; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
   for (int i=0; i<2; ++i) { Py_CLEAR(clear_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_clear_contents ### */
 /* CommonTypesMetaclass.module_state_clear */
@@ -2321,8 +2328,9 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_tuple);
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_bytes);
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_unicode);
+  for (int i=0; i<1; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_tuple[i]); }
   for (int i=0; i<1; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<40; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<45; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
   for (int i=0; i<2; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_traverse_contents ### */
 /* CommonTypesMetaclass.module_state_traverse */
@@ -2337,7 +2345,7 @@ return 0;
 #endif
 /* #### Code section: module_code ### */
 
-/* "multi_ai/models/ministral_3_3b_on_device.pyx":12
+/* "multi_ai/models/ministral_3_3b_on_device.pyx":22
  * 
  * 
  * def get_info():             # <<<<<<<<<<<<<<
@@ -2370,7 +2378,7 @@ static PyObject *__pyx_pf_8multi_ai_6models_24ministral_3_3b_on_device_get_info(
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("get_info", 0);
 
-  /* "multi_ai/models/ministral_3_3b_on_device.pyx":13
+  /* "multi_ai/models/ministral_3_3b_on_device.pyx":23
  * 
  * def get_info():
  *     return {             # <<<<<<<<<<<<<<
@@ -2379,38 +2387,38 @@ static PyObject *__pyx_pf_8multi_ai_6models_24ministral_3_3b_on_device_get_info(
 */
   __Pyx_XDECREF(__pyx_r);
 
-  /* "multi_ai/models/ministral_3_3b_on_device.pyx":14
+  /* "multi_ai/models/ministral_3_3b_on_device.pyx":24
  * def get_info():
  *     return {
  *         "name": "Ministral 3 3B (On-Device)",             # <<<<<<<<<<<<<<
  *         "version": "0.1.0",
  *         "repo_id": None,
 */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 24, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_name, __pyx_mstate_global->__pyx_kp_u_Ministral_3_3B_On_Device) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_version, __pyx_mstate_global->__pyx_kp_u_0_1_0) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_name, __pyx_mstate_global->__pyx_kp_u_Ministral_3_3B_On_Device) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_version, __pyx_mstate_global->__pyx_kp_u_0_1_0) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
 
-  /* "multi_ai/models/ministral_3_3b_on_device.pyx":16
+  /* "multi_ai/models/ministral_3_3b_on_device.pyx":26
  *         "name": "Ministral 3 3B (On-Device)",
  *         "version": "0.1.0",
  *         "repo_id": None,             # <<<<<<<<<<<<<<
  *         "params": "3B",
  *         "size_gb": 2.15,
 */
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_repo_id, Py_None) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_params, __pyx_mstate_global->__pyx_kp_u_3B) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_float_2_15) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_modality, __pyx_mstate_global->__pyx_kp_u_Text_Image) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_context_tokens, __pyx_mstate_global->__pyx_int_262144) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_Apache_2_0) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_strengths, __pyx_mstate_global->__pyx_kp_u_Mistral_s_compact_edge_model_vis) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_speed_profile, __pyx_mstate_global->__pyx_kp_u_Fast_capable_multimodal_reasonin) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_repo_id, Py_None) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_params, __pyx_mstate_global->__pyx_kp_u_3B) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_float_2_15) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_modality, __pyx_mstate_global->__pyx_kp_u_Text_Image) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_context_tokens, __pyx_mstate_global->__pyx_int_262144) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_Apache_2_0) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_strengths, __pyx_mstate_global->__pyx_kp_u_Mistral_s_compact_edge_model_vis) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_speed_profile, __pyx_mstate_global->__pyx_kp_u_Fast_capable_multimodal_reasonin) < (0)) __PYX_ERR(0, 24, __pyx_L1_error)
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "multi_ai/models/ministral_3_3b_on_device.pyx":12
+  /* "multi_ai/models/ministral_3_3b_on_device.pyx":22
  * 
  * 
  * def get_info():             # <<<<<<<<<<<<<<
@@ -2788,45 +2796,63 @@ __Pyx_RefNannySetupContext("PyInit_ministral_3_3b_on_device", 0);
  * 
  * _GGUF_SOURCE = "hf://mistralai/Ministral-3-3B-Instruct-2512-GGUF/Ministral-3-3B-Instruct-2512-Q4_K_M.gguf"             # <<<<<<<<<<<<<<
  * 
- * 
+ * # Vision needs llama.cpp's multimodal projector (libmtmd), which ships as a
 */
   if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_GGUF_SOURCE, __pyx_mstate_global->__pyx_kp_u_hf_mistralai_Ministral_3_3B_Inst) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
 
-  /* "multi_ai/models/ministral_3_3b_on_device.pyx":12
+  /* "multi_ai/models/ministral_3_3b_on_device.pyx":17
+ * # is worth more than matching float layouts across the roster.
+ * _GGUF_MMPROJ_SOURCE = (
+ *     "hf://mistralai/Ministral-3-3B-Instruct-2512-GGUF/Ministral-3-3B-Instruct-2512-BF16-mmproj.gguf"             # <<<<<<<<<<<<<<
+ * )
+ * _INPUT_MODALITIES = ("text", "image")
+*/
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_GGUF_MMPROJ_SOURCE, __pyx_mstate_global->__pyx_kp_u_hf_mistralai_Ministral_3_3B_Inst_2) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
+
+  /* "multi_ai/models/ministral_3_3b_on_device.pyx":19
+ *     "hf://mistralai/Ministral-3-3B-Instruct-2512-GGUF/Ministral-3-3B-Instruct-2512-BF16-mmproj.gguf"
+ * )
+ * _INPUT_MODALITIES = ("text", "image")             # <<<<<<<<<<<<<<
+ * 
+ * 
+*/
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_INPUT_MODALITIES, __pyx_mstate_global->__pyx_tuple[0]) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
+
+  /* "multi_ai/models/ministral_3_3b_on_device.pyx":22
  * 
  * 
  * def get_info():             # <<<<<<<<<<<<<<
  *     return {
  *         "name": "Ministral 3 3B (On-Device)",
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_6models_24ministral_3_3b_on_device_1get_info, 0, __pyx_mstate_global->__pyx_n_u_get_info, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_models_ministral_3_3b_o, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 12, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_6models_24ministral_3_3b_on_device_1get_info, 0, __pyx_mstate_global->__pyx_n_u_get_info, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_models_ministral_3_3b_o, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_info, __pyx_t_2) < (0)) __PYX_ERR(0, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_info, __pyx_t_2) < (0)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "multi_ai/models/ministral_3_3b_on_device.pyx":28
+  /* "multi_ai/models/ministral_3_3b_on_device.pyx":39
  * 
  * 
  * if __name__ == "__main__":             # <<<<<<<<<<<<<<
  *     print(get_info())
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_name_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 28, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_name_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 39, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_main, Py_EQ)); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(0, 28, __pyx_L1_error)
+  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_main, Py_EQ)); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(0, 39, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_3) {
 
-    /* "multi_ai/models/ministral_3_3b_on_device.pyx":29
+    /* "multi_ai/models/ministral_3_3b_on_device.pyx":40
  * 
  * if __name__ == "__main__":
  *     print(get_info())             # <<<<<<<<<<<<<<
 */
     __pyx_t_4 = NULL;
     __pyx_t_6 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_get_info); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 29, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_get_info); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 40, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_t_8 = 1;
     {
@@ -2834,7 +2860,7 @@ __Pyx_RefNannySetupContext("PyInit_ministral_3_3b_on_device", 0);
       __pyx_t_5 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_7, __pyx_callargs+__pyx_t_8, (1-__pyx_t_8) | (__pyx_t_8*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 29, __pyx_L1_error)
+      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 40, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
     }
     __pyx_t_8 = 1;
@@ -2843,12 +2869,12 @@ __Pyx_RefNannySetupContext("PyInit_ministral_3_3b_on_device", 0);
       __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_8, (2-__pyx_t_8) | (__pyx_t_8*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 29, __pyx_L1_error)
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 40, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "multi_ai/models/ministral_3_3b_on_device.pyx":28
+    /* "multi_ai/models/ministral_3_3b_on_device.pyx":39
  * 
  * 
  * if __name__ == "__main__":             # <<<<<<<<<<<<<<
@@ -2906,7 +2932,7 @@ __Pyx_RefNannySetupContext("PyInit_ministral_3_3b_on_device", 0);
 
 static int __Pyx_InitCachedBuiltins(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
-  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_print); if (!__pyx_builtin_print) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_print); if (!__pyx_builtin_print) __PYX_ERR(0, 40, __pyx_L1_error)
 
   /* Cached unbound methods */
   __pyx_mstate->__pyx_umethod_PyDict_Type_items.type = (PyObject*)&PyDict_Type;
@@ -2923,50 +2949,87 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
   __Pyx_RefNannyDeclarations
   CYTHON_UNUSED_VAR(__pyx_mstate);
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
+
+  /* "multi_ai/models/ministral_3_3b_on_device.pyx":19
+ *     "hf://mistralai/Ministral-3-3B-Instruct-2512-GGUF/Ministral-3-3B-Instruct-2512-BF16-mmproj.gguf"
+ * )
+ * _INPUT_MODALITIES = ("text", "image")             # <<<<<<<<<<<<<<
+ * 
+ * 
+*/
+  __pyx_mstate_global->__pyx_tuple[0] = PyTuple_Pack(2, __pyx_mstate_global->__pyx_n_u_text, __pyx_mstate_global->__pyx_n_u_image); if (unlikely(!__pyx_mstate_global->__pyx_tuple[0])) __PYX_ERR(0, 19, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_mstate_global->__pyx_tuple[0]);
+  __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[0]);
+  #if CYTHON_IMMORTAL_CONSTANTS
+  {
+    PyObject **table = __pyx_mstate->__pyx_tuple;
+    for (Py_ssize_t i=0; i<1; ++i) {
+      #if PY_VERSION_HEX >= 0x030F0000
+      PyUnstable_SetImmortal(table[i]);
+      #elif CYTHON_COMPILING_IN_CPYTHON_FREETHREADING
+      if ((PY_SSIZE_T_MAX <= _Py_IMMORTAL_REFCNT_LOCAL)) break;
+      #if PY_VERSION_HEX < 0x030E0000
+      if (_Py_IsOwnedByCurrentThread(table[i]) && Py_REFCNT(table[i]) == 1)
+      #else
+      if (PyUnstable_Object_IsUniquelyReferenced(table[i]))
+      #endif
+      {
+        Py_SET_REFCNT(table[i], ((Py_ssize_t)_Py_IMMORTAL_REFCNT_LOCAL + 1));
+      }
+      #else
+      if ((PY_SSIZE_T_MAX < _Py_IMMORTAL_INITIAL_REFCNT)) break;
+      Py_SET_REFCNT(table[i], _Py_IMMORTAL_INITIAL_REFCNT);
+      #endif
+    }
+  }
+  #endif
   __Pyx_RefNannyFinishContext();
   return 0;
+  __pyx_L1_error:;
+  __Pyx_RefNannyFinishContext();
+  return -1;
 }
 /* #### Code section: init_constants ### */
 
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 8; } index[] = {{1},{5},{2},{10},{41},{26},{138},{53},{12},{89},{12},{20},{12},{18},{18},{14},{8},{8},{13},{5},{7},{8},{8},{10},{40},{4},{8},{6},{5},{12},{7},{12},{10},{7},{13},{9},{8},{6},{7},{55}};
-    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (498 bytes) */
-const char* const cstring = "(\265/\375`\353\001E\017\000F`e0`W:\342\020\004A\020\304\251$6\340 \227\354\244\324[\246\031&\221\275\323\226)\201?\024!\277\236\302\265\271\217A\266\343\240M\342\234L\177\221\010X\000]\000O\000\235O\210\224\326\231JR\276\221\277\216\355\311\026\226\230tL\275+\331\2428\277-v\275\226\221a\343\300\255=\274\021\271HCN\351\026~l\357M\306\224\360Uiy\373\213\3130\335R\357\352w\331\225\3548\213mK\210\217\333\021!M$w\332b\030\031S\204$!E\\\004\"&\252UfYR4!Q1\021}\313\340G\377\2102\246h\2124\275\227FcQu\330\332\353#\037\362?|\362\001a\352O9\223Nzi\242\246W5\037\030\321F\242\"\177\tr.\2532z\006\223r\235q\262\003\305\303#7\n\242\024$)\201\\_[U/?\362w\254v\311\001\3542\320\267\252\367^\252\034\235[\273x\361\267\306\326Wy\353\263\245\332<\253T\243s\312{\375\017\277\277\226\322\226\303m\341\253\267\262\267k\221\275?{\3605\351usP\\U\376\375\347\276\252\025\227\374\207C\364[o|@#\252\034\032%(\001\004.\t\031\030\222\020\202\213B\346\005#t\260\020*\220\010\031d^\000B\003\231\027\201\200\027\000\026\177\035!{\"gn=\252\037\371Uc\347-g\370\221]W\017bJ1c\221c)\257t|\227m\305\324sT\245Z\037\306\320m\246\242\372\336\020\213\327\302\305T\371Z\227$\325\037 0\204(e\325\003b\210\341<\010\224V5\333$R\365X\211\241\000\034`V\023z\325s\314\323\256\0270-\036\244X\250\234\007(\013\000a1\307zt\034\254.\237\013\032\010\216,i\"\274p\032\027\2125[\247m\004\365#\267\330\033\001\3643";
-    PyObject *data = __Pyx_DecompressString(cstring, 498, 3);
+    const struct { const unsigned int length: 8; } index[] = {{1},{5},{2},{10},{41},{26},{212},{53},{12},{89},{94},{19},{12},{17},{20},{12},{18},{18},{14},{8},{8},{5},{13},{5},{7},{8},{8},{10},{40},{4},{8},{6},{5},{12},{7},{12},{10},{7},{13},{9},{8},{4},{6},{7},{57}};
+    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (600 bytes) */
+const char* const cstring = "(\265/\375`\302\002u\022\000vev4`o:02H\030\206a\030X\335\026\216V\177\"\223\344\330R\256\332$\262wZYvr\362\204&V=^wq\031-Bd\243\232b\233\022=^\201\350\037f\000g\000i\000lA\262\326\t\272\3460L\356\323\376Q\346p{\364;Az^U\366\212\256\212\322\251\227\326\245\005faogW\357?\267i\362-}\000E\364\363RsT1\004\261\233\205n>\365\350\240\316f\247\3046\213\036%u=\027\272Kj\376\260j\333P\3446\367v\342\251\363PX\025\333\243\3476NgCai,\n\215\363i\374T\235M\265\251\264L&\003\033}Vb\337\324'\246\323fq\224,\332\360\206\265\014\315\270\343\314\207S\371\303\n\262\276\343\3128\2734\233\256\214;z_YJ\232re\277n\321\2673\247\371J\272\023W\025\345\236 \254\330\306:w\312\177\235\"\347\266\030\032\317\322\367\245\025n{A\257\242\365\240xx,\210A\002T\353w\246\316\022\213\316\337\031\363\213\025c\246\261I\362\371\243|\244\347D\375\334|\216\316\035\035>\332\321\277\312)\237%\375\305\023\355w/ct\314X\227\274\251E\370\237s\230N#\314&\035\237\223O\010\207#\004\342\023\224\021\221O\307F\tJ\310\204?B%# \020\263\246U\030\032O\007\253YfU\025\232\213\212\352_\r\010/\r\006\000\0041$(\206\227\206\202\024\007\265\340\200J\320\240\024\nR\001\250\203\202\324\200@*\240%J\247\263K\264+t%\346g\246\243\317b\317\247\r\035\223s\343\253{\243\242\214\233\305\351\303\352\260\276\276)\363\345,\267\236\320U\025\346\217>7\252\271\3516\346\326\\\264,\346\206\365\364\316\034\335i\314Mc?\207\001-(0\002\302T\235y\261$\321\242\243\264\374\255[\277\003\"\230R\017\240\2731\302\207\377\r\240\311\251\332\n\347:\337\207\361\212\327\242s+\274F\317{\365\366\316\236\026\264;\374\004\230\257V/$\003Q\332,\347\352\300X\224\020\320:\031\233B\260\003'\313K)\365\235\220\033\322H*\004$X)&\277\037\345\000\273\203\243F\024V\224\271\254\375FX\346\014";
+    PyObject *data = __Pyx_DecompressString(cstring, 600, 3);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (572 bytes) */
-const char* const cstring = "BZh91AY&SY\200\355\031\270\000\000@\177\343&@~0`\357\376\020\277\253\376\000\277\357\377p@\000D@\000@P\000@\001\301\000CSF\2416\251\236\251\243OS\305\r\032z\231\000z\232\032\r=M\036MM<\232\233j\201\240\203Pi\224\300\223Q\352z\206\206\200\006\2004\000\017S\323Pq\223&\214C\023L\004\014\t\246\010\30114\323@\006\020\343&M\030\206&\230\010\030\023L\021\202bi\246\200\014&\273-2\0004\236i \014u\315@\222\254\270\\\304]\330\253[\363\251\324\036\311\357\025\017\264\367\360&E\222\365\0200\301\252\251a\004\221~UKv\270\340Y\370\246#\312\254\371\270\221\230D\006\330\207\310\020 D/\246\220>\206\001\307\330\364K\215\002s\217=(c\034f\204Lf\014\013\252\204{\300\346\231\222\035\271\271{\231\313X\2159\004\002\037\221@~\343\362P\366Lu'\253\nP\262\224\235W@\332\nx%\303\357\244\021H'\350#\031\005\202o\034\347\003\336\354\215\036\030\301\037\016\232\200\324\375\255x\262x\272m\254?\372=U\333\2713'\2307\"f\356{y_\200\213f\226\353\0242\225a\313\300D\346\230\223Qu\201\306ZF\3144\360\354\223!I\252\315\023d\036.\312\252\r\366\027O\006\313*\260\300\335%\031\241\327\310\2336>\230\310XjlF0\003\013\257\265W\253\262-\010(K}\200@iv\202\022\210\211\201\031\327\026\030\332O0Z\267\n$rh<\342\020\202U\037\\\334C\305\231\275\325\271\313*\342\256\2074\003\0308\302\263\263\226\270\020\204P\022\352\203\304\203\340\017v\230\002\273=0\213\2461s\231\005\314&<\226UT\3152;gq\001R\243\246\036\031\301\374%\210=\267\305k\013J\247-h\312p\000\033\003^l/\006\020\336\257\016\242B2\223Pm\240\032\007\213H\202\267\033\302\305un\327\267\022\242\325x\224\257\002\235@\2051\307Hr.\031\177\253\327`\037\273,\265\266\266\220\237\340\221\323\367\027\370\273\222)\302\204\204\007h\315\300";
-    PyObject *data = __Pyx_DecompressString(cstring, 572, 2);
+    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (680 bytes) */
+const char* const cstring = "BZh91AY&SY\215d_-\000\000Y\177\343\347`~\020`\357\377\020\277\277\376\000\277\377\377\360@\000D@\000@\020\000@\000@\002.\007qi\270j\231\rL\200\000\000\032\000\000\000\000\032\003L\230A\250\322joDh\322e=\2516\240\323@\006\200\000\000\000\000z\201\251\204\230\215)\275S\324\364\324\365\000\0004\000\000\000\000\000\001*h\t1\032d\322i\243\3124\206&4\032h'\251\204i\243'\265'\240C\020]\206\214\341N\000\311\266C\216xJ\353pTT\370\266j&Q\022\341Q\323\264\372\372\366\221\210q{wI\223\362$\367!o:\177\345\216\025i\257\34729z\026\r\013\301\374\313J\032\200\213/S\225\271d\247Ew\245\273\316T\301\033\3123\2576%f\010\032\2018a\372\002\010\010\201B\354\016\342\370<\304d\213\256\251+\024\324\357;\231]?r\305O\032\312\031\002\203\265G\342\306w\275\341m\243\3201H\372\303\266\253\260\205\026\037\226gq\035\314\024\226cy\373\266\357\366\005\027\310\270\n\215{Fs\300\331\256if\360v\010\361\357x\257\217ej\2219\321\354\340%\031\001nL\213z1B\374E\304\202\230\37732=<\324\3751\026\342$P'\257\366\320N\357\201\025\004\227)l\321j\216\365>\321\313\362;\030\322\004\246v/\024o7\000\007Q\013\t\022\321\"e3\205Np\373\206G[\037$\264\013]\034\017\226Z\257b\260\330H\231\215\201\025\201\361\334\017\255\253\013\336\221\030u\230+\2546\232RQ6!\002M\371\022\n\301b\336%\251#%\305\022X\002E@U=.R\231c\350cL\324\nlA\006\016\017\200\216s\006\220\203\024Z\331Y0\222T\221L\203J\000\2470]#k.4\234\r\200\361h{5jk\006\315\2442\246lZ\324\225T\301Z\352u\036' Ou%6t\343\325i\010D\260\032\322\373\034L\013yC\206O0\250\251\302\206\033\360u\3226\266\017\300\024Q\001pm\306\212##EW\330\251'\025 2u6\311\240\230Be\001\246\177\225\345\330#\223u\351\010\205\252\2116\346\"A\t\314`(\000Iz\355r#\001\nd\230-F\347\3179\245N\030(\001\301nK\200\0025\272U[t\005\264*\2147\360T\212Y\023/c\n\326\370\000E\010\022p<\004\205\364L\231\360\3448\273\037\200e\246\033\r7\320\025\300Qb:\277\305\334\221N\024$#Y\027\313@";
+    PyObject *data = __Pyx_DecompressString(cstring, 680, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (486 bytes) */
-const char* const cstring = "x\332}R;\217\0231\020\326I \245\344Y@e*@\334n\036\013\r\rJ8\356\024\241p\334\301\325#\307;\336X\361\332{~DY\252\373\t[P\334OK\211\370%\314\356&'\032(<\232\031\177\363\3157c\177\030\245\343t\224\315\246\025\027+d\223tt\312}8f\202W|\251\221\225Q\007U\332\234k\346\220{k\224)\230\264\216e\263\2052\312\007G7\031E\354\325\271INp\243\004\276^\364\371\227\236\t[\022q`\230\027\304es\324\354\367\315O\266Q^Y\223\034\232p\223\263\353\250\304\372\230\005\022\241U\261\n\350\003\263\262\213\377n$y\251t\235\262\213\267\360\031\026\354\354\354\352\224-\243\3229s\321x&\243\3265#\352\274S\222.Z\371\311t>\354\346\000\256\206\235\010?,\017\234\220A\266\004k`_Q\325\333\357\270\r\354\r\233\227\274\300\225|?$p\007\245\352;)I\226d\263dn(\210\"$\223w\343I\322\212\371?\242W\235\026E\224\320\242\341\333\371\325\345\307O\000_\353-\235\023%\002|\241\356\227(\001\27016\360\200\344\371\332\010eSa\235\215A\031\364B\223\005e\200:\t\\r\261\026\326\004\252\204`\327h<\200\214F\000\024\030\010%-(\017w\325*`\3515\rk<\221\227\234h\240{b\025\352\316\213\272\315\3577\226\366\033K\377\2651\303KB\367\266\342\216\227\276r\312\004\200\353\310u\237vX\221\202\034\300\223\234>E^\216\222S\017\257~ \024K_!\346P9+\225\246\267wh\212\260\2429\332\217\000\260\341:\242\337\240k\377\315\315\321\356\336\375\335\340As\264\033<n\306{\363\250y\261\367\2364\323\335\340\371\355!|\332\\\374\032<\273}\370\007\257I\023\341";
-    PyObject *data = __Pyx_DecompressString(cstring, 486, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (580 bytes) */
+const char* const cstring = "x\332\255S;s\323@\020&3\300\204\216g\223j\251\200!\222\343\010(h\030\233<\306\200\343\220G\275s>\235\344\305\247;Ew\347\330T\371\t.(\362\323\\\363\013\370\t\254$'C\003\025\205vv\367v\367\373\366\241\017;q7\336I\372\275R\310\211\202\335x\347@8\277\rR\224b\254\025\024A{*l*4TJ8k\310\344\220\331\n\222\376\220\0149_\361K\302\026\274\034\231hO\315H\252W\303\326\377\302\201\264\005\027\366\240\322\234k\331Ti\370y\365\003f\344\310\232\350\006D\230\024.\002\311\3516x&\241)\237x\345<\330\254\261\377\004\312DAz\021\303\3277\370\031\207pxx~\000\343@:\205R\007\007\344\035\034t\337AY\331oJz\346Y\005\003Y\320z\001\014\2306\374\266\301Y\240B0%2e\360pi\253\251\203K\362\0230\026\234\252f\252jH\261e\224\257\237\343a=\210\2507\3504\023AA\235\246\035\327)n\330a\202\311\030\255\301\026%.\027\36335\367\360\032\0065\326${\337\341\340&\224\263o\233\212\222(\351G\003\303F\220>\332}\333\335\215\352\266\376\035\321\366\037\347y\310\376o\341>\217/*\212z\200Mu\254Sp8<>\031}\302\323\321\371\311\307\375\326\265\326\007G\307\347g8\034\355\365\276\014\316\006\373\247\210\307\2139\177{$=\036q\377'*C\024\306X/\274b\315-\214$\033K[\331\340\311('5K$\203LI\252\261\220Si\215\347L\364v\252\214C\314\202\221\210\271\362\034\225\331fsH\016oK\220W\205\323<s\343\030\241\020\\\013\233\233%\277h\264\240k\377zqq\273\270\370o\2133\242\340\350V\226\242\022\205++2\036\361\"\010\335\272+UZ\244\024\3211\247\326\305Z\2522\301\030\216\276+\314\307\256T*E\236cF\232\217\271R&\367\023n\246\276\354Z\316\375L\350\240\034\337Z\3753\\m\254\356\336[m>\\n\2546\237,\273k\361x\371|\255=]\366V\233[\3277\346\263\345\327_\367\357<\330\272~\364\033*\333\\\214";
+    PyObject *data = __Pyx_DecompressString(cstring, 580, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (747 bytes) */
-const char* const bytes = "?0.1.03BApache 2.0Fast, capable multimodal reasoning for 3BMinistral 3 3B (On-Device)Mistral's compact edge model \342\200\224 vision-capable and quick, the lightest of the Ministral 3 family. Q4_K_M GGUF build runs fully on-device.Multi-AI/multi_ai/models/ministral_3_3b_on_device.pyxText + Imagehf://mistralai/Ministral-3-3B-Instruct-2512-GGUF/Ministral-3-3B-Instruct-2512-Q4_K_M.gguf_GGUF_SOURCE__Pyx_PyDict_NextRef__annotate__asyncio.coroutinescline_in_tracebackcontext_tokens__func__get_info_is_coroutineitemslicense__main__modality__module__multi_ai.models.ministral_3_3b_on_devicename__name__paramsprint__qualname__repo_id__set_name__setdefaultsize_gbspeed_profilestrengths__test__valuesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\340\010\031\230\021";
+    #else /* compression: none (962 bytes) */
+const char* const bytes = "?0.1.03BApache 2.0Fast, capable multimodal reasoning for 3BMinistral 3 3B (On-Device)Mistral's compact edge model \342\200\224 vision-capable and quick, the lightest of the Ministral 3 family. Q4_K_M GGUF build plus its F16 projector run fully on-device, so image input works with no server and no network.Multi-AI/multi_ai/models/ministral_3_3b_on_device.pyxText + Imagehf://mistralai/Ministral-3-3B-Instruct-2512-GGUF/Ministral-3-3B-Instruct-2512-Q4_K_M.ggufhf://mistralai/Ministral-3-3B-Instruct-2512-GGUF/Ministral-3-3B-Instruct-2512-BF16-mmproj.gguf_GGUF_MMPROJ_SOURCE_GGUF_SOURCE_INPUT_MODALITIES__Pyx_PyDict_NextRef__annotate__asyncio.coroutinescline_in_tracebackcontext_tokens__func__get_infoimage_is_coroutineitemslicense__main__modality__module__multi_ai.models.ministral_3_3b_on_devicename__name__paramsprint__qualname__repo_id__set_name__setdefaultsize_gbspeed_profilestrengths__test__textvaluesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\360\006\000\t\032\230\021";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
     PyObject **stringtab = __pyx_mstate->__pyx_string_tab;
     Py_ssize_t pos = 0;
-    for (int i = 0; i < 39; i++) {
+    for (int i = 0; i < 44; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyUnicode_DecodeUTF8(bytes + pos, bytes_length, NULL);
-      if (likely(string) && i >= 10) PyUnicode_InternInPlace(&string);
+      if (likely(string) && i >= 11) PyUnicode_InternInPlace(&string);
       if (unlikely(!string)) {
         Py_XDECREF(data);
         __PYX_ERR(0, 1, __pyx_L1_error)
@@ -2974,7 +3037,7 @@ const char* const bytes = "?0.1.03BApache 2.0Fast, capable multimodal reasoning 
       stringtab[i] = string;
       pos += bytes_length;
     }
-    for (int i = 39; i < 40; i++) {
+    for (int i = 44; i < 45; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyBytes_FromStringAndSize(bytes + pos, bytes_length);
       stringtab[i] = string;
@@ -2985,14 +3048,14 @@ const char* const bytes = "?0.1.03BApache 2.0Fast, capable multimodal reasoning 
       }
     }
     Py_XDECREF(data);
-    for (Py_ssize_t i = 0; i < 40; i++) {
+    for (Py_ssize_t i = 0; i < 45; i++) {
       if (unlikely(PyObject_Hash(stringtab[i]) == -1)) {
         __PYX_ERR(0, 1, __pyx_L1_error)
       }
     }
     #if CYTHON_IMMORTAL_CONSTANTS
     {
-      PyObject **table = stringtab + 39;
+      PyObject **table = stringtab + 44;
       for (Py_ssize_t i=0; i<1; ++i) {
         #if PY_VERSION_HEX >= 0x030F0000
         PyUnstable_SetImmortal(table[i]);
@@ -3064,7 +3127,7 @@ typedef struct {
     unsigned int num_kwonly_args : 1;
     unsigned int nlocals : 1;
     unsigned int flags : 10;
-    unsigned int first_line : 4;
+    unsigned int first_line : 5;
 } __Pyx_PyCode_New_function_description;
 /* NewCodeObj.proto */
 static PyObject* __Pyx_PyCode_New(
@@ -3081,7 +3144,7 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
   PyObject* tuple_dedup_map = PyDict_New();
   if (unlikely(!tuple_dedup_map)) return -1;
   {
-    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 12};
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 22};
     PyObject* const varnames[] = {0};
     __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_Multi_AI_multi_ai_models_ministr, __pyx_mstate->__pyx_n_u_get_info, __pyx_mstate->__pyx_kp_b_iso88591_1_1_1_A_1_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
   }

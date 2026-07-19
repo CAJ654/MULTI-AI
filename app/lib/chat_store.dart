@@ -1,19 +1,36 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'api_client.dart';
+
 class ChatMessage {
-  const ChatMessage({required this.text, required this.isUser, this.sender, this.isError = false});
+  const ChatMessage({
+    required this.text,
+    required this.isUser,
+    this.sender,
+    this.isError = false,
+    this.attachments = const [],
+  });
 
   final String text;
   final bool isUser;
   final String? sender;
   final bool isError;
 
+  /// Images/audio the user sent alongside [text]. Always empty on replies —
+  /// the models here only produce text.
+  final List<Attachment> attachments;
+
   Map<String, dynamic> toJson() => {
         'text': text,
         'isUser': isUser,
         if (sender != null) 'sender': sender,
         if (isError) 'isError': isError,
+        // Base64 in the same file as the text: attachments are capped at 32MB
+        // server-side and this keeps history a single self-contained blob,
+        // with no second store to keep in sync when a chat is deleted.
+        if (attachments.isNotEmpty)
+          'attachments': [for (final a in attachments) a.toWireJson()],
       };
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
@@ -21,7 +38,24 @@ class ChatMessage {
         isUser: json['isUser'] as bool,
         sender: json['sender'] as String?,
         isError: json['isError'] as bool? ?? false,
+        attachments: [
+          for (final a in (json['attachments'] as List<dynamic>? ?? []))
+            ?_attachmentFromJson(a as Map<String, dynamic>),
+        ],
       );
+}
+
+/// Null for an entry whose `kind` this build doesn't know — a history file
+/// written by a newer version shouldn't make the whole chat fail to load.
+Attachment? _attachmentFromJson(Map<String, dynamic> json) {
+  final kind = AttachmentKind.fromWireName(json['kind'] as String? ?? '');
+  if (kind == null) return null;
+  return Attachment(
+    kind: kind,
+    bytes: base64Decode(json['data'] as String),
+    mimeType: json['mime_type'] as String? ?? '',
+    name: json['name'] as String? ?? '',
+  );
 }
 
 class ChatSession {

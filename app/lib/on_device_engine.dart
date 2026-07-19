@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:llamadart/llamadart.dart';
+
+import 'api_client.dart' show Attachment, AttachmentKind;
 
 /// Built-in on-device model: small enough to download quickly and run on a
 /// phone. Always in the model list, even when the backend is unreachable.
@@ -37,6 +40,7 @@ const Duration _hardStopGrace = Duration(seconds: 3);
 class OnDeviceEngine {
   LlamaEngine? _engine;
   String? _loadedSource;
+  String? _loadedMmproj;
   void Function()? _cancelActive;
 
   /// Completes when an orphaned generation (cancelled, but still listened to
@@ -44,14 +48,23 @@ class OnDeviceEngine {
   /// generate() waits on this so two decode loops never overlap.
   Future<void>? _teardown;
 
-  Future<void> _ensureLoaded(String source) async {
-    if (_engine != null && _loadedSource == source) return;
+  Future<void> _ensureLoaded(String source, {String? mmproj}) async {
+    if (_engine != null && _loadedSource == source && _loadedMmproj == mmproj) return;
     // Only one model stays resident — a 20B GGUF and friends don't co-tenant
     // nicely in laptop/phone RAM.
     await _engine?.dispose();
     _engine = null;
+    _loadedMmproj = null;
     final engine = LlamaEngine(LlamaBackend());
     await engine.loadModelSource(ModelSource.parse(source));
+    if (mmproj != null) {
+      // The projector is a second GGUF that has to be on disk before
+      // loadMultimodalProjector can take it — it wants a local path, not a
+      // ModelSource, so the download goes through the engine's own manager.
+      final entry = await engine.modelDownloadManager.ensureModel(ModelSource.parse(mmproj));
+      await engine.loadMultimodalProjector(entry.filePath);
+      _loadedMmproj = mmproj;
+    }
     _engine = engine;
     _loadedSource = source;
   }
@@ -60,11 +73,13 @@ class OnDeviceEngine {
     String prompt, {
     String source = onDeviceModelSource,
     double? sizeGb,
+    String? mmproj,
+    List<Attachment> attachments = const [],
   }) async {
     // A previous stop() may still be winding down; two concurrent decode loops
     // on one engine would interleave their tokens.
     await _teardown;
-    await _ensureLoaded(source);
+    await _ensureLoaded(source, mmproj: mmproj);
     final buffer = StringBuffer();
     final done = Completer<String>();
     final finished = Completer<void>();
@@ -74,7 +89,7 @@ class OnDeviceEngine {
 
     final sub = _engine!
         .create(
-          [LlamaChatMessage.fromText(role: LlamaChatRole.user, text: prompt)],
+          [_buildMessage(prompt, attachments)],
           // A cap, not a target — generation still stops at end-of-turn, so
           // short replies stay fast; this just avoids truncating long ones.
           params: const GenerationParams(maxTokens: 1024, temp: 0.7),
@@ -122,6 +137,27 @@ class OnDeviceEngine {
     }
   }
 
+  /// Builds the user turn. Plain text stays on the text-only constructor —
+  /// the same call this used before multimodal existed — so a model with no
+  /// projector loaded takes exactly the path it always did.
+  ///
+  /// Images go through as bytes rather than a path: an attachment may have
+  /// come from a recording or a picker that only handed back bytes, and
+  /// llamadart decodes either.
+  LlamaChatMessage _buildMessage(String prompt, List<Attachment> attachments) {
+    final images = attachments.where((a) => a.kind == AttachmentKind.image);
+    if (images.isEmpty) {
+      return LlamaChatMessage.fromText(role: LlamaChatRole.user, text: prompt);
+    }
+    return LlamaChatMessage.withContent(
+      role: LlamaChatRole.user,
+      content: [
+        for (final image in images) LlamaImageContent(bytes: Uint8List.fromList(image.bytes)),
+        LlamaTextContent(prompt),
+      ],
+    );
+  }
+
   /// Waits out [_hardStopGrace] for a cancelled generation to end on its own;
   /// disposes the engine if it doesn't. The next [generate] then reloads the
   /// model, which is the price of guaranteeing the worker is gone.
@@ -156,5 +192,6 @@ class OnDeviceEngine {
     await _engine?.dispose();
     _engine = null;
     _loadedSource = null;
+    _loadedMmproj = null;
   }
 }

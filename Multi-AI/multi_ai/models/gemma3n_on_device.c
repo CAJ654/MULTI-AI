@@ -2242,11 +2242,11 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 /* #### Code section: constant_name_defines ### */
 #define __pyx_kp_u_ __pyx_string_tab[0]
 #define __pyx_kp_u_0_1_0 __pyx_string_tab[1]
-#define __pyx_kp_u_Fast_for_a_multimodal_model_good __pyx_string_tab[2]
-#define __pyx_kp_u_Gemma_3n_E2B_On_Device __pyx_string_tab[3]
-#define __pyx_kp_u_Gemma_Terms_of_Use __pyx_string_tab[4]
-#define __pyx_kp_u_Multi_AI_multi_ai_models_gemma3n __pyx_string_tab[5]
-#define __pyx_kp_u_Natively_multimodal_text_image_a __pyx_string_tab[6]
+#define __pyx_kp_u_Designed_to_run_efficiently_on_d __pyx_string_tab[2]
+#define __pyx_kp_u_Fast_for_a_multimodal_model_good __pyx_string_tab[3]
+#define __pyx_kp_u_Gemma_3n_E2B_On_Device __pyx_string_tab[4]
+#define __pyx_kp_u_Gemma_Terms_of_Use __pyx_string_tab[5]
+#define __pyx_kp_u_Multi_AI_multi_ai_models_gemma3n __pyx_string_tab[6]
 #define __pyx_kp_u_Text_Image_Audio __pyx_string_tab[7]
 #define __pyx_kp_u_hf_unsloth_gemma_3n_E2B_it_GGUF __pyx_string_tab[8]
 #define __pyx_n_u_E2B __pyx_string_tab[9]
@@ -2404,7 +2404,7 @@ static PyObject *__pyx_pf_8multi_ai_6models_17gemma3n_on_device_get_info(CYTHON_
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_modality, __pyx_mstate_global->__pyx_kp_u_Text_Image_Audio) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_context_tokens, __pyx_mstate_global->__pyx_int_32768) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_Gemma_Terms_of_Use) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_strengths, __pyx_mstate_global->__pyx_kp_u_Natively_multimodal_text_image_a) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_strengths, __pyx_mstate_global->__pyx_kp_u_Designed_to_run_efficiently_on_d) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_speed_profile, __pyx_mstate_global->__pyx_kp_u_Fast_for_a_multimodal_model_good) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -2807,26 +2807,26 @@ __Pyx_RefNannySetupContext("PyInit_gemma3n_on_device", 0);
   if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_info, __pyx_t_2) < (0)) __PYX_ERR(0, 12, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "multi_ai/models/gemma3n_on_device.pyx":27
+  /* "multi_ai/models/gemma3n_on_device.pyx":30
  * 
  * 
  * if __name__ == "__main__":             # <<<<<<<<<<<<<<
  *     print(get_info())
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_name_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 27, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_name_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 30, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_main, Py_EQ)); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(0, 27, __pyx_L1_error)
+  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_main, Py_EQ)); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(0, 30, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_3) {
 
-    /* "multi_ai/models/gemma3n_on_device.pyx":28
+    /* "multi_ai/models/gemma3n_on_device.pyx":31
  * 
  * if __name__ == "__main__":
  *     print(get_info())             # <<<<<<<<<<<<<<
 */
     __pyx_t_4 = NULL;
     __pyx_t_6 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_get_info); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 28, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_get_info); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_t_8 = 1;
     {
@@ -2834,7 +2834,7 @@ __Pyx_RefNannySetupContext("PyInit_gemma3n_on_device", 0);
       __pyx_t_5 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_7, __pyx_callargs+__pyx_t_8, (1-__pyx_t_8) | (__pyx_t_8*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 28, __pyx_L1_error)
+      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 31, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
     }
     __pyx_t_8 = 1;
@@ -2843,12 +2843,12 @@ __Pyx_RefNannySetupContext("PyInit_gemma3n_on_device", 0);
       __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_8, (2-__pyx_t_8) | (__pyx_t_8*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 28, __pyx_L1_error)
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 31, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "multi_ai/models/gemma3n_on_device.pyx":27
+    /* "multi_ai/models/gemma3n_on_device.pyx":30
  * 
  * 
  * if __name__ == "__main__":             # <<<<<<<<<<<<<<
@@ -2906,7 +2906,7 @@ __Pyx_RefNannySetupContext("PyInit_gemma3n_on_device", 0);
 
 static int __Pyx_InitCachedBuiltins(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
-  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_print); if (!__pyx_builtin_print) __PYX_ERR(0, 28, __pyx_L1_error)
+  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_print); if (!__pyx_builtin_print) __PYX_ERR(0, 31, __pyx_L1_error)
 
   /* Cached unbound methods */
   __pyx_mstate->__pyx_umethod_PyDict_Type_items.type = (PyObject*)&PyDict_Type;
@@ -2931,33 +2931,33 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 9; } index[] = {{1},{5},{54},{24},{18},{46},{269},{20},{61},{3},{12},{20},{12},{18},{18},{14},{8},{8},{13},{5},{7},{8},{8},{10},{33},{4},{8},{6},{5},{12},{7},{12},{10},{7},{13},{9},{8},{6},{7},{55}};
-    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (569 bytes) */
-const char* const cstring = "(\265/\375``\002}\021\000vcl1PU\322\001\020v3333\223\000v\0233\220\265\215\310\355A\266${\262\021\222\330\266\275\244\376\210<\224\020\346z\240F\364P\321\265\362\203dk\032a\000\\\000]\000\022\263|x+],#N\261j3\242_\336\016\037w\3176\033y\371X\221\244\374\224+(N\344,S\016H\306F\344Q%\247\227\261\202Oyx[\31796L\342\220\032\024\035\311\025\311\252\352\037o\353\334\233\027\236O\245\364\036\225\021\356\351\230\364\252mwU\311\022\276);2\017\211h\"\222\300\010\367\274\226\335\300\361OJ\313j\021\253\230s\016\371N\223d\344\256)\243\344\366ZI\017\225\217\217\024\321\020\2650\311(\302\367+\006\231\225.\014\346\341\253\362\275V\307\327\022~\342\315v\r\212\230\214\357\307\227\262\241!gdjr\303/?\256\371\333v\232\236|\301|\235\322\231\332x)\003.V\357\325\270\372&^\355S\252\215\257I5\362Y^+\277\306\322\330\312\033\203\255\274z^\327\342y\373z\360\265\350m\343O|\263~\314Lu\372\311\210v[\216\227O\211j\307\306\211\n\t\212\352tQT\264\351\335l\270b\323\351\3478\234\213\251\223\001\222\020)\321C\247\231\225\2617a\0054\n\003!\023P\002\315\302@(\003\204\300\0002\230\000\035\014\204\000@\004\003!\201\200\020\200\014\277\215\360\236\370\3131\217j\307\267j\3544\305\207\035\357vz\320R\351\267\342\n\245\207\331\310\246K\375\250*\255>\353\320\261\253E\265y\241\025U_1\216\"\325\273\353\323\253\312\313*\325G~\3336( \2040Ui\033\200V\235d\331\014b\210\3716\001\312\200\237\245\241\305I{\371\271A\224-\320\001\315T\204\257q\247\334s\0172v\027\223\355\017\217\313&\317\270\365\353\215#\320\200xD\374\021\243%\227P/<m\371|X\343\210\035\347\014\220\000\215!\340\310\260Wo_\301\356]\005\276\325>\366\253\240`\306\010\037(\001\31787\276I\302!\260\371]7\304o'\025\001\334\t";
-    PyObject *data = __Pyx_DecompressString(cstring, 569, 3);
+    const struct { const unsigned int length: 9; } index[] = {{1},{5},{321},{54},{24},{18},{46},{20},{61},{3},{12},{20},{12},{18},{18},{14},{8},{8},{13},{5},{7},{8},{8},{10},{33},{4},{8},{6},{5},{12},{7},{12},{10},{7},{13},{9},{8},{6},{7},{57}};
+    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (602 bytes) */
+const char* const cstring = "(\265/\375`\226\002\205\022\000\226&t1`W:0\022\013\202 \010BZ1x\200\335\037d\247d\3342m\211Nd\3574)\023\374\017\325\270\244\231\236\344\370d;\016\332 P\360\304z\264\001g\000b\000h\000\027\033\327\223\331k\230\377\262))=\214J\237\036c+\351\241\362\361\221\"\032\242\026&)y\334_\253\305v\245K\213\271\021Z\271\317\227\357\224\357\320\345\272\336\270Ts.\210\337\255\006EL\372>\354\235\262A\203\242\243!gdlr\035\203v\212\032f\366\276\227\035S\324fc1\341\347\264]\261/\207\2044!I`\004$\016\271\256\267\342\367\366\233\363\265\270\275UN\020V\233\355\275yH\217]\315\ty\302ZN\335r\253fqFHe\026\2777\273\"\233e\355GCN\373qm%\212\013\212\353\037\307\227\347\333\365\351\317\371\216\261\\\227\223\232\325\336\313\217xm\202\026\377\303\254\314^\353t\316o\206\327\307\255\307\345z>\003\315\372[\251\272\306(U\357\375\300\327\206n]\213\257\315\272\315\317\3716?\006#t\022d\327\231\357\267\207\335M\225\332\223\021}\307\034/Y\211j\307\306\211\n\t\212*\205U\225\024=GQWD\236\207\317\033\353t.(OFB\200$\304KviC\355\212\252\343\035n\332\001\311\210D\326U\222\202\351V\334\224\007\216\250\003\0064\013\004\000\234\033\223\220\002\315\002\247&#\224\300\020:\230\010!pj\002B\005\234\232\001\201\232\000\231\206\354qA\276\330k \325\367}U\367|\325\033\337\3671\005\343\245\323\356\345+\225.\014{\243v\372u\325\351\332\370\032\326\242\372\315\361r\325\265ZK\222\352>,{Vmn\226\352z\257\343\347\326>\253\263B*5( \204(Si\036pP\326\244\320f\022\332\274M\200o@\224\335\241q\361kCq\351(\000Q\261@\016\304:\334\353p\310b\367\200`Ft\237\355\274\360\303\276\262\317\363\270U\325\324F \002\212Nx\220d*\261\320p\355\300\261\014\233Z\334\215\017I\210\t\214\363\333,\257\200\235\021\206\004\311\334)0\243x\004\372\341\3142U\2078\310k\317\252\312\000\350\263W\211}8\301\013/\n";
+    PyObject *data = __Pyx_DecompressString(cstring, 602, 3);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (640 bytes) */
-const char* const cstring = "BZh91AY&SY\311\237\354\362\000\000J\177\343&@~0`\357\374\020\277\253\376\000\277\357\377\361@\000D@\000@\020\000@\002\016\235\234(\341\2512zS\312\231\243B=&\231\244zz\243\0200\200\301\251\3513S\322='\265\003SL\200\247\223SMO\321)\352y\000F\004\310\310\014\230\000\004a\251\212\214\200\000\310\000\000\320\310\000\000\000\0004\0211)\351\2056F(\000\001\246\200\001\240\001\243j\t\3705\327\001\202Z\341\200k0\311\247~{\273Q\225\021\002\216h\267\261\352\224\357\310y\253\276\205\222\302\253\310it\316A\233+N\010\032\206\226\327.\334\306O\367r\203\275<\243\341\344\240\312\002)1\343\302\3671\\\246\257J\326\322Z2\373^\020\001\235\256\001k\324>$\027\374\235%{\203lv\"\356@V\235\300]H)~\200\271z4\220\016\320yc$\007\027b\246\002+o\001\271\0306\r\241UV\310`\260\316\306\324\323S\342\274K%\200\374\"\340\335\223F\261\242\201\272\006\271(\"\037\221\030\224/\3670\300na\213\2779 \003D\037\320)I\027+E.\2373#\027\310\036$$Jn\275\250\340n\203\360P\2545)\314\234Z\345\001I+%\262\247\320\274\246\032eCNZ\300\375\242*\222\2148\255\2641r!\217`P\004\305i\202nT\301\037\013=\242\204\220\251\035\327\316\242\255\036\244\254O\031\3129c\200\245\213\013a\324|\006q\310\255\027\261\206f\333\246\250\020\200!P\252\312\351`\227\332\331\300E\3560\207\202\357\021(\263@\317WF!\320\307%9\267P\234nn\343\234m0aF\270;0\010C\357\032\"\203\202\214\034\360\312gs\\\214`\365\235\233\206\013 \221\003\t\034&7\250\331\222+M\206F\272\t\0200l\021\251\245\363\030,eDVg\322\347\250\230V\224\214\021V\013b\016q\211i\n1iyce\013 z\0322\006H\026\030\246Jd\222\230<\366\263u$\r\320\203\023h\216V\032\213\346>\271\002\346\n\350\243\202=m{Vi;t5\314K\356P\312&\3276\002ry\177\2348S\026L\331\277u\001\370!\rK\205,\013\245B\237\0109\205c7\2510\241}\020q\375\376\234\016\037\363\320\332\0330?\020q+\037\344.\344\212p\241!\223?\331\344";
-    PyObject *data = __Pyx_DecompressString(cstring, 640, 2);
+    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (678 bytes) */
+const char* const cstring = "BZh91AY&SY`\324\226\223\000\000P\177\343\346`~\020`\357\374\020\277\253\376\000\277\377\377\361@\000D@\000@\020\000@\000@\002!\271\332fn\032\200L\202\231\352\236\223j4i\243\324\323\324\000=@0\200=M\240\323iA\251\251\3511O\020OJ~\232\247\250h\000\000\000\000\000\000z\201\251\202\0214\364Dm \310\03244\000\000\320\000\000\001\242d\010\233T\323\364M@h\000\000h\000\000\0004\004i\325Z\2541\000R\234R\021\362\273\024\330\363\342\027\377D\346\225\005\366\245o\367a8\226\030\2429\365\350b\316\373)\314\260\262\231\026\236H(ME\215K\203A\327>t\235\031\260n\334\034\344ICCE7H\321p\301b\026O;\321\276\253\360.6\336Rrw\371\340\027@\306\342\220H<\205\261\364-\361v%L\364!>\366\323\205S\024\341\231h#R\237\357\222Zf_\207\224\002KG\271\202\031\263\014\251Me\210\224\032n\361\342#\010\340\277]\254\036\307\2130\3359m\223\323\010\260\022\000\330\261\033\315\034\rA\300\234\021\031\364S2\033\177\001\201A\243\313\357\363\004@h\2148E\214\270\216mo\304\277\205\241\302\260\017e\201\r\r\003\254\342\253R\006\367\010[\212\212hWL\236*\021\025\205\220\301\221z3U\002b\302\222\246@_\205L\2162an\305\321\023\315I\n\363\321\000\023D\014\022\236\2316|\r\252\257\312\033$\337\363e.]\252\002\267\300\2358\217\321eJ{\242\231\0306KN\313\027\207\013\257\326\314\210\212\262\200$\226\230h!j\005\264d\306\226\317(-\355\016b\314$\311\370\363I\304\343V!LR\347\005\236\0048\236\205\256\312\211\206\2451k5\0300\203\260\332\313\220'!\304\352\222\200\262$\tM\270\310\225\271\352\326\214\"Z\314\023\024\230`da#\204\024h\322\374\223S#\241f\212\360\300l&\2406L\357c\255\204W&\347=D\201\332\331P\"\245P\273H\2464\035dR\316\231\032j\316\241\n\212\330\235P+XBPa\234M\021j\224YR\037z\r\256\263P\0263N\3756J%q\\xm\210\223 \2203\310f\200X\234\"\363E\263&z\240\266\010\017\017R\324\300\363s\n\365\355\245\325\346]\315`\014\212He\336\314\210\210V\027\013P\035\210\030\201\r\001\327\236\200\354\222K\006\235U\001\256\272\203\205n\240\032\300a.\300\374\377\027rE8P\220`\324\226\223";
+    PyObject *data = __Pyx_DecompressString(cstring, 678, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (557 bytes) */
-const char* const cstring = "x\332eRMO\0341\014\025R+\355\261\237\207\366\344\236\000\225\231\205\322S/\025-\037B\025P(\234\255\220qf#2\311\220x\266\273=T\374\204=\364\300O\333s\177I\235\031\212\2208\214\307q\354\367\374\034\177\336,\267\312\315}\225\030L\210\240\240\351\034\333&T\312\201Xr\033P\207PAM\236\242\304\254gr\316\312Q\323\0015\215\202m\017{\037\276\300\332\211/vij5\255\017\361s\212M\202`\340\"\321Q\006-v\016\307=:*;\356\261\323\270\316\251\333\036\203\307\252/.\333\371\354X\261\235\222\233?\354e\215i\306\033`\033U\323\006\250\256\262a\035\224\257\240\242dkO\025p\200\330y c\254\266\344Y\352\203/\006T\370{\363\007V\245\315U\311\367\201)\301o\351YrIg.\221e(fM\240\203\214B@[\313$\023\210\004Q\375\204VE\325\020SL%\234~\304ox\004\007\007\027\373p\331YWe\336\004\246s\017)K8\271g\357\357yB\220E\014\205k\316\251F\225\272m\241\n\224\374*\013\363\224\"XN\203<\341\344\311zy\236K\336\303a\026.\377\235|51\237\306c\301t\201'\303\010\213m_\210\274\302r\221\341\037\005\207\236\313\272\356\214D0\347\340\217\223\213\263\257{\210\337\3473\371v\255f<\026\26232\210\312\313\224\024\223xi\356\265\r\245\0161tl=%\355\304\242\365\310Qi\272T\372J\007\237\225!\207+\362\t\321t^#\326\304\222e\002\332\204\367\3252\325&9\031\212O\002\336(\201\301\376\205-\317{\257s9~\267&\345\260&\345\2435\361\362\032\210\203\355\337&\265QV\023\361\272Sn\010Gj\205\272BL\322\307\020\022\257\"\243\004<\331_\204\365ej\211*lc0\326Qb\331\200\232'\"@\026D\260\246\312u\224\344Q\222\r\376fe\371\344\351r\364l\261\262\034\275\\l\335\231\027\213ww\336\253\305\316r\364\366\366\377\361\365\342t9zs\373\374\037x)=\017";
-    PyObject *data = __Pyx_DecompressString(cstring, 557, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (592 bytes) */
+const char* const cstring = "x\332eS=o\324@\020%\022HG\307g\223j\250\002\n\366\345\203*\rJ\310\207\"\024BBR\2176\353\261\275\334z\327\354\216\217\034\005\312O\270\202\"?\355j~\001?\201Y\373@\221Rx5~~\373f\346\315\370\375F\276\231o\354S4\225\243\002\330C\350\034PY\032m\310\261\235\201wYAS\243\t~\337\374\202\265\203\255\2755(\310y\246\010?\267\366\022\2274\233)\201q%\005r\302\324>\262\220bk\230\240\361\201 \250\357\320\252\240\032b\n1\207\263w\370\021O\340\350\350\362\020\256:c\213\2247B\331\331\273)s\270\240k\226w\001k\321\336\001\256E\275&=i\275q\014&\202S)\271\020\232\316\262i|\241\354[\221d\260V5*\327m;H\177\355\244&\303\0218I\266\212\353\276\241\326\350I\257\032)L)dWJO\304\210\265#j\032\005\333\016\372\206\305\2120\203\322\0070\215\252\010\224+@u\205\361\322t\333q~\250D<}Vw\312\220\316\013\222b*\357\013\250\310Q\020L\252&kM\225|\272\233\003^\237\272l\277\357\372\315\200_Ph\"\370\022.#\235$\321l\367x\334\253\2432\343^;\216\253D\335v\350\035.-kg\327\275i\353p\334\227\272\016\273\251\320\272\334\031\217\305\007\353\271\036ne\333.\223\304\231\341,\215\341\0368\214(\257\252\256\024\004\023\007\277\234^\236\1778@\374<\273\226g\337h\306O\222\354\234JD\345d)\024\223Dq\346\264\361\271\366\301wl\034Em\345D\343\220\203\322\224<\326\336\245A \373\t\271\210XvN#V\304\302*=\232\210\377o\313\0225\321Jo.\212x\243D\006{\203\r\317\372\250\263\t_:\223\017\316\344\367\234q\262|\210\303\331\257bl\203L\003\361[\247\354\000\007j%u\201\030\245\216\001\222\250\240R\211x4?\010\253\253\330\022\025\330\006_\032K\221e\341+\256\245\001\371\037Dk\252lGQ\026)\032\357nV\026\017\037-FO\346+\213\321\363\371\346\362x6\177\265\214^\314w\027\243\325\333\177\257/\347g\177F\017\036\257\336>\375\013\325QQ$";
+    PyObject *data = __Pyx_DecompressString(cstring, 592, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (864 bytes) */
-const char* const bytes = "?0.1.0Fast for a multimodal model, good general intelligenceGemma 3n E2B (On-Device)Gemma Terms of UseMulti-AI/multi_ai/models/gemma3n_on_device.pyxNatively multimodal (text, image, audio) and designed to run efficiently on-device \342\200\224 'E2B' denotes ~2B effective inference cost despite more raw parameters. Q4_K_M GGUF build runs fully on-device. On-device runs the text GGUF (llama.cpp doesn't cover its audio path).Text + Image + Audiohf://unsloth/gemma-3n-E2B-it-GGUF/gemma-3n-E2B-it-Q4_K_M.ggufE2B_GGUF_SOURCE__Pyx_PyDict_NextRef__annotate__asyncio.coroutinescline_in_tracebackcontext_tokens__func__get_info_is_coroutineitemslicense__main__modality__module__multi_ai.models.gemma3n_on_devicename__name__paramsprint__qualname__repo_id__set_name__setdefaultsize_gbspeed_profilestrengths__test__valuesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\330\010\031\230\021";
+    #else /* compression: none (918 bytes) */
+const char* const bytes = "?0.1.0Designed to run efficiently on-device \342\200\224 'E2B' denotes ~2B effective inference cost despite more raw parameters. Q4_K_M GGUF build runs fully on-device. Text only here: the checkpoint is natively multimodal, but llama.cpp runs just its text path \342\200\224 pick the server-backed 'Gemma 3n E2B' entry for image and audio input.Fast for a multimodal model, good general intelligenceGemma 3n E2B (On-Device)Gemma Terms of UseMulti-AI/multi_ai/models/gemma3n_on_device.pyxText + Image + Audiohf://unsloth/gemma-3n-E2B-it-GGUF/gemma-3n-E2B-it-Q4_K_M.ggufE2B_GGUF_SOURCE__Pyx_PyDict_NextRef__annotate__asyncio.coroutinescline_in_tracebackcontext_tokens__func__get_info_is_coroutineitemslicense__main__modality__module__multi_ai.models.gemma3n_on_devicename__name__paramsprint__qualname__repo_id__set_name__setdefaultsize_gbspeed_profilestrengths__test__valuesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\360\010\000\t\032\230\021";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
