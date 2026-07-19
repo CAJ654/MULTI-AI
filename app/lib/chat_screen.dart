@@ -54,6 +54,10 @@ List<_Suggestion> _pickRandomSuggestions() {
 
 enum _SidebarTab { models, chat, orchestration, code }
 
+/// Stands in for a reply the user cut short. Shown in the transcript but kept
+/// out of the history sent to the model — it's UI state, not something said.
+const String _stoppedPlaceholder = '(response stopped)';
+
 /// Chat UI model names always end in an explicit "(on-device)" / "(local
 /// server)" tag so it's clear which one is answering — the raw name from
 /// the backend isn't consistent about this (on-device sibling files bake in
@@ -354,6 +358,14 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty && attachments.isEmpty) return;
 
     final session = _session;
+    // Snapshot before the new message is appended, so history is strictly the
+    // turns that came before it. Error rows and the "(response stopped)"
+    // placeholder are excluded — they're UI state, not things the model said.
+    final history = [
+      for (final m in session.messages)
+        if (!m.isError && m.text != _stoppedPlaceholder)
+          ChatTurn(isUser: m.isUser, text: m.text),
+    ];
     final generation = ++_sendGeneration;
     _pendingSession = session;
     setState(() {
@@ -379,8 +391,14 @@ class _ChatScreenState extends State<ChatScreen> {
               sizeGb: localSizeGb,
               mmproj: model.mmproj,
               attachments: attachments,
+              history: history,
             )
-          : await _api.sendChat(model: model.id, message: text, attachments: attachments);
+          : await _api.sendChat(
+              model: model.id,
+              message: text,
+              attachments: attachments,
+              history: history,
+            );
       if (generation != _sendGeneration) return; // stopped by the user
       setState(() => session.messages
           .add(ChatMessage(text: reply, isUser: false, sender: _modelDisplayName(model))));
@@ -505,7 +523,7 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _sending = false;
       session?.messages.add(ChatMessage(
-          text: '(response stopped)',
+          text: _stoppedPlaceholder,
           isUser: false,
           sender: _selectedModel == null ? null : _modelDisplayName(_selectedModel!)));
     });

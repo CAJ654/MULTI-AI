@@ -130,17 +130,75 @@ def _list_models() -> list[dict]:
     return entries
 
 
-def _build_inputs(tokenizer, prompt: str):
+def _coerce_history(history) -> list[dict]:
+    """Normalize the client's prior turns into role/content dicts.
+
+    Anything malformed is dropped rather than raising: a corrupt history entry
+    should cost the model some context, not fail the whole request.
+    """
+    if not isinstance(history, list):
+        return []
+    turns = []
+    for item in history:
+        if not isinstance(item, dict):
+            continue
+        role = item.get("role")
+        content = item.get("content")
+        if role in ("user", "assistant") and isinstance(content, str) and content.strip():
+            turns.append({"role": role, "content": content})
+    return turns
+
+
+def _fit_history(tokenizer, turns: list[dict], budget: int) -> list[dict]:
+    """Drop the oldest turns until the conversation fits in [budget] tokens.
+
+    Trimming from the front keeps the newest exchange — the part the reply
+    actually depends on. Without this a long chat silently overruns the
+    context window and the model's answer gets cut off mid-sentence.
+    """
+    if budget <= 0 or not turns:
+        return []
+
+    def token_len(subset: list[dict]) -> int:
+        try:
+            return len(
+                tokenizer.apply_chat_template(subset, add_generation_prompt=True, tokenize=True)
+            )
+        except Exception:
+            # Template-less/base models: approximate with the plain framing.
+            return len(tokenizer(_plain_transcript(subset))["input_ids"])
+
+    kept = list(turns)
+    while kept and token_len(kept) > budget:
+        kept.pop(0)
+        # Never open on an assistant turn — a reply with no question above it
+        # reads as the model talking to itself.
+        while kept and kept[0]["role"] == "assistant":
+            kept.pop(0)
+    return kept
+
+
+def _plain_transcript(turns: list[dict]) -> str:
+    """User:/Assistant: framing for base models with no chat template."""
+    lines = [
+        f"{'User' if t['role'] == 'user' else 'Assistant'}: {t['content']}" for t in turns
+    ]
+    lines.append("Assistant:")
+    return "\n".join(lines)
+
+
+def _build_inputs(tokenizer, prompt: str, history: list[dict] | None = None):
+    turns = list(history or []) + [{"role": "user", "content": prompt}]
     if getattr(tokenizer, "chat_template", None):
         return tokenizer.apply_chat_template(
-            [{"role": "user", "content": prompt}],
+            turns,
             add_generation_prompt=True,
             return_dict=True,
             return_tensors="pt",
             enable_thinking=False,  # honored by Qwen-style templates, ignored by others
         )
     # Base models have no chat template; raw text would just get "continued".
-    return tokenizer(f"User: {prompt}\nAssistant:", return_tensors="pt")
+    return tokenizer(_plain_transcript(turns), return_tensors="pt")
 
 
 # ------------------------------------------------------------- attachments
@@ -231,6 +289,34 @@ def _get_or_load_processor(repo_id: str):
     return processor
 
 
+def _model_context_window(model) -> int | None:
+    config = model.config
+    max_pos = getattr(config, "max_position_embeddings", None)
+    if max_pos is None:
+        max_pos = getattr(getattr(config, "text_config", None), "max_position_embeddings", None)
+    return max_pos
+
+
+# Long-context models advertise windows (256K) far larger than the VRAM here
+# can actually attend over, so history is capped well below the true limit.
+# It's a memory ceiling, not an accuracy one — the newest turns always survive.
+_MAX_HISTORY_TOKENS = 4096
+
+
+def _history_budget(model, tokenizer, prompt: str, max_new_tokens: int) -> int:
+    """Tokens left for prior turns once the new message and the reply are
+    accounted for. Reserving the reply up front is what stops a long history
+    from crowding out the answer it was supposed to inform."""
+    window = _model_context_window(model)
+    if not window:
+        return _MAX_HISTORY_TOKENS
+    try:
+        prompt_len = len(tokenizer(prompt)["input_ids"])
+    except Exception:
+        prompt_len = 0
+    return max(0, min(_MAX_HISTORY_TOKENS, window - prompt_len - max_new_tokens))
+
+
 def _compute_dtype(model):
     """The float dtype the model actually computes in.
 
@@ -246,13 +332,28 @@ def _compute_dtype(model):
         return torch.bfloat16
 
 
-def _build_multimodal_inputs(processor, prompt: str, decoded: list[tuple[str, str]]):
-    """Build one user turn whose content interleaves the attachments and the
-    text, in the structured form multimodal chat templates expect."""
+def _build_multimodal_inputs(
+    processor,
+    prompt: str,
+    decoded: list[tuple[str, str]],
+    history: list[dict] | None = None,
+):
+    """Build the conversation, with the final user turn's content interleaving
+    the attachments and the text, in the form multimodal templates expect.
+
+    Prior turns carry text only — their attachments' temp files are long gone
+    by now, and re-sending images the model already described would burn a lot
+    of the context window for little benefit.
+    """
     content = [{"type": kind, kind: path} for kind, path in decoded]
     content.append({"type": "text", "text": prompt})
+    messages = [
+        {"role": turn["role"], "content": [{"type": "text", "text": turn["content"]}]}
+        for turn in (history or [])
+    ]
+    messages.append({"role": "user", "content": content})
     return processor.apply_chat_template(
-        [{"role": "user", "content": content}],
+        messages,
         add_generation_prompt=True,
         tokenize=True,
         return_dict=True,
@@ -341,6 +442,27 @@ def _load_failure_hint(exc: Exception) -> str:
     return ""
 
 
+def _tokenizer_is_degenerate(tokenizer) -> bool:
+    """Whether this tokenizer encodes ordinary text to nothing but <unk>.
+
+    A half-downloaded cache is the trap: the JSON config files land before the
+    vocabulary does, so `local_files_only=True` finds "a tokenizer" and loads
+    it without error — but with no vocab every token maps to <unk>. The prompt
+    then encodes to a single junk token, the model generates noise from it, and
+    the reply comes back as "(model returned an empty response)" with nothing
+    pointing at the real cause. Worse, that tokenizer gets cached in memory, so
+    every later chat fails the same way until the server restarts.
+    """
+    unk = getattr(tokenizer, "unk_token_id", None)
+    if unk is None:
+        return False
+    try:
+        ids = tokenizer("The capital of France is Paris.", add_special_tokens=False)["input_ids"]
+    except Exception:
+        return False
+    return not ids or all(i == unk for i in ids)
+
+
 def _get_or_load_hf_model(repo_id: str) -> tuple:
     """Load (and disk-cache) the tokenizer/model for repo_id, or return the
     already-resident pair. Shared by chat generation and the standalone
@@ -391,6 +513,16 @@ def _get_or_load_hf_model(repo_id: str) -> tuple:
 
     try:
         tokenizer = _load_with(AutoTokenizer, {"token": token})
+        if _tokenizer_is_degenerate(tokenizer):
+            # The offline read found an incomplete cache. Re-read with the hub
+            # available so the missing vocabulary files actually get fetched.
+            tokenizer = AutoTokenizer.from_pretrained(repo_id, token=token)
+            if _tokenizer_is_degenerate(tokenizer):
+                raise RuntimeError(
+                    "its tokenizer loads but encodes everything to <unk>, which means the "
+                    "download is incomplete or corrupt. Delete the model from the Models tab "
+                    "and download it again"
+                )
         try:
             model = _load_model(load_kwargs)
         except ValueError as exc:
@@ -414,14 +546,20 @@ def _hf_generate(
     prompt: str,
     max_new_tokens: int = 1024,
     decoded_attachments: list | None = None,
+    history: list | None = None,
 ) -> str:
     tokenizer, model = _get_or_load_hf_model(repo_id)
+    turns = _fit_history(
+        tokenizer,
+        _coerce_history(history),
+        _history_budget(model, tokenizer, prompt, max_new_tokens),
+    )
     if decoded_attachments:
         # The processor owns both the chat template and the image/audio
         # preprocessing, so the text-only tokenizer path can't be reused here.
         processor = _get_or_load_processor(repo_id)
         decoder = processor if hasattr(processor, "decode") else tokenizer
-        inputs = _build_multimodal_inputs(processor, prompt, decoded_attachments)
+        inputs = _build_multimodal_inputs(processor, prompt, decoded_attachments, turns)
         # Pixel/audio values come out of the processor as float32; the vision
         # and audio towers run in the model's compute dtype and reject a
         # mismatch. BatchFeature.to casts only floating tensors, so token ids
@@ -429,16 +567,13 @@ def _hf_generate(
         inputs = inputs.to(model.device, dtype=_compute_dtype(model))
     else:
         decoder = tokenizer
-        inputs = _build_inputs(tokenizer, prompt).to(model.device)
+        inputs = _build_inputs(tokenizer, prompt, turns).to(model.device)
     prompt_len = inputs["input_ids"].shape[1]
     # Never generate past the model's context window. Models with absolute
     # position embeddings (GPT-2: 1024) index off the end of the embedding
     # table otherwise — a CUDA device-side assert that corrupts the whole
     # process's GPU state, breaking every model until the server restarts.
-    config = model.config
-    max_pos = getattr(config, "max_position_embeddings", None)
-    if max_pos is None:
-        max_pos = getattr(getattr(config, "text_config", None), "max_position_embeddings", None)
+    max_pos = _model_context_window(model)
     token_budget = max_new_tokens if not max_pos else min(max_new_tokens, max_pos - prompt_len)
     if token_budget <= 0:
         return "(your message is too long for this model's context window)"
@@ -458,6 +593,14 @@ def _hf_generate(
         ended_at_fake_turn = truncated != text.strip()
         text = truncated
     if not text:
+        # Distinguish "it declined to say anything" from "the prompt never
+        # made it in": a prompt that encodes to a couple of tokens means the
+        # tokenizer, not the model, is what went wrong.
+        if prompt.strip() and prompt_len <= 4:
+            return (
+                "(the prompt encoded to almost nothing, so this model's tokenizer is likely "
+                "incomplete — delete the model from the Models tab and download it again)"
+            )
         return "(model returned an empty response)"
     # If it stopped only because it hit the cap (no natural end-of-turn token),
     # say so rather than ending mid-sentence with no explanation. Not when the
@@ -527,7 +670,12 @@ def _delete_hf_weights(repo_id: str) -> dict:
     return _model_cache_status(repo_id)
 
 
-def _chat_reply(model_id: str, message: str, attachments: list | None = None) -> str:
+def _chat_reply(
+    model_id: str,
+    message: str,
+    attachments: list | None = None,
+    history: list | None = None,
+) -> str:
     module = _load_model_module(model_id)
     repo_id = getattr(module, "_REPO_ID", None)
     gguf = getattr(module, "_GGUF_SOURCE", None)
@@ -544,7 +692,7 @@ def _chat_reply(model_id: str, message: str, attachments: list | None = None) ->
             except AttachmentError as exc:
                 return f"[{model_id}] {exc}"
         try:
-            return _hf_generate(repo_id, message, decoded_attachments=decoded)
+            return _hf_generate(repo_id, message, decoded_attachments=decoded, history=history)
         except Exception as exc:
             reply = f"[{model_id}] failed to generate: {exc}"
             if "CUDA error" in str(exc):
@@ -604,6 +752,7 @@ class _Handler(BaseHTTPRequestHandler):
             model = body.get("model")
             message = body.get("message", "")
             attachments = body.get("attachments") or []
+            history = body.get("history") or []
             valid_ids = {m["id"] for m in _list_models()}
 
             if model not in valid_ids:
@@ -614,7 +763,7 @@ class _Handler(BaseHTTPRequestHandler):
                 return
 
             try:
-                reply = _chat_reply(model, message, attachments)
+                reply = _chat_reply(model, message, attachments, history)
             except Exception as exc:
                 reply = f"[{model}] unexpected error: {exc}"
             self._send_json(200, {"reply": reply})

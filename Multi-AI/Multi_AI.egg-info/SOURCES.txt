@@ -33,8 +33,6 @@ Multi-AI/multi_ai/models/gemma3n_on_device.c
 Multi-AI/multi_ai/models/gemma_3_4b.c
 Multi-AI/multi_ai/models/gemma_3_4b_on_device.c
 Multi-AI/multi_ai/models/gemma_3n.c
-Multi-AI/multi_ai/models/gpt2.c
-Multi-AI/multi_ai/models/gpt2_on_device.c
 Multi-AI/multi_ai/models/gptOSS.c
 Multi-AI/multi_ai/models/llama3.c
 Multi-AI/multi_ai/models/llama3_1.c

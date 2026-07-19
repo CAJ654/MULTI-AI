@@ -175,6 +175,21 @@ class Attachment {
       };
 }
 
+/// One prior turn of a conversation, sent so the model can see what was
+/// already said. The UI shows a threaded chat, so without this the model
+/// would answer every message as if it were the first.
+class ChatTurn {
+  const ChatTurn({required this.isUser, required this.text});
+
+  final bool isUser;
+  final String text;
+
+  Map<String, dynamic> toWireJson() => {
+        'role': isUser ? 'user' : 'assistant',
+        'content': text,
+      };
+}
+
 /// Disk-cache state of a server-backed (`_REPO_ID`) model's weights, as
 /// reported by the Python backend's Hugging Face cache.
 class ServerModelCacheStatus {
@@ -234,6 +249,7 @@ class ApiClient {
     required String model,
     required String message,
     List<Attachment> attachments = const [],
+    List<ChatTurn> history = const [],
   }) async {
     // A dedicated client per chat request so cancelChat can abort it without
     // touching anything else.
@@ -248,6 +264,8 @@ class ApiClient {
           'message': message,
           if (attachments.isNotEmpty)
             'attachments': [for (final a in attachments) a.toWireJson()],
+          if (history.isNotEmpty)
+            'history': [for (final t in history) t.toWireJson()],
         }),
       );
       final data = jsonDecode(response.body) as Map<String, dynamic>;

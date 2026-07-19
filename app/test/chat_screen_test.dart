@@ -11,17 +11,23 @@ import 'package:multi_ai/on_device_engine.dart';
 
 /// Returns canned models instead of calling the real backend.
 class _FakeApiClient extends ApiClient {
-  _FakeApiClient(this.models, {Set<String>? notCachedIds}) : _notCachedIds = notCachedIds ?? const {};
+  _FakeApiClient(this.models, {Set<String>? notCachedIds, this.reply})
+      : _notCachedIds = notCachedIds ?? const {};
 
   final List<ModelInfo> models;
   final Set<String> _notCachedIds;
 
+  /// When set, sendChat resolves with this instead of hanging — needed by
+  /// tests that have to get past the first exchange.
+  final String? reply;
+
   @override
   Future<List<ModelInfo>> fetchModels() async => models;
 
-  /// Attachments from the last sendChat call, for asserting what actually
-  /// went out with a message.
+  /// Attachments and history from the last sendChat call, for asserting what
+  /// actually went out with a message.
   List<Attachment> lastAttachments = const [];
+  List<ChatTurn> lastHistory = const [];
 
   // Never resolves, so a send leaves the UI in the "thinking" state for the
   // test to inspect.
@@ -30,8 +36,12 @@ class _FakeApiClient extends ApiClient {
     required String model,
     required String message,
     List<Attachment> attachments = const [],
+    List<ChatTurn> history = const [],
   }) {
     lastAttachments = attachments;
+    lastHistory = history;
+    final canned = reply;
+    if (canned != null) return Future<String>.value(canned);
     return Completer<String>().future;
   }
 
@@ -136,7 +146,7 @@ void main() {
     _useDesktopSurface(tester);
 
     final fake = _FakeApiClient(const [
-      ModelInfo(id: 'gpt2', name: 'GPT-2'),
+      ModelInfo(id: 'test_model', name: 'Test Model'),
       ModelInfo(id: 'gptOSS', name: 'GPT-OSS 20B', gguf: 'hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf'),
     ]);
 
@@ -149,7 +159,7 @@ void main() {
 
     // Chat picker labels every entry with where it runs.
     expect(find.text('$onDeviceModelName (on-device)'), findsWidgets);
-    expect(find.text('GPT-2 (local server)'), findsWidgets);
+    expect(find.text('Test Model (local server)'), findsWidgets);
     expect(find.text('GPT-OSS 20B (on-device)'), findsWidgets);
   });
 
@@ -171,7 +181,7 @@ void main() {
     _useDesktopSurface(tester);
 
     final fake = _FakeApiClient(const [
-      ModelInfo(id: 'gpt2', name: 'GPT-2', params: '124M', sizeGb: 0.55),
+      ModelInfo(id: 'test_model', name: 'Test Model', params: '124M', sizeGb: 0.55),
     ]);
 
     await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
@@ -189,7 +199,7 @@ void main() {
     // in its closed state, so this may match more than just the tab's card.
     expect(find.text(onDeviceModelName), findsWidgets);
     expect(find.textContaining('$onDeviceModelParams params'), findsOneWidget);
-    expect(find.text('GPT-2'), findsOneWidget);
+    expect(find.text('Test Model'), findsOneWidget);
     expect(find.textContaining('124M params'), findsOneWidget);
 
     await tester.tap(find.text('Chat'));
@@ -203,8 +213,8 @@ void main() {
 
     final fake = _FakeApiClient(const [
       ModelInfo(
-        id: 'gpt2',
-        name: 'GPT-2',
+        id: 'test_model',
+        name: 'Test Model',
         params: '124M',
         sizeGb: 0.55,
         modality: 'Text',
@@ -221,7 +231,7 @@ void main() {
     await tester.tap(find.text('Models'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('GPT-2'));
+    await tester.tap(find.text('Test Model'));
     await tester.pumpAndSettle();
 
     expect(find.text('Modality'), findsOneWidget);
@@ -240,7 +250,7 @@ void main() {
   testWidgets('sending a message shows the thinking row without crashing', (tester) async {
     _useDesktopSurface(tester);
 
-    final fake = _FakeApiClient(const [ModelInfo(id: 'gpt2', name: 'GPT-2')]);
+    final fake = _FakeApiClient(const [ModelInfo(id: 'test_model', name: 'Test Model')]);
 
     await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
     await tester.pumpAndSettle();
@@ -249,7 +259,7 @@ void main() {
     // resolving) server model so the send goes through _api.sendChat.
     await tester.tap(find.byType(DropdownButton<ModelInfo>));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('GPT-2 (local server)').last);
+    await tester.tap(find.text('Test Model (local server)').last);
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'hello');
@@ -269,7 +279,7 @@ void main() {
 
     const missingGguf = 'hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf';
     final fake = _FakeApiClient(const [
-      ModelInfo(id: 'gpt2', name: 'GPT-2'),
+      ModelInfo(id: 'test_model', name: 'Test Model'),
       ModelInfo(id: 'gptOSS', name: 'GPT-OSS 20B', gguf: missingGguf),
     ]);
     final missingCacheKey = ModelSource.parse(missingGguf).cacheKey;
@@ -282,7 +292,7 @@ void main() {
     await tester.tap(find.byType(DropdownButton<ModelInfo>));
     await tester.pumpAndSettle();
     expect(find.text('$onDeviceModelName (on-device)'), findsWidgets);
-    expect(find.text('GPT-2 (local server)'), findsWidgets);
+    expect(find.text('Test Model (local server)'), findsWidgets);
     expect(find.text('GPT-OSS 20B (on-device)'), findsNothing);
 
     // Dismiss the still-open dropdown menu overlay before switching tabs.
@@ -363,6 +373,40 @@ void main() {
     expect(find.text('Gemma 3 4B (on-device)'), findsNothing);
   });
 
+  testWidgets('a follow-up message carries the earlier turns as history',
+      (tester) async {
+    _useDesktopSurface(tester);
+
+    final api = _FakeApiClient(
+      const [ModelInfo(id: 'test_model', name: 'Test Model')],
+      reply: 'Nice to meet you, Alex.',
+    );
+    await tester.pumpWidget(MaterialApp(
+      home: ChatScreen(apiClient: api, downloadManager: const _FakeDownloadManager()),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButton<ModelInfo>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Test Model (local server)').last);
+    await tester.pumpAndSettle();
+
+    // First message: nothing came before it, so history must be empty.
+    await tester.enterText(find.byType(TextField), 'My name is Alex.');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(api.lastHistory, isEmpty);
+
+    // Second message: both turns of the first exchange must go with it, in
+    // order. This is the bug that made every model look like it had amnesia.
+    await tester.enterText(find.byType(TextField), 'What is my name?');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(api.lastHistory.map((t) => t.text).toList(),
+        ['My name is Alex.', 'Nice to meet you, Alex.']);
+    expect(api.lastHistory.map((t) => t.isUser).toList(), [true, false]);
+  });
+
   // ------------------------------------------------- attachment input gating
 
   /// Pumps a chat screen whose picker holds [models], with the model named
@@ -397,8 +441,8 @@ void main() {
       (tester) async {
     await pumpWithModel(
       tester,
-      const [ModelInfo(id: 'gpt2', name: 'GPT-2')],
-      select: 'GPT-2',
+      const [ModelInfo(id: 'test_model', name: 'Test Model')],
+      select: 'Test Model',
     );
 
     expect(find.widgetWithIcon(IconButton, Icons.add), findsNothing);
@@ -537,7 +581,7 @@ void main() {
         name: 'Ministral 3 3B',
         inputModalities: ['text', 'image'],
       ),
-      ModelInfo(id: 'gpt2', name: 'GPT-2'),
+      ModelInfo(id: 'test_model', name: 'Test Model'),
     ]);
     await pumpWithModel(tester, api.models, select: 'Ministral 3 3B', api: api);
 
@@ -547,7 +591,7 @@ void main() {
 
     await tester.tap(find.byType(DropdownButton<ModelInfo>));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('GPT-2 (local server)').last);
+    await tester.tap(find.text('Test Model (local server)').last);
     await tester.pumpAndSettle();
 
     // Chip gone, attach button gone, and the user was told why.

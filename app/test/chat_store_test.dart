@@ -6,8 +6,8 @@ void main() {
   test('chat sessions survive a JSON round-trip', () {
     final session = ChatSession(title: 'Fun fact', messages: [
       const ChatMessage(text: 'Tell me a fun fact', isUser: true),
-      const ChatMessage(text: 'Rome had concrete.', isUser: false, sender: 'GPT-2'),
-      const ChatMessage(text: 'backend unreachable', isUser: false, sender: 'GPT-2', isError: true),
+      const ChatMessage(text: 'Rome had concrete.', isUser: false, sender: 'Falcon3'),
+      const ChatMessage(text: 'backend unreachable', isUser: false, sender: 'Falcon3', isError: true),
     ]);
 
     final restored = ChatSession.fromJson(session.toJson());
@@ -16,7 +16,7 @@ void main() {
     expect(restored.messages.length, 3);
     expect(restored.messages[0].text, 'Tell me a fun fact');
     expect(restored.messages[0].isUser, isTrue);
-    expect(restored.messages[1].sender, 'GPT-2');
+    expect(restored.messages[1].sender, 'Falcon3');
     expect(restored.messages[1].isError, isFalse);
     expect(restored.messages[2].isError, isTrue);
   });

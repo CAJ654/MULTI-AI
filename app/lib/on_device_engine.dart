@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:llamadart/llamadart.dart';
 
-import 'api_client.dart' show Attachment, AttachmentKind;
+import 'api_client.dart' show Attachment, AttachmentKind, ChatTurn;
 
 /// Built-in on-device model: small enough to download quickly and run on a
 /// phone. Always in the model list, even when the backend is unreachable.
@@ -33,6 +33,11 @@ const double _hardStopMinSizeGb = 4.0;
 /// model resident. Firing means the worker is wedged somewhere that never
 /// polls, and the reload cost is worth paying.
 const Duration _hardStopGrace = Duration(seconds: 3);
+
+/// Roughly 4096 tokens of prior conversation, at ~4 characters per token.
+/// Matches the server's `_MAX_HISTORY_TOKENS` so a chat behaves the same
+/// whichever side answers it.
+const int _historyCharBudget = 4096 * 4;
 
 /// Runs GGUF models locally via llamadart/llama.cpp — no server, and no
 /// network after a model's first download. Server-roster models can opt in
@@ -75,6 +80,7 @@ class OnDeviceEngine {
     double? sizeGb,
     String? mmproj,
     List<Attachment> attachments = const [],
+    List<ChatTurn> history = const [],
   }) async {
     // A previous stop() may still be winding down; two concurrent decode loops
     // on one engine would interleave their tokens.
@@ -89,7 +95,14 @@ class OnDeviceEngine {
 
     final sub = _engine!
         .create(
-          [_buildMessage(prompt, attachments)],
+          [
+            for (final turn in _fitHistory(history))
+              LlamaChatMessage.fromText(
+                role: turn.isUser ? LlamaChatRole.user : LlamaChatRole.assistant,
+                text: turn.text,
+              ),
+            _buildMessage(prompt, attachments),
+          ],
           // A cap, not a target — generation still stops at end-of-turn, so
           // short replies stay fast; this just avoids truncating long ones.
           params: const GenerationParams(maxTokens: 1024, temp: 0.7),
@@ -135,6 +148,31 @@ class OnDeviceEngine {
     } finally {
       _cancelActive = null;
     }
+  }
+
+  /// Trims the oldest turns so a long chat can't overrun the context window.
+  ///
+  /// Measured in characters, not tokens: there's no tokenizer on this side of
+  /// the boundary (llama.cpp owns it, behind the FFI), and roughly 4 characters
+  /// per token is close enough for a budget whose job is only to bound growth.
+  /// Deliberately conservative — overshooting costs a truncated reply, while
+  /// undershooting only costs a little recall.
+  List<ChatTurn> _fitHistory(List<ChatTurn> history) {
+    var budget = _historyCharBudget;
+    final kept = <ChatTurn>[];
+    // Walk backwards so the newest turns — the ones the reply depends on —
+    // are the ones that survive.
+    for (final turn in history.reversed) {
+      budget -= turn.text.length;
+      if (budget < 0) break;
+      kept.insert(0, turn);
+    }
+    // Never open on an assistant turn: a reply with no question above it
+    // reads as the model talking to itself.
+    while (kept.isNotEmpty && !kept.first.isUser) {
+      kept.removeAt(0);
+    }
+    return kept;
   }
 
   /// Builds the user turn. Plain text stays on the text-only constructor —

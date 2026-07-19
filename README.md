@@ -168,9 +168,24 @@ multi-ai-server
 
 > The `multi-ai-server` console script is created by the editable install. If its directory isn't on your PATH, use `python -c "from multi_ai.server import run; run()"` instead. A compiled extension module can't be launched as a script the way `python server.pyx` could, which is why there's a dedicated entry point.
 
-Every model under `models/` points at a real Hugging Face checkpoint: 24 declare a `_REPO_ID` and the server loads/generates with `transformers`, while 23 declare a `_GGUF_SOURCE` and run on-device in the app via llama.cpp instead. Most GGUF entries are `_on_device` siblings of a server model; `gptOSS` is the exception, GGUF-only, because the transformers path won't fit in RAM. Selecting a model in the chat UI downloads its weights on first use (seconds for `gpt2`, much longer for multi-billion-parameter models) and keeps it cached in memory afterward.
+Every model under `models/` points at a real Hugging Face checkpoint: 23 declare a `_REPO_ID` and the server loads/generates with `transformers`, while 22 declare a `_GGUF_SOURCE` and run on-device in the app via llama.cpp instead. Most GGUF entries are `_on_device` siblings of a server model; `gptOSS` is the exception, GGUF-only, because the transformers path won't fit in RAM. Selecting a model in the chat UI downloads its weights on first use (a minute or two for the 1–3B models, much longer for multi-billion-parameter ones) and keeps it cached in memory afterward.
 
 Gated model families (Llama, Gemma) need a Hugging Face access token: run `huggingface-cli login`, or set `HF_TOKEN` in the environment, before chatting with one.
+
+### Conversation history
+
+Each `/api/chat` request carries the prior turns as `history: [{role, content}, …]`, and the on-device path passes the same turns to llamadart as a list of `LlamaChatMessage`s. Both then build a multi-turn prompt.
+
+**This was broken until 2026-07-19** — every message was sent alone, so the model answered each one as if it were the first. The UI showed a thread, which made a stateless model look like it was hallucinating; the tell was a follow-up like "What is my name?" drawing a blank one turn after the name was given. It affected every model, not just weak ones.
+
+Long chats are trimmed rather than allowed to overflow:
+
+- The oldest turns are dropped first, so the newest exchange — the part the reply depends on — always survives.
+- The budget reserves room for the new message *and* the reply, so history can't crowd out the answer it was meant to inform.
+- Trimming never leaves an assistant turn first; a reply with no question above it reads as the model talking to itself.
+- Capped at 4096 tokens (`_MAX_HISTORY_TOKENS`) regardless of the model's advertised window: the 256K-context models can't practically attend that far in this much VRAM. The on-device side approximates the same cap in characters (~4/token), since the tokenizer lives behind llama.cpp's FFI.
+
+Error rows and "(response stopped)" placeholders are UI state and are excluded from what gets sent. Malformed history entries are dropped individually rather than failing the request.
 
 ### Image and audio input (multimodal models)
 
@@ -210,9 +225,13 @@ pip install timm                        # Gemma 3n specifically — its vision t
 
 When a model fails to load, the reply names the specific missing dependency. (It used to append "gated repos need HF_TOKEN" to *every* load failure, which sent you hunting for an auth problem when the real cause was a missing package.)
 
+Verified against real weights (2026-07-19): `ministral_3_3b` and `gemma3n` both read a generated test image correctly, and `gemma3n` processed a WAV without error. The audio check used a synthesized 440Hz tone rather than speech — that exercises decode → feature extraction → audio encoder end-to-end, but says nothing about transcription quality on real speech, which is still untested. On-device (mmproj) image input is also untested against real weights: the plumbing and gating have unit coverage, but no projector has actually been downloaded and run.
+
 `torchvision` must match your torch build — on CUDA 12.8, `pip install torchvision --index-url https://download.pytorch.org/whl/cu128`. Without it, image sends fail with "PixtralProcessor requires the Torchvision library".
 
 > **The Flutter app now needs Windows Developer Mode.** The image picker (`file_picker`) and recorder (`record`) are plugins, and Flutter's Windows desktop build symlinks plugin sources — so `flutter run -d windows` fails with "Building with plugins requires symlink support" until you run `start ms-settings:developers` and turn Developer Mode on (one-time). This is a change from before: the app previously avoided all plugins for exactly this reason (see the note in `chat_store.dart` about not using `path_provider`). Android/iOS builds are unaffected.
+
+> **Partial downloads used to fail silently.** Weights are loaded with `local_files_only=True` first (fast, and it dodges hub rate limits), but a half-finished cache satisfies that: the config JSON lands before the vocabulary, so a tokenizer loads *without error* and then encodes every token to `<unk>`. The prompt became one junk token, generation produced noise, and the reply was an unexplained "(model returned an empty response)" — which then repeated for the rest of the server's life, because the broken tokenizer was cached in memory. The server now sanity-checks a freshly loaded tokenizer, re-fetches from the hub if it's degenerate, and says so plainly if it still is.
 
 > If every HTTPS request fails with `CERTIFICATE_VERIFY_FAILED`, something on your machine (antivirus or a network proxy) is intercepting TLS with a non-standard root certificate. `pip install pip-system-certs` makes Python trust the Windows certificate store instead of its bundled list, which usually fixes it.
 
@@ -250,7 +269,10 @@ Verified working (each answered a test question correctly):
 - [x] `ministral_3_3b` — fixed by swapping to the bf16 `unsloth` mirror (official FP8 weights need Triton kernels that don't work on Windows)
 - [x] `llama_3_2_1b` — fixed by swapping to ungated `unsloth` mirror (4s)
 - [x] `qwen3_8b` — regression-checked (17s)
-- [x] `gpt2` — responds, but it's a 124M base model from 2019: rambling is inherent, now labeled "(base, no chat tuning)"
+- [x] ~~`gpt2`~~ — **removed 2026-07-19.** It responded, but a 124M base model from 2019 does text continuation, not conversation: it echoed the prompt back (`"hi"` → `"hi"`, `"What color is the sky"` → `"What color is the moon?"`) and otherwise rambled. Nothing to fix — it was mostly a source of output that looked like a bug. Both `gpt2.pyx` and `gpt2_on_device.pyx` deleted; `gptOSS` (GPT-OSS 20B) is unrelated and stays.
+- [x] `gemma1` — ungated `unsloth` mirror works (8s)
+- [x] `gemma3n` / `gemma_3n` — all three modalities confirmed (2026-07-19): text (14s), image (5s, correctly read a red circle), audio (3s). Needed `pip install timm` — its vision tower is a `TimmWrapperModel`, and without it the load failed with an error the server then mislabeled as a gating problem.
+- [x] `gemma_3_4b` — text (13s) and image (4s, correctly read the same test circle). Its first run returned "(model returned an empty response)": the weights were chatted with before the download finished, so `local_files_only=True` loaded a vocabulary-less tokenizer that encoded the whole prompt to one `<unk>`. See the partial-download guard below.
 
 2026-07-17: "only the on-device Qwen works" root-caused — gpt2 generated past
 its 1024-token position-embedding table (`max_new_tokens=1024` regardless of
@@ -262,7 +284,7 @@ deepseek_r1_distill_1_5b all answer correctly in one server run.
 
 Fix applied, not yet run (weights download on first use):
 
-- [ ] `gemma1/2/3/3n/_3_4b/_3n` — swapped to ungated `unsloth` mirrors (same proven mechanism as Llama)
+- [ ] `gemma2` / `gemma3` — ungated `unsloth` mirrors, same mechanism as the `gemma1`/`gemma3n`/`gemma_3_4b` set now verified above; these two just aren't downloaded yet
 - [ ] `llama3` / `llama3_1` / `llama3_2` / `llama_3_2_3b` — ungated mirrors
 - [ ] `ministral_3_8b` / `ministral_3_14b` — bf16 mirrors (3B variant verified)
 - [ ] `falcon_7b` — swapped to `falcon-7b-instruct` (base variant couldn't chat)
