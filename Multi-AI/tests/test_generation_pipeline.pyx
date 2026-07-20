@@ -103,6 +103,9 @@ class _FakeModel:
     def generate(self, **kwargs):
         if self._raise_exc:
             raise self._raise_exc
+        # Kept so tests can assert on what was actually passed to generate —
+        # pad_token_id and the reply budget are both decided by the caller.
+        self.last_kwargs = dict(kwargs)
         input_ids = kwargs["input_ids"]
         max_new_tokens = kwargs["max_new_tokens"]
         if self._reply_token_ids is not None:
@@ -402,12 +405,12 @@ def test_history_budget_reserves_room_for_the_reply():
     server = _server()
     tokenizer = _FakeTokenizer(prompt_ids=(1, 2, 3))  # 3-token prompt
     model = _FakeModel(_FakeConfig(max_position_embeddings=1024))
-    budget = server._history_budget(model, tokenizer, "hi", max_new_tokens=1000)
+    budget = server._history_budget(model, tokenizer, "hi", reply_reserve=1000)
     assert budget == 1024 - 3 - 1000
     # A window too small for prompt+reply leaves no room at all, rather than
     # going negative and being treated as unlimited.
     tiny = _FakeModel(_FakeConfig(max_position_embeddings=64))
-    assert server._history_budget(tiny, tokenizer, "hi", max_new_tokens=1000) == 0
+    assert server._history_budget(tiny, tokenizer, "hi", reply_reserve=1000) == 0
 
 
 if __name__ == "__main__":

@@ -297,16 +297,65 @@ def _model_context_window(model) -> int | None:
     return max_pos
 
 
-# Long-context models advertise windows (256K) far larger than the VRAM here
-# can actually attend over, so history is capped well below the true limit.
-# It's a memory ceiling, not an accuracy one — the newest turns always survive.
+# Both of these are VRAM ceilings, not model limits. Long-context models
+# advertise windows (256K) far larger than the KV cache this card can hold, so
+# neither the history nor the reply is allowed to grow to the advertised size.
+# Within these bounds every model gets as much of its own window as it has —
+# a 32K model is not held to what a 1K model can do, which is what a single
+# flat cap used to enforce.
+#
+# Raising these is the knob if replies still come back cut off; the cost is
+# KV-cache memory, which scales with (history + reply) x layers x heads, so a
+# large model feels an increase here far more than a small one does.
 _MAX_HISTORY_TOKENS = 4096
+_MAX_REPLY_TOKENS = 4096
 
 
-def _history_budget(model, tokenizer, prompt: str, max_new_tokens: int) -> int:
+def _reply_reserve(model, requested: int | None = None) -> int:
+    """How much of the window to hold back for the reply when trimming history.
+
+    Never more than half the window. Reserving the flat _MAX_REPLY_TOKENS
+    would zero out the history budget on any model whose window isn't much
+    bigger than that — a 4096-window model would keep no prior turns at all
+    and answer every message as if it were the first. Splitting the window
+    keeps both sides usable; the reply can still overrun this at generation
+    time, because by then the prompt is built and whatever the window has
+    left is genuinely free.
+    """
+    ceiling = _MAX_REPLY_TOKENS if requested is None else requested
+    window = _model_context_window(model)
+    if not window:
+        return ceiling
+    return min(ceiling, window // 2)
+
+
+def _reply_budget(max_pos: int | None, prompt_len: int, requested: int | None = None) -> int:
+    """How many tokens the reply may occupy.
+
+    Bounded by whatever is left of the model's context window after the
+    prompt, so a model with absolute position embeddings (GPT-2: 1024) can
+    never index off the end of its embedding table — that's a CUDA
+    device-side assert which corrupts GPU state for every model until the
+    server restarts, not a recoverable error.
+
+    Returns <= 0 when the prompt has already filled the window; the caller
+    reports that rather than calling generate().
+    """
+    ceiling = _MAX_REPLY_TOKENS if requested is None else requested
+    if not max_pos:
+        return ceiling
+    return min(ceiling, max_pos - prompt_len)
+
+
+def _history_budget(model, tokenizer, prompt: str, reply_reserve: int) -> int:
     """Tokens left for prior turns once the new message and the reply are
     accounted for. Reserving the reply up front is what stops a long history
-    from crowding out the answer it was supposed to inform."""
+    from crowding out the answer it was supposed to inform.
+
+    [reply_reserve] is the *ceiling* the reply might use, not what it will:
+    the real budget can't be known until the templated prompt exists, and
+    that can't be built until history is trimmed. Reserving the maximum keeps
+    that circularity from ever over-committing the window."""
     window = _model_context_window(model)
     if not window:
         return _MAX_HISTORY_TOKENS
@@ -314,7 +363,7 @@ def _history_budget(model, tokenizer, prompt: str, max_new_tokens: int) -> int:
         prompt_len = len(tokenizer(prompt)["input_ids"])
     except Exception:
         prompt_len = 0
-    return max(0, min(_MAX_HISTORY_TOKENS, window - prompt_len - max_new_tokens))
+    return max(0, min(_MAX_HISTORY_TOKENS, window - prompt_len - reply_reserve))
 
 
 def _compute_dtype(model):
@@ -541,10 +590,14 @@ def _get_or_load_hf_model(repo_id: str) -> tuple:
 # A cap, not a target: the model still stops early at its end-of-turn token,
 # so short answers stay fast. This just keeps long ones (lists, code) from
 # being truncated mid-sentence.
+#
+# [max_new_tokens] defaults to None meaning "as much as this model's own
+# window allows", up to _MAX_REPLY_TOKENS — pass an int only to cap a single
+# request below that.
 def _hf_generate(
     repo_id: str,
     prompt: str,
-    max_new_tokens: int = 1024,
+    max_new_tokens: int | None = None,
     decoded_attachments: list | None = None,
     history: list | None = None,
 ) -> str:
@@ -552,7 +605,7 @@ def _hf_generate(
     turns = _fit_history(
         tokenizer,
         _coerce_history(history),
-        _history_budget(model, tokenizer, prompt, max_new_tokens),
+        _history_budget(model, tokenizer, prompt, _reply_reserve(model, max_new_tokens)),
     )
     if decoded_attachments:
         # The processor owns both the chat template and the image/audio
@@ -569,20 +622,21 @@ def _hf_generate(
         decoder = tokenizer
         inputs = _build_inputs(tokenizer, prompt, turns).to(model.device)
     prompt_len = inputs["input_ids"].shape[1]
-    # Never generate past the model's context window. Models with absolute
-    # position embeddings (GPT-2: 1024) index off the end of the embedding
-    # table otherwise — a CUDA device-side assert that corrupts the whole
-    # process's GPU state, breaking every model until the server restarts.
-    max_pos = _model_context_window(model)
-    token_budget = max_new_tokens if not max_pos else min(max_new_tokens, max_pos - prompt_len)
+    token_budget = _reply_budget(_model_context_window(model), prompt_len, max_new_tokens)
     if token_budget <= 0:
         return "(your message is too long for this model's context window)"
+    # `or` would be wrong here: a pad id of 0 is both valid and falsy (Gemma's
+    # <pad> is 0), and silently swapping it for the eos id would make padded
+    # positions read as end-of-turn once batching exists.
+    pad_token_id = tokenizer.pad_token_id
+    if pad_token_id is None:
+        pad_token_id = tokenizer.eos_token_id
     output = model.generate(
         **inputs,
         max_new_tokens=token_budget,
         do_sample=True,
         temperature=0.7,
-        pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
+        pad_token_id=pad_token_id,
     )
     new_tokens = output[0][prompt_len:]
     text = decoder.decode(new_tokens, skip_special_tokens=True)
