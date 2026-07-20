@@ -11,11 +11,16 @@ import 'package:multi_ai/on_device_engine.dart';
 
 /// Returns canned models instead of calling the real backend.
 class _FakeApiClient extends ApiClient {
-  _FakeApiClient(this.models, {Set<String>? notCachedIds, this.reply})
+  _FakeApiClient(this.models, {Set<String>? notCachedIds, this.reply, this.deviceSpecs})
       : _notCachedIds = notCachedIds ?? const {};
 
   final List<ModelInfo> models;
   final Set<String> _notCachedIds;
+
+  /// Hardware for the Models-tab header. Null makes the fetch throw, standing
+  /// in for a backend too old to serve /api/device — the header is then
+  /// expected to be absent rather than to break the model list.
+  final DeviceSpecs? deviceSpecs;
 
   /// When set, sendChat resolves with this instead of hanging — needed by
   /// tests that have to get past the first exchange.
@@ -53,6 +58,13 @@ class _FakeApiClient extends ApiClient {
   @override
   Future<ServerModelCacheStatus> getServerModelCacheStatus(String modelId) async =>
       ServerModelCacheStatus(cached: !_notCachedIds.contains(modelId));
+
+  @override
+  Future<DeviceSpecs> fetchDeviceSpecs() async {
+    final specs = deviceSpecs;
+    if (specs == null) throw Exception('no /api/device on this backend');
+    return specs;
+  }
 }
 
 /// Stands in for llamadart's real file-backed cache manager so tests never
@@ -206,6 +218,66 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(FilledButton, 'New Chat'), findsOneWidget);
+  });
+
+  testWidgets('Models tab badges each model with how well this machine runs it', (tester) async {
+    _useDesktopSurface(tester);
+
+    final fake = _FakeApiClient(
+      const [
+        ModelInfo(
+          id: 'big_model',
+          name: 'Big Model',
+          sizeGb: 40,
+          fit: ModelFit(
+            rating: ModelFitRating.notRecommended,
+            reason: 'Needs about 12.7 GB of VRAM, more than this GPU.',
+          ),
+        ),
+        ModelInfo(
+          id: 'tight_model',
+          name: 'Tight Model',
+          sizeGb: 20,
+          fit: ModelFit(rating: ModelFitRating.possible, reason: 'It fits, but barely.'),
+        ),
+      ],
+      deviceSpecs: const DeviceSpecs(gpuName: 'Test GPU', vramGb: 11.94, ramGb: 31.38),
+    );
+
+    await tester.pumpWidget(MaterialApp(
+        home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Models'));
+    await tester.pumpAndSettle();
+
+    // Each rating is spelled out, not just coloured — colour alone isn't a
+    // readable signal, and the label is what a screen reader gets. The card
+    // uses the short form so it survives the narrow sidebar.
+    expect(find.text("Won't fit"), findsOneWidget);
+    expect(find.text('Possible'), findsOneWidget);
+    // The built-in on-device model is rated client-side, so it has one too.
+    expect(find.text('Optimal'), findsWidgets);
+
+    // The header names the hardware the verdicts were measured against.
+    expect(find.textContaining('Test GPU'), findsOneWidget);
+    expect(find.textContaining('11.9 GB VRAM'), findsOneWidget);
+  });
+
+  testWidgets('a backend without /api/device still lists models, just unbadged', (tester) async {
+    _useDesktopSurface(tester);
+
+    // deviceSpecs omitted -> the fetch throws. An older backend must cost the
+    // header, not the model list.
+    final fake = _FakeApiClient(const [ModelInfo(id: 'test_model', name: 'Test Model')]);
+
+    await tester.pumpWidget(MaterialApp(
+        home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Models'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Test Model'), findsOneWidget);
+    expect(find.textContaining('Your hardware'), findsNothing);
   });
 
   testWidgets('tapping a model card opens its detail page with the full spec', (tester) async {

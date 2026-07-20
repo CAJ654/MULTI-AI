@@ -99,6 +99,7 @@ class _FakeModel:
         self._reply_token_ids = reply_token_ids
         self._hit_cap = hit_cap
         self._raise_exc = raise_exc
+        self.last_kwargs = None
 
     def generate(self, **kwargs):
         if self._raise_exc:
@@ -411,6 +412,66 @@ def test_history_budget_reserves_room_for_the_reply():
     # going negative and being treated as unlimited.
     tiny = _FakeModel(_FakeConfig(max_position_embeddings=64))
     assert server._history_budget(tiny, tokenizer, "hi", reply_reserve=1000) == 0
+
+
+def test_reply_reserve_never_starves_history():
+    """Holding back the full reply ceiling would leave a 4096-window model no
+    room for prior turns at all, so every message would be answered as if it
+    were the first. The reserve is capped at half the window to prevent that."""
+    server = _server()
+    # Window equal to the reply ceiling: the naive reserve would take all of it.
+    model = _FakeModel(_FakeConfig(max_position_embeddings=server._MAX_REPLY_TOKENS))
+    assert server._reply_reserve(model) == server._MAX_REPLY_TOKENS // 2
+
+    tokenizer = _FakeTokenizer(prompt_ids=(1, 2, 3))
+    budget = server._history_budget(model, tokenizer, "hi", server._reply_reserve(model))
+    assert budget > 0
+
+    # A window far larger than the ceiling is bounded by the ceiling, not halved
+    # forever — this is the VRAM limit doing the work, not the window.
+    roomy = _FakeModel(_FakeConfig(max_position_embeddings=131072))
+    assert server._reply_reserve(roomy) == server._MAX_REPLY_TOKENS
+
+
+def test_reply_budget_scales_with_the_models_own_window():
+    """The point of the change: a long-context model is no longer held to what
+    a short-context one can do, while a small window still clamps hard."""
+    server = _server()
+    # 32K window, short prompt — the VRAM ceiling is what binds, not 1024.
+    assert server._reply_budget(32768, prompt_len=100) == server._MAX_REPLY_TOKENS
+    # GPT-2's 1024 table: bounded by what's left of the window, never past it.
+    assert server._reply_budget(1024, prompt_len=100) == 924
+    # An explicit per-request cap still wins when it's the smaller number.
+    assert server._reply_budget(32768, prompt_len=100, requested=64) == 64
+    # A prompt that fills the window yields nothing to generate with, rather
+    # than a negative budget that would read as unlimited.
+    assert server._reply_budget(1024, prompt_len=1024) == 0
+
+
+def test_pad_token_id_of_zero_is_not_swapped_for_eos(monkeypatch):
+    """A pad id of 0 is valid and falsy — Gemma's <pad> is 0. `or` would
+    discard it and pass eos instead, which makes padded positions read as
+    end-of-turn as soon as batching exists."""
+    model = _FakeModel(_FakeConfig(max_position_embeddings=4096))
+    server = _install_fakes(monkeypatch, model_factory=lambda **kw: model)
+    server._chat_reply("gemma1", "Hello")
+    assert model.last_kwargs["pad_token_id"] == 0
+
+    # With no pad token at all, falling back to eos is still correct.
+    model2 = _FakeModel(_FakeConfig(max_position_embeddings=4096))
+
+    def _no_pad(local_files_only):
+        tok = _FakeTokenizer()
+        tok.pad_token_id = None
+        return tok
+
+    server = _install_fakes(
+        monkeypatch,
+        model_factory=lambda **kw: model2,
+        tokenizer_factory=_no_pad,
+    )
+    server._chat_reply("gemma1", "Hello")
+    assert model2.last_kwargs["pad_token_id"] == 2
 
 
 if __name__ == "__main__":

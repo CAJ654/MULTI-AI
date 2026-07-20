@@ -82,7 +82,8 @@ MULTI-AI/
 ├── setup.py                       # Cython build — compiles every .pyx under Multi-AI/ to a .pyd/.so
 ├── Multi-AI/
 │   ├── multi_ai/                  # the importable Python package
-│   │   ├── server.pyx             # stdlib HTTP backend: /api/models, /api/chat, /api/hello
+│   │   ├── server.pyx             # stdlib HTTP backend: /api/models, /api/chat, /api/hello, /api/device
+│   │   ├── hardware.pyx           # GPU/RAM detection + per-model green/yellow/red fit ratings
 │   │   ├── server.c               #   └─ Cython-generated C (build input, regenerated)
 │   │   ├── server.cp314-win_amd64.pyd  #   └─ compiled module — what actually runs (git-ignored)
 │   │   ├── __init__.pyx           # package init (compiled like everything else)
@@ -161,7 +162,7 @@ Run a model directly (imports the compiled module and prints its metadata):
 python -c "import multi_ai.models.qwen3_8b as m; print(m.get_info())"
 ```
 
-Run the API server (serves `/api/hello`, `/api/models`, and `/api/chat` on `http://localhost:8000`, which the Flutter app's chat screen calls):
+Run the API server (serves `/api/hello`, `/api/models`, `/api/chat`, and `/api/device` on `http://localhost:8000`, which the Flutter app's chat screen calls):
 
 ```bash
 multi-ai-server
@@ -236,6 +237,30 @@ Verified against real weights (2026-07-19): `ministral_3_3b` and `gemma3n` both 
 
 > If every HTTPS request fails with `CERTIFICATE_VERIFY_FAILED`, something on your machine (antivirus or a network proxy) is intercepting TLS with a non-standard root certificate. `pip install pip-system-certs` makes Python trust the Windows certificate store instead of its bundled list, which usually fixes it.
 
+### Hardware fit ratings
+
+The roster spans 0.5B to 20B, and the difference between "this runs great" and "this downloads 12GB and then OOMs" isn't visible from a parameter count. So the backend sizes up the machine and rates every model against it, and the app colours each one:
+
+| Badge | Meaning |
+|---|---|
+| 🟢 **Optimal** | Fits with headroom — full GPU offload, room left for a long conversation |
+| 🟡 **Possible** | Runs, but tight on VRAM or partly CPU-bound. Usable, not fast |
+| 🔴 **Not recommended** | Doesn't fit, or only "fits" by running mostly on the CPU at unusable speed |
+| ⚪ **Unknown** | No CUDA GPU or unreadable memory total — a missing measurement, not a verdict |
+
+`multi_ai/hardware.pyx` does the sizing: RAM via stdlib (`GlobalMemoryStatusEx` on Windows, `sysconf` elsewhere) and VRAM via a **lazily imported** `torch` — listing models still works on a machine that never installed the heavy deps, it just rates everything "unknown". Results are surfaced as a `fit` object per model on `/api/models`, plus a `GET /api/device` endpoint the app uses to caption the Models tab with the hardware being judged against.
+
+The two run paths get **different formulas**, because `size_gb` means different things for each:
+
+- **`_REPO_ID` (server)** — `size_gb` is the fp16 checkpoint, but transformers loads it 4-bit, so the estimate is `size/4 × 1.15 + 1.2GB` workspace and compares against **VRAM only**. Rating a 7B on its 14.5GB fp16 size would wrongly condemn most of the roster.
+- **`_GGUF_SOURCE` (on-device)** — `size_gb` is already the quantized file, so `size × 1.1 + 0.8GB`. Three regimes: fits VRAM with headroom (full offload), fits but tight (llama.cpp drops layers), or spills to CPU.
+
+The CPU-spill cutoff is calibrated on the Wave 0 benchmarks above rather than guessed: `gptOSS` (12.11GB) technically *passes* on this machine — the GPU-layer ladder rescues it — at **0.1 tok/s**, 198s for one short reply, while `falcon2_11b_on_device` (6.85GB) full-offloads at a usable 4.3 tok/s. So a GGUF that overflows VRAM and exceeds ~10GB rates red, not yellow: **"it runs" and "you'd wait three minutes for a sentence" are different claims**, and only one of them should be green.
+
+Colour is never the only signal — every badge carries its text label and a one-line explanation in this machine's actual numbers ("Needs about 5.4 GB of your 11.9 GB VRAM — comfortable fit"), so the verdict is auditable rather than a mystery traffic light.
+
+> **Scope caveat.** Ratings describe the **backend machine**, including for on-device GGUF entries. That's correct when the app and server run on the same desktop (the current setup) but wrong once the app runs on a phone against a remote backend — a phone can't be judged by its server's GPU. Rating on-device entries against the *app's* hardware needs a device-side probe that doesn't exist yet.
+
 Run tests (from the `Multi-AI/` directory, where the pytest config and `conftest.py` live — and after building, since the tests import the compiled modules):
 
 ```bash
@@ -246,11 +271,21 @@ pytest -q
 
 - `tests/test_imports.pyx` — every `models/*.pyx` file compiles, imports, and declares `get_info()` plus a `_REPO_ID`/`_GGUF_SOURCE`.
 - `tests/test_model_roster.pyx` — the model list matches `models/*.pyx` both internally and through the live `GET /api/models` endpoint (what the Flutter dropdown actually calls).
+- `tests/test_hardware_fit.pyx` — the fit ratings behave: rated against *synthetic* specs (a 12GB card, a 4GB card, no GPU) so the result doesn't change with whichever machine runs the suite, plus a monotonicity property (a bigger model must never rate better than a smaller one) and a check that every listed model carries a rating.
 - `tests/test_model_downloads.pyx` — every declared `_REPO_ID`/`_GGUF_SOURCE` resolves on the Hugging Face Hub (metadata-only checks, no weights downloaded). Needs network; skips per-model on unreachable-Hub errors but fails on a genuinely broken/renamed source.
 
 ## TODO
 
-### Model status after the 2026-06-30 fix round
+### AI Orchestration Portion
+  - LangGraph
+  - Create the Orchestration Page
+  - 
+
+### AI Coding Tool Portion
+  - Look into models that are great at text output & coding
+  - Create coding page
+
+### Model status after the 2026-07-20 fix round
 
 Root causes found for the manual-test failures: (1) the server fed raw text
 instead of applying chat templates, so instruct models "continued" the prompt
@@ -270,10 +305,13 @@ Verified working (each answered a test question correctly):
 - [x] `ministral_3_3b` — fixed by swapping to the bf16 `unsloth` mirror (official FP8 weights need Triton kernels that don't work on Windows)
 - [x] `llama_3_2_1b` — fixed by swapping to ungated `unsloth` mirror (4s)
 - [x] `qwen3_8b` — regression-checked (17s)
-- [x] ~~`gpt2`~~ — **removed 2026-07-19.** It responded, but a 124M base model from 2019 does text continuation, not conversation: it echoed the prompt back (`"hi"` → `"hi"`, `"What color is the sky"` → `"What color is the moon?"`) and otherwise rambled. Nothing to fix — it was mostly a source of output that looked like a bug. Both `gpt2.pyx` and `gpt2_on_device.pyx` deleted; `gptOSS` (GPT-OSS 20B) is unrelated and stays.
+(`"hi"` → `"hi"`, `"What color is the sky"` → `"What color is the moon?"`) and otherwise rambled. Nothing to fix — it was mostly a source of output that looked like a bug. Both `gpt2.pyx` and `gpt2_on_device.pyx` deleted; `gptOSS` (GPT-OSS 20B) is unrelated and stays.
 - [x] `gemma1` — ungated `unsloth` mirror works (8s)
 - [x] `gemma3n` / `gemma_3n` — all three modalities confirmed (2026-07-19): text (14s), image (5s, correctly read a red circle), audio (3s). Needed `pip install timm` — its vision tower is a `TimmWrapperModel`, and without it the load failed with an error the server then mislabeled as a gating problem.
 - [x] `gemma_3_4b` — text (13s) and image (4s, correctly read the same test circle). Its first run returned "(model returned an empty response)": the weights were chatted with before the download finished, so `local_files_only=True` loaded a vocabulary-less tokenizer that encoded the whole prompt to one `<unk>`. See the partial-download guard below.
+- [x] `gemma2` / `gemma3` — ungated `unsloth` mirrors, same mechanism as the `gemma1`/`gemma3n`/`gemma_3_4b` set now verified above; these two just aren't downloaded yet
+- [x] `gptOSS` (GPT-OSS 20B) — rerouted to run **on-device** via llama.cpp GGUF (native MXFP4, 12.11GB download on first chat); via transformers it
+- [x] `falcon_7b` — swapped to `falcon-7b-instruct` (base variant couldn't chat)
 
 2026-07-17: "only the on-device Qwen works" root-caused — gpt2 generated past
 its 1024-token position-embedding table (`max_new_tokens=1024` regardless of
@@ -285,11 +323,10 @@ deepseek_r1_distill_1_5b all answer correctly in one server run.
 
 Fix applied, not yet run (weights download on first use):
 
-- [ ] `gemma2` / `gemma3` — ungated `unsloth` mirrors, same mechanism as the `gemma1`/`gemma3n`/`gemma_3_4b` set now verified above; these two just aren't downloaded yet
+
 - [ ] `llama3` / `llama3_1` / `llama3_2` / `llama_3_2_3b` — ungated mirrors
 - [ ] `ministral_3_8b` / `ministral_3_14b` — bf16 mirrors (3B variant verified)
-- [ ] `falcon_7b` — swapped to `falcon-7b-instruct` (base variant couldn't chat)
-- [x] `gptOSS` (GPT-OSS 20B) — rerouted to run **on-device** via llama.cpp GGUF (native MXFP4, 12.11GB download on first chat); via transformers it dequantizes to ~40GB, more than this machine's RAM. Duplicate `GPTOSSS20b.pyx` removed (2026-07-18: its orphaned `__pycache__/GPTOSSS20b.cpython-314.pyc` was still tracked in git; untracked and deleted). Server side verified 2026-07-18: roster lists it as available with `gguf` set and no `_REPO_ID`, `/api/chat` correctly defers to the app, and `ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf` resolves and is **ungated** (no `HF_TOKEN` needed). **On-device generation verified 2026-07-19** — first attempt failed with `Failed to create context`: llamadart defaults to `gpuLayers: 999`, so all layers went to the GPU, the 11.28GB of weights fit inside 11.66GB of free VRAM, and nothing was left for the KV cache or compute buffers. llama.cpp reports that as a context-creation failure *after* a successful model load, which reads like a corrupt download. Fixed with a GPU-offload backoff ladder in `OnDeviceEngine._ensureLoaded` (`app/lib/on_device_engine.dart`) — it retries with progressively fewer offloaded layers, and small models still succeed on the first (full-offload) attempt unchanged.
+ dequantizes to ~40GB, more than this machine's RAM. Duplicate `GPTOSSS20b.pyx` removed (2026-07-18: its orphaned `__pycache__/GPTOSSS20b.cpython-314.pyc` was still tracked in git; untracked and deleted). Server side verified 2026-07-18: roster lists it as available with `gguf` set and no `_REPO_ID`, `/api/chat` correctly defers to the app, and `ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf` resolves and is **ungated** (no `HF_TOKEN` needed). **On-device generation verified 2026-07-19** — first attempt failed with `Failed to create context`: llamadart defaults to `gpuLayers: 999`, so all layers went to the GPU, the 11.28GB of weights fit inside 11.66GB of free VRAM, and nothing was left for the KV cache or compute buffers. llama.cpp reports that as a context-creation failure *after* a successful model load, which reads like a corrupt download. Fixed with a GPU-offload backoff ladder in `OnDeviceEngine._ensureLoaded` (`app/lib/on_device_engine.dart`) — it retries with progressively fewer offloaded layers, and small models still succeed on the first (full-offload) attempt unchanged.
 
 ### On-device GGUF verification (2026-07-19 – 2026-07-20, in progress)
 
@@ -496,7 +533,8 @@ Removed (2026-07-17: all models previously marked "unavailable" were deleted fro
   - The Transparency Log phrases are templated (`{query}`/`{model}` placeholders filled via `fillThinkingTemplate()`) so they narrate the actual in-flight request — e.g. `Searching for "what's the capital of..."…` / `Assembling Qwen2.5 0.5B's response…` — instead of generic text; the settings dialog shows a generic filled-in preview since it has no live request to reference
   - Regression-tested: `late` fields whose initializer reads themselves (as the original phrase-picker did, to avoid repeating a phrase) don't throw — they silently corrupt the value — so `app/test/chat_screen_test.dart`'s "sending a message shows the thinking row without crashing" test drives an actual send to catch that class of bug
 - [x] Expand on-device support to more/larger models with GGUF builds (mirroring the server's `_REPO_ID` roster) — 22 of the 24 server models now have an on-device `_GGUF_SOURCE` sibling (Q4_K_M). Skipped only where no clean llama.cpp GGUF exists: `gemma_3n`/`llama3_2` are duplicate stems already covered by `gemma3n`/`llama_3_2_3b`; every other model has a sibling.
-- [ ] Add a model-download size/progress indicator before committing a phone's storage — the roster now includes 8–14B on-device entries (Ministral 3 14B, Mistral Nemo 12B, Falcon2 11B) that are desktop-viable but too big for most phones, so surfacing size/device-fit before download matters more now
+- [x] Surface **device fit** before download — every model card and detail page now carries a green/yellow/red badge saying whether this machine can run it, so an 8–14B entry can't quietly cost a multi-gigabyte download that ends in an OOM. See "Hardware fit ratings" above (`multi_ai/hardware.pyx`, `GET /api/device`, `app/lib/model_fit_badge.dart`)
+- [ ] Add a model-download **progress** indicator to go with it — the size is now shown up front, but a first-time download still gives no feedback while it runs
 - [ ] Decide if/how `multi_ai.server`'s model roster and the on-device roster should be unified (e.g. one config listing both a `_REPO_ID` for the server and a GGUF source for on-device, per model)
 
 ## TODO: Core + add-on architecture

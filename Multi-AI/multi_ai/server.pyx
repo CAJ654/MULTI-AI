@@ -40,6 +40,8 @@ import tempfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from multi_ai import hardware
+
 _MODELS_DIR = Path(__file__).resolve().parent / "models"
 # TensorFlow/pytorch are framework helper stubs, not chat models.
 _EXCLUDED_STEMS = {"__init__", "TensorFlow", "pytorch"}
@@ -76,6 +78,9 @@ def _input_modalities(module) -> tuple:
 
 
 def _list_models() -> list[dict]:
+    # Probed once per listing, not once per model: every entry is rated against
+    # the same machine, and detection lazily initializes CUDA.
+    specs = hardware.detect_specs()
     entries = []
     for path in sorted(_MODELS_DIR.glob("*.pyx")):
         stem = path.stem
@@ -116,6 +121,13 @@ def _list_models() -> list[dict]:
             entry["params"] = info["params"]
         if info.get("size_gb"):
             entry["size_gb"] = info["size_gb"]
+        # Can this machine actually run it? A GGUF entry is rated against the
+        # llama.cpp path (VRAM, else CPU + RAM), a repo against the 4-bit
+        # transformers path (VRAM only). Absent when size_gb isn't annotated.
+        if available:
+            fit = hardware.rate_model(info.get("size_gb"), runs_on_device=bool(gguf), specs=specs)
+            if fit:
+                entry["fit"] = fit
         if info.get("modality"):
             entry["modality"] = info["modality"]
         if info.get("context_tokens"):
@@ -789,6 +801,8 @@ class _Handler(BaseHTTPRequestHandler):
             self._send_json(200, {"message": "Hello from the Multi-AI Cython backend"})
         elif self.path == "/api/models":
             self._send_json(200, {"models": _list_models()})
+        elif self.path == "/api/device":
+            self._send_json(200, hardware.detect_specs())
         elif cache_match:
             self._handle_model_route(cache_match.group(1), _model_cache_status)
         else:

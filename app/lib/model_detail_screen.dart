@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:llamadart/llamadart.dart';
 
 import 'api_client.dart';
+import 'model_fit_badge.dart';
 import 'theme.dart';
 
 /// Full-page breakdown of a single model, pushed when its card is tapped in
@@ -276,6 +277,7 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildStatsRow(),
+                _buildFitSection(),
                 const SizedBox(height: 24),
                 _buildInstallSection(),
                 _buildServerInstallSection(),
@@ -326,6 +328,54 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
         const SizedBox(width: 12),
         Expanded(child: _buildStatTile('Context', _formatContext(model.contextTokens))),
       ],
+    );
+  }
+
+  /// The "should I download this?" answer, directly under the stats and above
+  /// the download button — the one place the user decides to spend the
+  /// multi-gigabyte transfer.
+  Widget _buildFitSection() {
+    final fit = widget.model.fit;
+    if (fit == null) return const SizedBox.shrink();
+    final color = fitColor(fit.rating);
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            switch (fit.rating) {
+              ModelFitRating.optimal => Icons.check_circle_outline,
+              ModelFitRating.possible => Icons.warning_amber_outlined,
+              ModelFitRating.notRecommended => Icons.block_outlined,
+              ModelFitRating.unknown => Icons.help_outline,
+            },
+            size: 18,
+            color: color,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'On your hardware: ${fit.rating.label}',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+                ),
+                const SizedBox(height: 4),
+                Text(fit.reason,
+                    style: const TextStyle(fontSize: 12, height: 1.45, color: Colors.white70)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

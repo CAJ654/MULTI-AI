@@ -8,6 +8,7 @@ import 'api_client.dart';
 import 'attachment_input.dart';
 import 'chat_store.dart';
 import 'model_detail_screen.dart';
+import 'model_fit_badge.dart';
 import 'on_device_engine.dart';
 import 'theme.dart';
 import 'thinking_indicator.dart';
@@ -125,6 +126,11 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _recording = false;
 
   List<ModelInfo> _models = [];
+
+  /// The backend machine's hardware, shown atop the Models tab so the fit
+  /// badges say what they were measured against. Null until it loads, and on
+  /// a backend too old to report it.
+  DeviceSpecs? _deviceSpecs;
   // Ids of models whose weights are actually present — on-device cache hit,
   // or the backend's HF cache reports one. The chat picker only offers these:
   // selecting an undownloaded model would otherwise silently kick off a
@@ -225,6 +231,14 @@ class _ChatScreenState extends State<ChatScreen> {
       id: onDeviceModelId,
       name: onDeviceModelName,
       available: true,
+      // Rated here rather than by the backend, which doesn't know about this
+      // entry: at half a gigabyte it clears any machine that can run the app,
+      // so the verdict doesn't depend on the specs we may not have yet.
+      fit: ModelFit(
+        rating: ModelFitRating.optimal,
+        reason: 'Half a gigabyte — runs comfortably on any machine that runs this app.',
+        needsGb: onDeviceModelSizeGb,
+      ),
       params: onDeviceModelParams,
       sizeGb: onDeviceModelSizeGb,
       modality: onDeviceModelModality,
@@ -236,6 +250,15 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final serverModels = await _api.fetchModels();
       setState(() => _models = [onDeviceModel, ...serverModels]);
+      // Context for the fit badges: which machine they were judged against.
+      // Best-effort — an older backend has no /api/device, and a missing
+      // header is a much smaller loss than a failed model list.
+      try {
+        final specs = await _api.fetchDeviceSpecs();
+        if (mounted) setState(() => _deviceSpecs = specs);
+      } catch (_) {
+        // Leave the header off.
+      }
     } catch (e) {
       setState(() {
         _models = [onDeviceModel];
@@ -840,10 +863,52 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
     }
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      itemCount: _models.length,
-      itemBuilder: (context, i) => _buildModelCard(_models[i]),
+    final specs = _deviceSpecs;
+    return Column(
+      children: [
+        if (specs != null) _buildDeviceSummary(specs),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            itemCount: _models.length,
+            itemBuilder: (context, i) => _buildModelCard(_models[i]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Header naming the hardware every fit badge below was judged against —
+  /// without it, a card reading "Not recommended" gives no way to tell whether
+  /// the app misjudged the machine or the model is genuinely too big.
+  Widget _buildDeviceSummary(DeviceSpecs specs) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.memory_outlined, size: 16, color: Colors.deepPurple.shade200),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Your hardware',
+                    style: TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white70)),
+                const SizedBox(height: 2),
+                Text(specs.summary,
+                    style: const TextStyle(fontSize: 11, color: Colors.white38)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -892,9 +957,26 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(m.name,
-                          style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
+                      Row(
+                        children: [
+                          // The name yields first: in a ~184px sidebar a long
+                          // name would otherwise wrap to three lines or shove
+                          // the badge off the edge.
+                          Flexible(
+                            child: Text(m.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white)),
+                          ),
+                          if (m.fit != null) ...[
+                            const SizedBox(width: 6),
+                            ModelFitBadge(fit: m.fit!, compact: true),
+                          ],
+                        ],
+                      ),
                       if (details.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(details, style: const TextStyle(fontSize: 12, color: Colors.white54)),

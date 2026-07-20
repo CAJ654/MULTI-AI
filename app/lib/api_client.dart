@@ -34,11 +34,104 @@ final String apiBaseUrl = () {
   return 'http://localhost:8000';
 }();
 
+/// How well a model suits the machine it would run on, as judged by the
+/// backend's `multi_ai.hardware` against its VRAM and RAM.
+enum ModelFitRating {
+  /// Comfortable fit — runs with headroom to spare.
+  optimal,
+
+  /// It runs, but tight on memory or forced onto the CPU: expect it to be
+  /// slow, or to struggle once the conversation gets long.
+  possible,
+
+  /// Doesn't fit. Downloading it means an out-of-memory failure at load.
+  notRecommended,
+
+  /// The backend couldn't size up this machine (no CUDA GPU, or an
+  /// unreadable memory total), so no claim is made either way.
+  unknown;
+
+  static ModelFitRating parse(String? raw) => switch (raw) {
+        'optimal' => ModelFitRating.optimal,
+        'possible' => ModelFitRating.possible,
+        'not_recommended' => ModelFitRating.notRecommended,
+        _ => ModelFitRating.unknown,
+      };
+
+  /// Full label, for the detail page where there's room for it.
+  String get label => switch (this) {
+        ModelFitRating.optimal => 'Optimal',
+        ModelFitRating.possible => 'Possible',
+        ModelFitRating.notRecommended => 'Not recommended',
+        ModelFitRating.unknown => 'Unknown',
+      };
+
+  /// Label for the badge on a model card. The sidebar is ~184px wide, and
+  /// "Not recommended" next to a model name overflows it — so the crowded
+  /// case gets a shorter word rather than losing its text and leaving colour
+  /// as the only signal.
+  String get shortLabel => switch (this) {
+        ModelFitRating.notRecommended => "Won't fit",
+        _ => label,
+      };
+}
+
+/// The backend's verdict on running one model on this machine.
+class ModelFit {
+  const ModelFit({required this.rating, required this.reason, this.needsGb});
+
+  final ModelFitRating rating;
+
+  /// One sentence explaining the rating in terms of this machine's actual
+  /// memory — shown as the badge tooltip and on the model detail page.
+  final String reason;
+
+  /// Estimated peak memory the model needs to run, in GB.
+  final double? needsGb;
+
+  factory ModelFit.fromJson(Map<String, dynamic> json) {
+    return ModelFit(
+      rating: ModelFitRating.parse(json['rating'] as String?),
+      reason: json['reason'] as String? ?? '',
+      needsGb: (json['needs_gb'] as num?)?.toDouble(),
+    );
+  }
+}
+
+/// The backend machine's hardware, as reported by `/api/device`.
+class DeviceSpecs {
+  const DeviceSpecs({this.gpuName, this.vramGb, this.ramGb});
+
+  final String? gpuName;
+  final double? vramGb;
+  final double? ramGb;
+
+  /// One-line summary for the Models tab header, e.g.
+  /// `"NVIDIA GeForce RTX 5070 Ti • 12.0 GB VRAM • 32.0 GB RAM"`.
+  String get summary {
+    final parts = [
+      ?gpuName,
+      if (vramGb != null) '${vramGb!.toStringAsFixed(1)} GB VRAM',
+      if (ramGb != null) '${ramGb!.toStringAsFixed(1)} GB RAM',
+    ];
+    return parts.isEmpty ? 'Hardware unknown' : parts.join(' • ');
+  }
+
+  factory DeviceSpecs.fromJson(Map<String, dynamic> json) {
+    return DeviceSpecs(
+      gpuName: json['gpu_name'] as String?,
+      vramGb: (json['vram_gb'] as num?)?.toDouble(),
+      ramGb: (json['ram_gb'] as num?)?.toDouble(),
+    );
+  }
+}
+
 class ModelInfo {
   const ModelInfo({
     required this.id,
     required this.name,
     this.available = true,
+    this.fit,
     this.gguf,
     this.mmproj,
     this.params,
@@ -57,6 +150,11 @@ class ModelInfo {
   /// Whether this entry actually declares a `_REPO_ID` or `_GGUF_SOURCE` —
   /// false for stub/broken model files, which can't run or manage weights.
   final bool available;
+
+  /// Whether this machine can comfortably run the model. Null for unavailable
+  /// entries, for models with no annotated `size_gb`, and for the app's
+  /// built-in on-device model (which never round-trips through the backend).
+  final ModelFit? fit;
 
   /// llama.cpp model source (e.g. `hf://owner/repo/file.gguf`). When set,
   /// the app runs this model on-device instead of calling the server.
@@ -124,6 +222,10 @@ class ModelInfo {
       id: json['id'] as String,
       name: json['name'] as String,
       available: json['available'] as bool? ?? true,
+      // Absent on an older backend that predates hardware rating.
+      fit: json['fit'] == null
+          ? null
+          : ModelFit.fromJson(json['fit'] as Map<String, dynamic>),
       gguf: json['gguf'] as String?,
       mmproj: json['mmproj'] as String?,
       params: json['params'] as String?,
@@ -164,6 +266,13 @@ class ApiClient {
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     final models = data['models'] as List<dynamic>;
     return models.map((m) => ModelInfo.fromJson(m as Map<String, dynamic>)).toList();
+  }
+
+  /// The backend machine's GPU and memory — what every model's [ModelInfo.fit]
+  /// rating was judged against.
+  Future<DeviceSpecs> fetchDeviceSpecs() async {
+    final response = await http.get(Uri.parse('$apiBaseUrl/api/device'));
+    return DeviceSpecs.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   /// Whether a server-backed model's weights are already in the backend
