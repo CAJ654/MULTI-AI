@@ -49,7 +49,8 @@ That prints a number (the PID).
 Stop-Process -Id <PID> -Force
 
 3. Restart it (the backend is compiled — run the entry point, not the .pyx):
-cd "c:/Users/cajga/Documents/GitHub/MULTI-AI/Multi-AI" && python -c "from multi_ai.server import run; run()"
+cd "c:/Users/cajga/Documents/GitHub/MULTI-AI/Multi-AI"
+python -c "from multi_ai.server import run; run()"
 
 multi-ai-server
 (equivalently: `python -c "from multi_ai.server import run; run()"`. If you changed any .pyx, rebuild first — see Python Backend below.)
@@ -289,6 +290,192 @@ Fix applied, not yet run (weights download on first use):
 - [ ] `ministral_3_8b` / `ministral_3_14b` — bf16 mirrors (3B variant verified)
 - [ ] `falcon_7b` — swapped to `falcon-7b-instruct` (base variant couldn't chat)
 - [x] `gptOSS` (GPT-OSS 20B) — rerouted to run **on-device** via llama.cpp GGUF (native MXFP4, 12.11GB download on first chat); via transformers it dequantizes to ~40GB, more than this machine's RAM. Duplicate `GPTOSSS20b.pyx` removed (2026-07-18: its orphaned `__pycache__/GPTOSSS20b.cpython-314.pyc` was still tracked in git; untracked and deleted). Server side verified 2026-07-18: roster lists it as available with `gguf` set and no `_REPO_ID`, `/api/chat` correctly defers to the app, and `ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf` resolves and is **ungated** (no `HF_TOKEN` needed). **On-device generation verified 2026-07-19** — first attempt failed with `Failed to create context`: llamadart defaults to `gpuLayers: 999`, so all layers went to the GPU, the 11.28GB of weights fit inside 11.66GB of free VRAM, and nothing was left for the KV cache or compute buffers. llama.cpp reports that as a context-creation failure *after* a successful model load, which reads like a corrupt download. Fixed with a GPU-offload backoff ladder in `OnDeviceEngine._ensureLoaded` (`app/lib/on_device_engine.dart`) — it retries with progressively fewer offloaded layers, and small models still succeed on the first (full-offload) attempt unchanged.
+
+### On-device GGUF verification (2026-07-19 – 2026-07-20, in progress)
+
+Separate from the list above, which is scoped to the server/`transformers` path
+— an entry there means "answered correctly via the Python backend", which is a
+different claim from "loads and generates through llamadart on-device".
+
+Run headless, no GUI and no server, from `app/`:
+
+```
+dart run tool/verify_on_device.dart --preflight   # cache status, downloads nothing
+dart run tool/verify_on_device.dart --wave 0      # cached models only
+```
+
+`tool/verify_on_device.dart` drives the real `OnDeviceEngine` — the same code
+path the app uses, including the GPU-offload ladder and the mmproj projector —
+rather than a reimplementation that could drift. It parses the roster out of
+`Multi-AI/multi_ai/models/*.pyx` so there is one source of truth, and flushes
+results to `tool/.verify_results.json` after every model so a native crash
+costs one result rather than the run. `--report` reprints the table without
+re-running anything.
+
+This was possible only because llamadart uses Dart **native assets/build
+hooks** rather than a Flutter plugin, so `dart run` resolves the DLLs from
+`app/.dart_tool/lib`. (Never run `dart pub get` in `app/` — the SDK-sourced
+Flutter dep won't resolve and a partial `.dart_tool/` rewrite destroys that
+state. Use `flutter pub get`.)
+
+**A `pass` means the model loaded and generated coherent, non-echoing text —
+not that it answered correctly.** Several roster models are base models that
+ramble or emit `<think>` blocks; gating on answer content would measure model
+quality instead of whether the stack works. The keyword check is recorded but
+non-gating.
+
+**Wave 0 — 4 of 4 passed** (already-cached models, zero downloads):
+
+| Model | GB | GPU layers | First token | Gen | tok/s | Verdict | Reply |
+|---|---|---|---|---|---|---|---|
+| `gptOSS` | 12.11 | **12** | 40.9s | 198.5s | **0.1** | pass | `<\|channel\|>analysis<\|message\|>The user asks…` |
+| `falcon2_11b_on_device` | 6.85 | 999 | 10.8s | 11.5s | 4.3 | pass | The capital city of France is Paris. |
+| `gemma4_e2b_on_device` | 3.11 | 999 | 7.2s | 7.9s | 25.1 | pass | The capital of France is Paris. |
+| `gemma3n_on_device` | 3.03 | 999 | 7.3s | 8.3s | 2.9 | pass | The capital of France is Paris. |
+| Qwen2.5 0.5B (built-in) | 0.49 | 999 | 5.8s | 6.3s | 6.3 | pass | Paris is the capital city of France. |
+
+(`gemma4_e2b` and the pre-0.8.16 numbers aren't directly comparable — everything
+above `gemma4_e2b` was measured on llamadart 0.8.11 and would likely be faster
+re-run today. Only Gemma 4 has been measured on `b9982`.)
+
+The **GPU layers** column is the practical output of the exercise — it records
+which rung of the `_gpuLayerLadder` each model needed. Three findings:
+
+- **`falcon2_11b` full-offloads at 999.** 6.85GB fits comfortably beside its own
+  runtime allocations in ~11.7GB, at a usable 4.3 tok/s. Since every remaining
+  7–9B entry is 4.4–5.2GB at Q4_K_M, they should all full-offload too — this one
+  zero-download data point de-risks that whole wave.
+- **`gptOSS` passes but is not practically usable.** The ladder rescues it from
+  the `Failed to create context` crash by dropping to 12 layers, but that means
+  most of a 20B MoE runs on CPU: **0.1 tok/s**, 40.9s to first token, 198.5s for
+  one short reply. "Working" and "usable" are different claims and this is the
+  gap between them. Anything that makes it faster costs context or quality
+  (smaller `contextSize` to buy back offload room, or a smaller quant).
+- **The backend is Vulkan, not CUDA.** llamadart's prebuilt Windows bundle
+  drives the RTX 5070 Ti through `ggml-vulkan.dll`. The VRAM arithmetic is
+  unchanged, but the ladder is backing off *Vulkan* offload, and its allocator
+  behaves differently under pressure than CUDA's.
+
+**`gptOSS` leaks its harmony format into the reply.** The raw output begins
+`<|channel|>analysis<|message|>…` — the app has no parser for GPT-OSS's channel
+scaffolding, so a user would see that reasoning-channel markup verbatim in the
+chat bubble. The harness strips `<|…|>` before judging, which is why it still
+scores a pass; the *display* path has no such stripping. Unfiled — needs either
+a harmony parser or a channel filter in `chat_screen.dart`, alongside the
+existing `<think>`-stripping the server does.
+
+**Falcon 7B Instruct on-device fixed and verified (2026-07-20).** It was
+prefixing every reply with a wall of `<|im_start|>calculate` / `<|im_start|>while
+loop` junk, then — mid-investigation — echoing the question back, leaking a
+trailing `<|im_end|>`, and returning empty after the first turn. All of it was
+one cause: `maddes8cht/tiiuae-falcon-7b-instruct-gguf` ships **no
+`tokenizer.chat_template`**, so llama.cpp falls back to ChatML. Falcon-7B-Instruct
+predates ChatML and was trained on a bare `User:`/`Assistant:` transcript; fed
+`<|im_start|>` it has no `<|im_end|>` token to stop on and degenerates into
+repeating `<|im_start|>assistant` forever.
+
+The trap is that **`ModelParams.chatTemplate` does not fix this** — it is
+silently ineffective on the path the app uses. `LlamaEngine.create()` renders its
+prompt Dart-side in `ChatTemplateRenderer`, which reads `tokenizer.chat_template`
+straight out of the GGUF metadata and never consults the model params.
+(`llama_cpp_service`'s `applyChatTemplate` *does* honour them, but `create()`
+doesn't go through it.) Setting it looks correct, analyzes clean, and changes
+nothing.
+
+The fix is a `_quirksBySource` table in `app/lib/on_device_engine.dart`: a
+quirked model bypasses chat templating entirely and takes llamadart's low-level
+`engine.generate(rawPrompt)` with the transcript built in Dart. Non-quirked
+models take the original `create()` path untouched; both feed one shared
+`Stream<String>`, so buffering, `onToken`, and cancellation are common.
+
+Two things worth carrying forward to the next model that misbehaves like this:
+
+- **Declaring a stop sequence does not keep its text out of the reply.**
+  llama.cpp's decode loop `yield`s each token's bytes downstream *before* testing
+  them against the stop list, and never retracts — so the text that triggered the
+  stop is always already in the buffer. `OnDeviceEngine._trimStopMarker` strips a
+  trailing match; this is independent of the templating question and applies to
+  any model given stop sequences.
+- **Dump the rendered prompt before theorising.** Four rounds of plausible
+  fixes were aimed at the wrong layer because the prompt was assumed rather than
+  inspected; one throwaway script printing the prompt and the raw bytes settled
+  it immediately. `engine.chatTemplate(messages)` returns the exact string.
+
+Verified end-to-end through `OnDeviceEngine` (not a reimplementation), three
+turns with real history: `The capital of France is Paris.` →
+`&lt;header&gt;&lt;/header&gt;` → a coherent follow-up. No markup, no echo, no
+empties. Answer *quality* is the ceiling of a 4-bit 2023-era 7B — turn 3
+confabulated — but the prompting stack is correct. Note this is the on-device
+path only; the server/`transformers` `falcon_7b` entry above is unaffected.
+
+**Gemma 3n on-device is text-only, and now says so (2026-07-19).**
+`gemma3n_on_device.pyx` advertised `"modality": "Text + Image + Audio"` while
+having no `_GGUF_MMPROJ_SOURCE`, so the Models tab promised image and audio that
+the attachment buttons correctly refused to offer — the file contradicted its own
+`strengths` text. Corrected to `"Text"`. The model *is* multimodal and the
+server-backed `gemma3n` entry still delivers all three modalities; it's llama.cpp
+that can't:
+
+- No projector exists in any repo. `unsloth/gemma-3n-E2B-it-GGUF` ships 24 text
+  quants and no mmproj; `ggml-org/gemma-3n-E2B-it-GGUF` — llama.cpp's own org —
+  ships two text GGUFs. `lmstudio-community` names theirs `…-text-GGUF`.
+- Gemma 3n uses MobileNet-V5 vision and a USM audio tower rather than Gemma 3's
+  SigLIP, and is **absent** from llama.cpp's supported multimodal list.
+
+**Gemma 4 E2B/E4B added as the on-device multimodal path.** Both are in
+llama.cpp's vision *and* mixed-modality lists and ship "omni" GGUFs where one
+projector covers image and audio. GGUF-only, no `_REPO_ID` sibling (same shape as
+`gptOSS`). `gemma4_e2b_on_device` text verified: full offload, **25.1 tok/s**.
+
+**llamadart 0.8.11 → 0.8.16.** Lockfile-only bump (the existing `^0.8.11`
+constraint already allowed it). Native runtime `b9829` → `b9982`. Text throughput
+on Gemma 4 E2B went **2.5 → 25.1 tok/s, a 10x speedup**, from the release's
+"improved llama.cpp batching defaults". 19/19 Dart tests and 66 pytest tests
+still pass.
+
+**On-device image/audio is blocked under `dart run` — root-caused, and probably
+harness-only.** Both Gemma 4 probes fail with *"Multimodal support is unavailable
+in this native runtime bundle (missing `mtmd_context_params_default`)"*. That
+message is misleading; the chain is:
+
+1. `mtmd.dll` is fine. A direct `DynamicLibrary.open` of it from `.dart_tool/lib`
+   succeeds and resolves `mtmd_context_params_default`, `mtmd_init_from_file`,
+   and `mtmd_support_audio`. It exports 97 `mtmd_*` symbols, including
+   `mtmd_audio_preprocessor_gemma4a`.
+2. `bindings.dart` is annotated `@ffi.DefaultAsset('package:llamadart/llamadart')`,
+   so every binding resolves against **llamadart.dll** — which does not contain
+   the `mtmd_*` symbols. The primary lookup therefore always fails and llamadart
+   falls back to opening `mtmd.dll` itself.
+3. That fallback searches only the bare filename plus `_backendModuleDirectory`.
+   Under `dart run` the executable is `dart.exe` and the CWD is `app/`, so
+   neither looks like a native bundle and the directory resolves to null —
+   nothing finds `.dart_tool/lib`. Setting `LLAMADART_NATIVE_LIB_DIR` does not
+   help.
+
+**A `flutter run -d windows` build stages those DLLs next to the `.exe`, which
+*should* satisfy the executable-directory branch — so multimodal may well work in
+the real app. That is a hypothesis, not a result: it has not been tested, and
+confirming it needs the GUI path this harness exists to avoid.** Until someone
+checks, treat on-device image/audio as unverified for all four projector-bearing
+entries (`gemma4_e2b`, `gemma4_e4b`, `gemma_3_4b`, and the Ministrals), not as
+broken.
+
+`OnDeviceEngine._buildMessage` previously dropped audio attachments silently —
+it filtered to `AttachmentKind.image` only. Now fixed to emit
+`LlamaAudioContent`, which was a prerequisite for any entry honestly declaring
+`audio`.
+
+Not yet run — waves 1-4, ~65GB of downloads (`--preflight` reports 5 of 25
+cached):
+
+- [ ] Wave 1 (~4GB, resumes existing `.part` files) — `gemma_3_4b` (also the
+      first test of the mmproj/vision path), `deepseek_r1_distill_1_5b`, `gemma1`
+- [ ] Wave 2 (~15GB, ≤4GB models) — includes `ministral_3_3b`, whose BF16
+      projector comes from `mistralai`'s own repo rather than the `unsloth`
+      mirror the other three use
+- [ ] Wave 3 (~30GB, 7-9B) — expected to full-offload per the `falcon2_11b` result
+- [ ] Wave 4 (~17GB, 12-14B) — `mistral_nemo_12b`, `ministral_3_14b`; the
+      partial-offload candidates, expect `gptOSS`-like speeds
 
 Removed (2026-07-17: all models previously marked "unavailable" were deleted from the project):
 

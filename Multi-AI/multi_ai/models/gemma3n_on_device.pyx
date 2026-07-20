@@ -16,7 +16,14 @@ def get_info():
         "repo_id": None,
         "params": "E2B",
         "size_gb": 3.03,
-        "modality": "Text + Image + Audio",
+        # Text, despite the checkpoint being natively multimodal — this field
+        # describes what *this* entry can do, and llama.cpp has no projector for
+        # Gemma 3n's MobileNet-V5 vision or USM audio towers (no mmproj exists in
+        # any GGUF repo, and Gemma 3n is absent from llama.cpp's supported
+        # multimodal list). Saying otherwise advertised capability the app then
+        # correctly refused to enable. See _strengths below for where to go
+        # instead; Gemma 4 E2B/E4B is the on-device multimodal option.
+        "modality": "Text",
         "context_tokens": 32768,
         "license": "Gemma Terms of Use",
         "strengths": "Designed to run efficiently on-device — 'E2B' denotes ~2B effective "

@@ -30,6 +30,8 @@ Multi-AI/multi_ai/models/gemma3.c
 Multi-AI/multi_ai/models/gemma3_on_device.c
 Multi-AI/multi_ai/models/gemma3n.c
 Multi-AI/multi_ai/models/gemma3n_on_device.c
+Multi-AI/multi_ai/models/gemma4_e2b_on_device.c
+Multi-AI/multi_ai/models/gemma4_e4b_on_device.c
 Multi-AI/multi_ai/models/gemma_3_4b.c
 Multi-AI/multi_ai/models/gemma_3_4b_on_device.c
 Multi-AI/multi_ai/models/gemma_3n.c

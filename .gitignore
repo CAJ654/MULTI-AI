@@ -25,3 +25,8 @@ venv/
 build/
 *.pyd
 *.so
+
+# On-device verification results. Regenerable by re-running the harness, and
+# the timings are specific to whichever machine produced them — the findings
+# worth keeping get written up in the README instead.
+app/tool/.verify_results.json
