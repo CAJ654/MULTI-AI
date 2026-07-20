@@ -1,33 +1,18 @@
 import 'package:flutter/material.dart';
 
-import 'markdown_settings.dart';
 import 'theme.dart';
 import 'thinking_settings.dart';
 import 'thinking_words.dart';
 
-/// The chat settings dialog, behind the gear icon in the top bar.
-///
-/// Two sections today: the "thinking" row (toggle whole phrase groups on/off,
-/// or expand a group to pick individual phrases within it) and message
-/// formatting. Each section's changes are pushed live via its own callback so
-/// the caller can persist + apply them immediately (see `chat_screen.dart`).
-///
-/// The class name predates the second section — it is still the only dialog
-/// the gear opens.
+/// Settings dialog for the chat "thinking" row: toggle whole phrase groups
+/// on/off, or expand a group to pick individual phrases within it. Changes
+/// are pushed live via `onChanged` so the caller can persist + apply them
+/// immediately (see `chat_screen.dart`).
 class ThinkingSettingsDialog extends StatefulWidget {
-  const ThinkingSettingsDialog({
-    super.key,
-    required this.initial,
-    required this.onChanged,
-    required this.initialMarkdown,
-    required this.onMarkdownChanged,
-  });
+  const ThinkingSettingsDialog({super.key, required this.initial, required this.onChanged});
 
   final ThinkingSettings initial;
   final ValueChanged<ThinkingSettings> onChanged;
-
-  final MarkdownSettings initialMarkdown;
-  final ValueChanged<MarkdownSettings> onMarkdownChanged;
 
   @override
   State<ThinkingSettingsDialog> createState() => _ThinkingSettingsDialogState();
@@ -59,29 +44,6 @@ class _ThinkingSettingsDialogState extends State<ThinkingSettingsDialog> {
     _push();
   }
 
-  late bool _renderUserMarkdown = widget.initialMarkdown.renderUserMessages;
-
-  void _setRenderUserMarkdown(bool enabled) {
-    setState(() => _renderUserMarkdown = enabled);
-    widget.onMarkdownChanged(
-      widget.initialMarkdown.copyWith(renderUserMessages: enabled),
-    );
-  }
-
-  Widget _sectionHeader(String title, String blurb) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white70)),
-            const SizedBox(height: 4),
-            Text(blurb, style: const TextStyle(fontSize: 12, color: Colors.white54)),
-          ],
-        ),
-      );
-
   void _setAllWords(ThinkingWordGroup group, bool enabled) {
     setState(() {
       if (enabled) {
@@ -109,7 +71,7 @@ class _ThinkingSettingsDialogState extends State<ThinkingSettingsDialog> {
               child: Row(
                 children: [
                   const Expanded(
-                    child: Text('Chat settings',
+                    child: Text('Thinking indicator',
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
                   ),
                   IconButton(
@@ -119,37 +81,19 @@ class _ThinkingSettingsDialogState extends State<ThinkingSettingsDialog> {
                 ],
               ),
             ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Text(
+                'Choose what shows in the chat status row while a reply is generating. '
+                'Turn a whole group on or off, or expand it to pick individual phrases.',
+                style: TextStyle(fontSize: 12, color: Colors.white54),
+              ),
+            ),
             const Divider(height: 1, color: borderColor),
             Flexible(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 4),
-                children: [
-                  _sectionHeader(
-                    'Thinking indicator',
-                    'What shows in the chat status row while a reply is generating. '
-                        'Turn a whole group on or off, or expand it to pick individual phrases.',
-                  ),
-                  for (final group in thinkingWordGroups) _buildGroup(group),
-                  const Divider(height: 24, color: borderColor),
-                  _sectionHeader(
-                    'Message formatting',
-                    'Replies are always formatted — models write in markdown, so showing it '
-                        'raw would leave asterisks and backticks on screen.',
-                  ),
-                  SwitchListTile(
-                    value: _renderUserMarkdown,
-                    onChanged: _setRenderUserMarkdown,
-                    dense: true,
-                    activeThumbColor: Colors.deepPurple.shade300,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                    title: const Text('Format my messages too',
-                        style: TextStyle(fontSize: 13, color: Colors.white)),
-                    subtitle: const Text(
-                      'Off by default, so what you type appears exactly as typed.',
-                      style: TextStyle(fontSize: 11, color: Colors.white38),
-                    ),
-                  ),
-                ],
+                children: [for (final group in thinkingWordGroups) _buildGroup(group)],
               ),
             ),
           ],

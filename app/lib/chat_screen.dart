@@ -6,9 +6,7 @@ import 'package:llamadart/llamadart.dart' hide ChatSession;
 
 import 'api_client.dart';
 import 'attachment_input.dart';
-import 'bubble_text.dart';
 import 'chat_store.dart';
-import 'markdown_settings.dart';
 import 'model_detail_screen.dart';
 import 'on_device_engine.dart';
 import 'theme.dart';
@@ -116,9 +114,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final _thinkingSettingsStore = ThinkingSettingsStore();
   ThinkingSettings _thinkingSettings = ThinkingSettings.defaults();
 
-  final _markdownSettingsStore = MarkdownSettingsStore();
-  MarkdownSettings _markdownSettings = MarkdownSettings.defaults();
-
   late final ModelDownloadManager _downloadManager =
       widget._downloadManager ?? DefaultModelDownloadManager();
   late final AttachmentSource _attachments =
@@ -167,19 +162,12 @@ class _ChatScreenState extends State<ChatScreen> {
     _loadModels();
     _loadStoredSessions();
     _loadThinkingSettings();
-    _loadMarkdownSettings();
   }
 
   Future<void> _loadThinkingSettings() async {
     final settings = await _thinkingSettingsStore.load();
     if (!mounted) return;
     setState(() => _thinkingSettings = settings);
-  }
-
-  Future<void> _loadMarkdownSettings() async {
-    final settings = await _markdownSettingsStore.load();
-    if (!mounted) return;
-    setState(() => _markdownSettings = settings);
   }
 
   void _openThinkingSettings() {
@@ -190,11 +178,6 @@ class _ChatScreenState extends State<ChatScreen> {
         onChanged: (settings) {
           setState(() => _thinkingSettings = settings);
           _thinkingSettingsStore.save(settings);
-        },
-        initialMarkdown: _markdownSettings,
-        onMarkdownChanged: (settings) {
-          setState(() => _markdownSettings = settings);
-          _markdownSettingsStore.save(settings);
         },
       ),
     );
@@ -1181,11 +1164,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 if (message.text.isNotEmpty) const SizedBox(height: 8),
               ],
               if (message.text.isNotEmpty)
-                BubbleText(
-                  text: message.text,
-                  style: const TextStyle(color: Colors.white, height: 1.4),
-                  asMarkdown: _markdownSettings.renderUserMessages,
-                ),
+                SelectableText(message.text,
+                    style: const TextStyle(color: Colors.white, height: 1.4)),
             ],
           ),
         ),
@@ -1206,16 +1186,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     style: const TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white70)),
                 const SizedBox(height: 4),
-                BubbleText(
-                  text: message.text,
+                SelectableText(
+                  message.text,
                   style: TextStyle(
                     height: 1.5,
                     color: message.isError ? Colors.red.shade300 : Colors.white,
                   ),
-                  // Errors are plain strings from the app, not model output —
-                  // rendering them as markdown could only mangle a stack trace
-                  // or a path.
-                  asMarkdown: !message.isError,
                 ),
               ],
             ),
