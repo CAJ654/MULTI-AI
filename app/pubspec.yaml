@@ -38,6 +38,7 @@ dependencies:
   llamadart: ^0.8.11
   file_picker: ^11.0.2
   record: ^7.1.1
+  gpt_markdown: ^1.1.8
 
 dev_dependencies:
   flutter_test:

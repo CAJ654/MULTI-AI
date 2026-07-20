@@ -6,6 +6,7 @@ import 'package:llamadart/llamadart.dart';
 
 import 'package:multi_ai/api_client.dart';
 import 'package:multi_ai/attachment_input.dart';
+import 'package:multi_ai/bubble_text.dart';
 import 'package:multi_ai/chat_screen.dart';
 import 'package:multi_ai/on_device_engine.dart';
 
@@ -405,6 +406,52 @@ void main() {
     expect(api.lastHistory.map((t) => t.text).toList(),
         ['My name is Alex.', 'Nice to meet you, Alex.']);
     expect(api.lastHistory.map((t) => t.isUser).toList(), [true, false]);
+  });
+
+  testWidgets('a reply renders markdown while the sent message stays literal',
+      (tester) async {
+    _useDesktopSurface(tester);
+
+    // Bold and a bullet — the two things every model reaches for, and what was
+    // showing up as raw asterisks in the chat.
+    final api = _FakeApiClient(
+      const [ModelInfo(id: 'test_model', name: 'Test Model')],
+      reply: '**Display and Share:**\n\n* Create a gallery wall\n* Hang it up to dry',
+    );
+    await tester.pumpWidget(MaterialApp(
+      home: ChatScreen(apiClient: api, downloadManager: const _FakeDownloadManager()),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButton<ModelInfo>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Test Model (local server)').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Give me **ideas**');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    // The reply's syntax is consumed by the renderer: the words survive, the
+    // asterisks don't. Asserting on the absence of markup rather than on
+    // gpt_markdown's widget tree keeps this a test of what the user sees.
+    final rendered = tester
+        .widgetList<Text>(find.byType(Text))
+        .map((t) => t.data ?? t.textSpan?.toPlainText() ?? '')
+        .join('\n');
+    expect(rendered, contains('Display and Share:'));
+    expect(rendered, contains('Create a gallery wall'));
+    expect(rendered, isNot(contains('**Display and Share:**')));
+
+    // The user's own message keeps its asterisks — formatting there is opt-in
+    // and defaults off, so text comes back exactly as typed. Scoped to the
+    // bubble because the sidebar also titles the session with this text.
+    expect(
+      find.descendant(
+        of: find.byType(BubbleText),
+        matching: find.text('Give me **ideas**'),
+      ),
+      findsOneWidget,
+    );
   });
 
   // ------------------------------------------------- attachment input gating
