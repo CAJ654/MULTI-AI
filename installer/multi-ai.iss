@@ -85,8 +85,7 @@ begin
     DataDir := ExpandConstant('{localappdata}\MultiAI');
     if DirExists(DataDir) then
     begin
-      if MsgBox('Also delete the downloaded AI runtime (about 2.5 GB)?' + #13#10 +
-                #13#10 +
+      if MsgBox('Also delete the downloaded AI runtime (about 2.5 GB)?' + #13#10 + #13#10 +
                 'Keep it if you plan to reinstall — it saves repeating the ' +
                 'first-run download. Downloaded model weights in your Hugging ' +
                 'Face cache are not affected either way.',
