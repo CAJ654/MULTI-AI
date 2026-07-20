@@ -343,6 +343,160 @@ pytest -q
   - Look into models that are great at text output & coding
   - Create coding page
 
+### Android
+
+**Scope: Android only (iOS is not a target), and on-device GGUF only — the
+phone never talks to the Python backend.** That second decision removes a lot
+of work (no runtime server-URL setting, no LAN entry in
+`network_security_config.xml`, no cleartext HTTP, and the Models tab's
+server download/delete calls and `/api/device` header can be compiled out) but
+it creates one new problem, below.
+
+Already done, contrary to what the on-device TODO above still says: the
+`INTERNET` and `RECORD_AUDIO` permissions are declared in
+`app/android/app/src/main/AndroidManifest.xml`, `network_security_config.xml`
+exists, and `chat_screen.dart` already has a `LayoutBuilder`/`Drawer` phone
+layout.
+
+- [ ] **Bundle the model roster as an asset** — the app has no local roster.
+      `_GGUF_SOURCE` lives in `Multi-AI/multi_ai/models/*.pyx`, which is
+      Cython-compiled and server-side, so the app gets its 24 on-device entries
+      from the backend's `/api/models`. With no backend reachable,
+      `chat_screen.dart`'s catch falls back to `_models = [onDeviceModel]` —
+      **one** hardcoded Qwen2.5 0.5B plus a red "Backend unreachable" banner. So
+      an Android build today is not "on-device models", it is *one* on-device
+      model and an error message. Fix: a build-time generator writes
+      `assets/on_device_roster.json` and Android loads that instead of calling
+      `fetchModels()`. The parser already exists — `_parseRoster` in
+      `app/tool/verify_on_device.dart` reads `_GGUF_SOURCE`,
+      `_GGUF_MMPROJ_SOURCE`, `size_gb` and `_INPUT_MODALITIES` out of the `.pyx`
+      files and asserts the entry count, so `.pyx` stays the single source of
+      truth. Drop the error banner on Android while you're there.
+- [ ] **Fix persistence — it is silently broken on mobile.**
+      `chat_store.dart` and `thinking_settings.dart` resolve their data
+      directory from `Platform.environment`, which is effectively empty on
+      Android: no `APPDATA`, no `HOME`, no `XDG_DATA_HOME`. Both fall through to
+      the relative `.multi_ai_data`, resolved against a CWD of `/`, which is not
+      writable — and `load()`'s `catch (_)` swallows it into "no history". Use
+      `path_provider`. The comment saying it was avoided because the plugin needs
+      Windows Developer Mode is **stale**: `file_picker` and `record` already
+      force Developer Mode (see the note under Python Backend), so that cost is
+      already paid. This also determines where llamadart's download cache lands.
+- [ ] **Device-side fit ratings** — currently `fit` comes from the backend and
+      is null with no server, so every badge vanishes on the platform that needs
+      it most: the roster carries `gptOSS` at 12.11GB and several 7–14B entries,
+      and a phone will happily start a download that can never load. Simpler than
+      the server version — only the GGUF formula applies (`size × 1.1 + 0.8GB`),
+      against total RAM rather than VRAM. Realistically only the ≤2–3GB Q4
+      entries should be listed at all. Supersedes the scope caveat under
+      "Hardware fit ratings".
+- [ ] **Verify llamadart's `android-arm64` backend before tuning anything.**
+      `_gpuLayerLadder` in `app/lib/on_device_engine.dart` was calibrated on
+      *Vulkan* against 11.7GB of dedicated VRAM; its own comment concedes the
+      free-VRAM question "would be wrong on the phone targets anyway". If the
+      Android bundle is CPU-only, `gpuLayers` is moot and the ladder just burns
+      three reload attempts before landing on `0`. llamadart's `hook/build.dart`
+      does ship real `android-arm64`/`android-x64` bundles, so no companion
+      package is needed (unlike the iOS SwiftPM path) — but which compute backend
+      is in them is unchecked.
+- [ ] **Foreground service for downloads** — Android kills a multi-GB fetch as
+      soon as the app backgrounds. Pairs with the download-progress indicator
+      already open above.
+- [ ] **Release signing** — `android/app/build.gradle.kts` still signs release
+      builds with the debug keys.
+- [ ] **On-device image input is unverified on Android** — the `mtmd` symbol
+      resolution problem root-caused under `dart run` (see the on-device
+      verification notes) has never been checked against an Android bundle.
+
+Suggested order: roster asset and `path_provider` first (both independent of
+any device being present, and together they make the build testable at all),
+then `flutter run` on the Pixel_9 emulator for the first honest signal, then
+device-side fit, then downloads and signing.
+
+### Linux
+
+Unlike Android, Linux is a **full-fat desktop target**: both run paths (the
+Python/`transformers` server *and* on-device GGUF) are in scope, because a Linux
+box has the same CUDA and RAM story as the Windows dev machine. Most of the
+work is therefore packaging and scripting, not architecture — none of it has
+been attempted or verified, but very little of it looks hard.
+
+What already works by construction, and is worth not re-solving:
+
+- `setup.py` is platform-agnostic — it walks for `.pyx` and hands everything to
+  `cythonize()`, so `pip install -e . --no-deps` should produce
+  `.cpython-314-x86_64-linux-gnu.so` files under `gcc`/`clang` with no changes.
+  (The `.pyd` naming throughout this README is Windows-specific prose, not a
+  code assumption.)
+- `hardware.pyx` already branches: `GlobalMemoryStatusEx` on `win32`, and
+  `os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")` everywhere else.
+  The VRAM path is `torch.cuda`, which is if anything better supported on Linux.
+- `chat_store.dart` and `thinking_settings.dart` resolve `XDG_DATA_HOME` (then
+  `$HOME/.local/share`). Linux is the one platform where their environment-
+  variable approach genuinely works — contrast the Android entry above, where
+  the same code silently writes nowhere.
+- `app/linux/` scaffolding exists (`CMakeLists.txt`, `runner/`,
+  `my_application.cc`) and `record_linux` is registered in
+  `generated_plugin_registrant.cc`.
+- **No Developer Mode / symlink problem.** That constraint is Windows-only, so
+  the plugin-avoidance reasoning documented elsewhere in this README does not
+  apply here.
+- llamadart's `hook/build.dart` ships `linux-x64` and `linux-arm64` bundles, so
+  the native-assets path resolves with no companion package.
+
+- [ ] **Decide the packaging story — this is the real fork in the road.**
+      `installer/multi-ai.iss` is Inno Setup, Windows-only, and the trick it
+      wraps does not port: there is no Linux equivalent of embeddable CPython,
+      and the `python._pth` / `pip.pyz --target` dance exists purely to work
+      around Program Files being read-only. On Linux the honest options are a
+      `venv` built at first launch, or an AppImage/Flatpak carrying its own
+      interpreter. Cheapest credible v1 — and the one that matches the Android
+      scoping decision — is **"Linux is a source install"**: document
+      `pip install -e . --no-deps` plus `flutter build linux`, ship no installer,
+      and revisit once someone actually wants a one-click Linux download.
+- [ ] **Port or explicitly disable the bundled-backend supervisor.**
+      `app/lib/backend_process.dart` is hardcoded Windows throughout: backslash
+      path joins, `python\python.exe`, `%LOCALAPPDATA%`, and an `isBundled`
+      gated on `Platform.isWindows`. The *safe* current behaviour is that
+      `isBundled` is false on Linux, so `startup_gate.dart` falls straight
+      through to the chat screen and you start `multi-ai-server` yourself —
+      exactly the development experience. That is fine and needs no code today;
+      it only becomes work if the packaging decision above says otherwise.
+      Whichever way it goes, the file should say so rather than leaving the
+      Windows-only gate looking accidental.
+- [ ] **Build-time system dependencies** — Flutter Linux desktop needs `clang`,
+      `cmake`, `ninja-build`, `pkg-config` and `libgtk-3-dev`; `record_linux`
+      additionally wants ALSA/PulseAudio headers. Document them, since a missing
+      one surfaces as a CMake error rather than anything mentioning Flutter.
+- [ ] **Runtime system dependency: `xdg-desktop-portal`.** `file_picker` 11
+      talks to `org.freedesktop.portal.FileChooser` over D-Bus (`dartPluginClass`,
+      so nothing appears in `generated_plugins.cmake` — its absence there is
+      correct, not a bug). A headless or minimal desktop with no portal backend
+      installed gets no file dialog, which will read as "the + button is
+      broken". Note this is a **change from `file_picker` 8.x**, which shelled
+      out to `zenity`/`qarma`/`kdialog` — don't follow older guidance found
+      online.
+- [ ] **Verify llamadart's `linux-x64` compute backend.** Same unknown as the
+      Android entry: the Windows bundle turned out to be Vulkan (see the Wave 0
+      notes), and the hook's CUDA-detection helpers (`_windowsCudartPattern`,
+      `_hasWindowsBackendModule`) are explicitly Windows-only, so which backend
+      Linux gets is unread. This decides whether `_gpuLayerLadder` is doing
+      anything useful there or just burning reload attempts.
+- [ ] **Shell-script equivalents** — `scripts/` is three PowerShell files
+      (`run-windows.ps1`, `run-app.ps1`, `restart-backend.ps1`). The
+      port-8000-holder lookup in `restart-backend.ps1` needs `lsof`/`ss` instead
+      of `Get-NetTCPConnection`.
+- [ ] **CI** — `.github/workflows/release.yml` is a single Windows job. Add a
+      Linux build (at minimum `pip install -e . --no-deps` + `pytest -q` +
+      `flutter build linux`, which would also catch Windows-only regressions in
+      the backend early), or state that Linux is deliberately source-only.
+
+Suggested order: build it once by hand end-to-end (`pip install -e . --no-deps`
+→ `pytest -q` → `flutter build linux` → chat with one server model and one
+on-device model) and let that tell you which of the above are real. The
+packaging decision can wait until that works; everything else is downstream
+of it.
+
 ### Model status after the 2026-07-20 fix round
 
 Root causes found for the manual-test failures: (1) the server fed raw text
