@@ -1,0 +1,214 @@
+# Builds the Windows installer and attaches it to a GitHub release.
+#
+# Triggered by pushing a tag like `v1.0.0`, or manually from the Actions tab
+# (which builds and uploads the installer as a workflow artifact without
+# publishing a release — useful for testing the pipeline itself).
+#
+# The interesting constraint is that this cannot ship a self-contained bundle.
+# The backend's dependencies are ~4.5GB installed (torch alone is 4.12GB,
+# because the cu128 wheel carries the CUDA runtime), and a GitHub release asset
+# is capped at 2GB. So the installer carries the app, an embeddable CPython and
+# the Cython-compiled backend — about 200MB — and the app pip-installs the rest
+# on first launch. See app/lib/backend_process.dart.
+
+name: Release (Windows)
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write # required to create the release and upload the installer
+
+env:
+  # Must match the embeddable runtime below at the minor version: the compiled
+  # extensions are ABI-tagged (server.cp314-win_amd64.pyd) and CPython refuses
+  # to load a .pyd built for a different minor version.
+  PYTHON_VERSION: '3.14'
+  PYTHON_EMBED_VERSION: '3.14.6'
+  FLUTTER_VERSION: '3.44.4'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Derive version
+        id: version
+        shell: pwsh
+        run: |
+          # A tag push releases that version; a manual run is an untagged test
+          # build, labelled from the commit so two of them can't collide.
+          if ($env:GITHUB_REF -like 'refs/tags/v*') {
+            $v = $env:GITHUB_REF -replace '^refs/tags/v', ''
+          } else {
+            $v = "0.0.0-dev+$($env:GITHUB_SHA.Substring(0,7))"
+          }
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Output "Building version $v"
+
+      # ---------------------------------------------------------------
+      # 1. Compile the Cython backend
+      # ---------------------------------------------------------------
+      # The .pyd files are git-ignored (platform- and version-specific), so
+      # they are built here rather than committed. windows-latest ships the
+      # MSVC build tools Cython needs.
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Build the compiled backend
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip setuptools wheel "Cython>=3.0"
+          # --inplace puts each .pyd next to its .pyx, which is the layout the
+          # staging step below copies and the runtime imports.
+          python setup.py build_ext --inplace
+          $pyds = Get-ChildItem Multi-AI\multi_ai -Recurse -Filter *.pyd
+          Write-Output "Compiled $($pyds.Count) extension modules"
+          if ($pyds.Count -lt 2) { throw "Backend build produced no extension modules" }
+
+      - name: Smoke-test the compiled backend
+        shell: pwsh
+        run: |
+          # Catches a build that "succeeded" but produced modules that cannot
+          # actually be imported - far cheaper to find here than in an
+          # installer a downloader is already running.
+          $env:PYTHONPATH = "$PWD\Multi-AI"
+          python -c "from multi_ai.server import run; import multi_ai.hardware; print('backend imports OK')"
+
+      # ---------------------------------------------------------------
+      # 2. Build the Flutter Windows app
+      # ---------------------------------------------------------------
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Build Flutter release
+        shell: pwsh
+        working-directory: app
+        run: |
+          flutter config --enable-windows-desktop
+          flutter pub get
+          flutter build windows --release --build-name=${{ steps.version.outputs.version }}
+
+      # ---------------------------------------------------------------
+      # 3. Assemble the installer payload
+      # ---------------------------------------------------------------
+
+      - name: Fetch embeddable CPython and pip
+        shell: pwsh
+        run: |
+          $ver = "${{ env.PYTHON_EMBED_VERSION }}"
+          New-Item -ItemType Directory -Force installer\staging\backend\python | Out-Null
+          Invoke-WebRequest -Uri "https://www.python.org/ftp/python/$ver/python-$ver-embed-amd64.zip" -OutFile embed.zip
+          Expand-Archive embed.zip -DestinationPath installer\staging\backend\python -Force
+
+          # The embeddable distribution's ._pth replaces normal path setup and
+          # ships with `import site` commented out. pip's zipapp needs the site
+          # module, so re-enable it. (This does NOT make PYTHONPATH work - a
+          # ._pth disables it outright, which is why the backend receives its
+          # paths through MULTI_AI_PATH instead. See installer/runtime/bootstrap.py.)
+          $pth = Get-ChildItem installer\staging\backend\python -Filter "python*._pth" | Select-Object -First 1
+          (Get-Content $pth.FullName) -replace '^#\s*import site', 'import site' | Set-Content $pth.FullName -Encoding ascii
+
+          # pip as a zipapp rather than an installed package: the interpreter
+          # lives in Program Files and is not writable at runtime, so there is
+          # nowhere for a real pip install to go. pip.pyz needs no install.
+          Invoke-WebRequest -Uri "https://bootstrap.pypa.io/pip/pip.pyz" -OutFile installer\staging\backend\pip.pyz
+
+      - name: Stage app and backend
+        shell: pwsh
+        run: |
+          # The Flutter release tree: exe + DLLs + data\. All of it is
+          # required; the exe alone will not launch.
+          Copy-Item -Recurse -Force app\build\windows\x64\runner\Release installer\staging\app
+
+          # The compiled backend. .pyx sources and generated .c are build
+          # inputs, not runtime files - excluding them keeps the payload small
+          # and stops anyone assuming the .pyx is what runs.
+          $dest = "installer\staging\backend\multi_ai"
+          Copy-Item -Recurse -Force Multi-AI\multi_ai $dest
+          Get-ChildItem $dest -Recurse -Include *.pyx,*.c | Remove-Item -Force
+          Get-ChildItem $dest -Recurse -Directory -Filter __pycache__ | Remove-Item -Recurse -Force
+
+          Copy-Item installer\runtime\bootstrap.py    installer\staging\backend\
+          Copy-Item installer\runtime\requirements.txt installer\staging\backend\
+
+          Write-Output "--- staged payload ---"
+          "{0:N1} MB app" -f ((Get-ChildItem installer\staging\app -Recurse -File | Measure-Object Length -Sum).Sum / 1MB)
+          "{0:N1} MB backend" -f ((Get-ChildItem installer\staging\backend -Recurse -File | Measure-Object Length -Sum).Sum / 1MB)
+
+      - name: Verify the staged backend runs
+        shell: pwsh
+        run: |
+          # Runs the bundled interpreter against the bundled backend exactly as
+          # the app will. It cannot chat (torch is not installed - that is the
+          # first-run download), but importing the server and serving
+          # /api/models exercises the ._pth / MULTI_AI_PATH wiring, which is
+          # the part most likely to be silently wrong.
+          $backend = "$PWD\installer\staging\backend"
+          $env:MULTI_AI_PATH = $backend
+          & "$backend\python\python.exe" -c "import sys; sys.path.insert(0, r'$backend'); from multi_ai.server import run; print('bundled backend imports OK')"
+
+      # ---------------------------------------------------------------
+      # 4. Compile the installer
+      # ---------------------------------------------------------------
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          # Inno Setup is not preinstalled on windows-latest.
+          choco install innosetup -y --no-progress
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
+              /DAppVersion=${{ steps.version.outputs.version }} `
+              installer\multi-ai.iss
+          Get-ChildItem dist | ForEach-Object {
+            "{0} - {1:N1} MB" -f $_.Name, ($_.Length / 1MB)
+          }
+
+      - name: Check the installer fits GitHub's asset limit
+        shell: pwsh
+        run: |
+          # A release asset is capped at 2GB. If this ever trips, something
+          # heavy leaked into the payload that belongs in the first-run
+          # download instead.
+          $exe = Get-ChildItem dist\*.exe | Select-Object -First 1
+          if ($exe.Length -gt 2GB) {
+            throw "Installer is $([math]::Round($exe.Length/1GB,2)) GB, over GitHub's 2 GB asset limit"
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MultiAI-Setup-${{ steps.version.outputs.version }}
+          path: dist/*.exe
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.exe
+          draft: true # reviewed before it goes public
+          generate_release_notes: true
+          body: |
+            ## Install
+
+            Download **MultiAI-Setup-${{ steps.version.outputs.version }}.exe** below and run it.
+
+            Windows SmartScreen will warn that the publisher is unknown — the
+            installer is unsigned. Choose *More info* → *Run anyway*.
+
+            **First launch downloads about 2.5 GB** of AI runtime (PyTorch and
+            friends). That happens once. You can skip it and still use the
+            on-device models, which need no backend.
+
+            **An NVIDIA GPU is recommended.** The server-backed models are
+            4-bit quantized for consumer VRAM; the app rates each model against
+            your hardware and tells you before you download one.

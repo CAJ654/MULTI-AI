@@ -30,3 +30,7 @@ build/
 # the timings are specific to whichever machine produced them — the findings
 # worth keeping get written up in the README instead.
 app/tool/.verify_results.json
+
+# Installer output
+dist/
+installer/staging/

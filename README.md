@@ -57,6 +57,64 @@ multi-ai-server
 
 A hybrid Python/Dart edge computing platform for managing and running multiple AI models locally, with a Flutter mobile/desktop frontend.
 
+## Shipping a Windows release
+
+Push a tag and [`.github/workflows/release.yml`](.github/workflows/release.yml) builds the installer and opens a **draft** release with it attached:
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Review the draft on GitHub, then publish. A manual run from the Actions tab builds the same installer as a workflow artifact without creating a release — use that to test pipeline changes.
+
+### Why an installer rather than a bare .exe
+
+`flutter build windows` does **not** produce a standalone executable. It produces `multi_ai.exe` plus `flutter_windows.dll`, the plugin DLLs (`file_picker`, `record`, and llamadart's `ggml-vulkan.dll`/`mtmd.dll`) and a `data/` directory. Ship the `.exe` alone and it won't launch. [`installer/multi-ai.iss`](installer/multi-ai.iss) wraps the whole tree into one `MultiAI-Setup-<version>.exe` — that single file is the release asset.
+
+### Why the dependencies aren't in it
+
+The chat-time stack is ~4.5 GB installed (torch alone is 4.12 GB — the `cu128` wheel carries the CUDA runtime inside `torch/lib`), and **a GitHub release asset is capped at 2 GB**. No compression closes that gap. So the split is:
+
+| Ships in the installer (~200 MB) | Installed on first launch (~2.5 GB) |
+|---|---|
+| Flutter app + DLLs + `data/` | torch, transformers, accelerate, bitsandbytes |
+| Embeddable CPython 3.14 (~11 MB) | pillow, torchvision, librosa, soundfile, timm |
+| The Cython-compiled `multi_ai` package | pip-system-certs |
+| `bootstrap.py`, `pip.pyz`, `requirements.txt` | (from PyPI + PyTorch's index, not hosted here) |
+
+First launch shows a setup screen with pip's live output — a 10-minute install behind a bare spinner is indistinguishable from a hang. It's skippable: the on-device GGUF models need none of it, so a failed or declined install costs the server models rather than the app.
+
+### Runtime layout
+
+```
+C:\Program Files\Multi-AI\          (read-only, admin to install)
+  multi_ai.exe, *.dll, data\        the Flutter app
+  backend\python\                   embeddable CPython 3.14
+  backend\multi_ai\*.pyd            the compiled backend
+  backend\bootstrap.py, pip.pyz, requirements.txt
+
+%LOCALAPPDATA%\MultiAI\
+  site-packages\                    torch et al. land here
+  .provisioned                      the requirements.txt they satisfy
+```
+
+Dependencies install under `%LOCALAPPDATA%` deliberately: Program Files isn't user-writable, and a first launch that's already a long download shouldn't also need an admin prompt. The `.provisioned` marker holds the `requirements.txt` those packages were installed from, so an update that edits the list re-provisions instead of running against stale packages.
+
+### Three traps worth knowing before editing any of this
+
+- **The embeddable interpreter ignores `PYTHONPATH`.** Its `python._pth` replaces path setup wholesale, so the obvious fix — point `PYTHONPATH` at the dependency directory — silently does nothing and `import torch` fails with paths that look correct. [`installer/runtime/bootstrap.py`](installer/runtime/bootstrap.py) takes a `MULTI_AI_PATH` env var instead and builds `sys.path` after startup, where nothing is overriding it. The workflow does still un-comment `import site` in the `._pth`, because `pip.pyz` needs the `site` module.
+- **pip is a zipapp, not an install.** The interpreter lives in Program Files and isn't writable at runtime, so there's nowhere for a real `pip install` to go. `pip.pyz` runs without being installed and writes to `--target`.
+- **The `.pyd` ABI tag must match the bundled interpreter.** `server.cp314-win_amd64.pyd` loads only under CPython 3.14 on win-amd64. `PYTHON_VERSION` and `PYTHON_EMBED_VERSION` in the workflow have to stay on the same minor version; patch releases are ABI-compatible.
+
+The installer is **unsigned**, so Windows SmartScreen warns that the publisher is unknown and users must click *More info* → *Run anyway*. Fixing that means an Authenticode certificate (~$100–400/yr from a CA); an EV certificate clears SmartScreen immediately, a standard one only after enough downloads build reputation.
+
+### Backend lifecycle
+
+The app owns the backend process in a packaged build: [`app/lib/backend_process.dart`](app/lib/backend_process.dart) spawns it, polls `/api/hello` until healthy, and kills it on exit. It first checks whether something already answers on port 8000 and adopts it if so — otherwise a developer's hand-started server, or an orphan from a previous crash, would collide with a fresh spawn and produce an "address in use" crash loop.
+
+In development none of this engages: with no `backend/` directory next to the executable, `BackendRuntime.isBundled` is false, [`startup_gate.dart`](app/lib/startup_gate.dart) falls straight through to the chat screen, and you keep starting the server yourself as before.
+
 ## TODO: Extend on-device (GGUF/llama.cpp) model support
 
 Mobile can't run the `transformers`/`torch`/`bitsandbytes` server backend (no CUDA, no mobile builds of those libs) — the on-device path is GGUF weights run through `llamadart`/llama.cpp, already proven with the built-in Qwen2.5 0.5B (`app/lib/on_device_engine.dart`). The `_GGUF_SOURCE` → `"gguf"` JSON field → `ModelInfo.gguf` routing in `chat_screen.dart` is already generic (any model with a `gguf` field auto-routes through `OnDeviceEngine`, no Dart changes needed) — only one model (`gptOSS.pyx`) currently uses it.

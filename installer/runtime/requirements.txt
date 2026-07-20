@@ -1,0 +1,39 @@
+# Chat-time dependencies for the packaged Windows build.
+#
+# These are NOT in the installer. Together they are ~4.5GB installed (torch
+# alone is 4.12GB, because the cu128 wheel bundles the CUDA runtime inside
+# torch/lib), and GitHub Releases caps a single file at 2GB — so the installer
+# ships the app plus a ~11MB interpreter, and the app pip-installs this list
+# into %LOCALAPPDATA%\MultiAI\site-packages on first launch.
+#
+# The app hashes this file to decide whether provisioning is still current, so
+# editing it (even a version bump) re-triggers the first-run download on the
+# next update. Keep it minimal for that reason.
+
+# CUDA build. The default PyPI torch for Windows is CPU-only, and this app's
+# whole server path is 4-bit GPU inference — see --index-url below, which the
+# provisioner passes so this resolves to the cu128 wheels.
+torch==2.11.0
+transformers
+accelerate
+
+# 4-bit quantization. Every _REPO_ID model is loaded 4-bit to fit consumer
+# VRAM, so this is not optional for the server path.
+bitsandbytes
+
+# Multimodal input. pillow+torchvision for image, librosa+soundfile for audio,
+# timm for Gemma 3n specifically (its vision tower is a TimmWrapperModel, and
+# without it the load fails in a way the server used to mislabel as a gating
+# problem).
+pillow
+torchvision
+librosa
+soundfile
+timm
+
+# Makes Python trust the Windows certificate store rather than its own bundled
+# CA list. Without it, any machine behind TLS-intercepting antivirus or a
+# corporate proxy fails every Hugging Face download with
+# CERTIFICATE_VERIFY_FAILED — common enough on consumer Windows to be worth
+# shipping by default rather than in a troubleshooting note.
+pip-system-certs

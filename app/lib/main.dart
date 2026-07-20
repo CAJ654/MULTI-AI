@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'chat_screen.dart';
+import 'startup_gate.dart';
 
 void main() {
   runApp(const App());
@@ -20,7 +20,10 @@ class App extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: const ChatScreen(),
+      // Not ChatScreen directly: a packaged build has to provision and start
+      // the Python backend first. In development the gate falls straight
+      // through. See startup_gate.dart.
+      home: const StartupGate(),
     );
   }
 }
