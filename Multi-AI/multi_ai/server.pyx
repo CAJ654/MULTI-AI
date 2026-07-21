@@ -77,15 +77,32 @@ def _input_modalities(module) -> tuple:
     return tuple(dict.fromkeys(("text",) + tuple(declared)))
 
 
+def _discover_model_ids() -> list[str]:
+    """The model ids present under models/.
+
+    In development each model is a .pyx source; in a packaged build the .pyx
+    (and generated .c) are stripped and only the Cython-compiled extension
+    ships, so both have to be discovered or a release lists no models at all.
+    The id is the module name — the filename up to its first dot, which drops
+    the .pyx suffix and a compiled extension's ABI tag alike
+    (foo.cp314-win_amd64.pyd, foo.cpython-314-x86_64-linux-gnu.so). A set
+    dedupes the dev tree, where a model has both files side by side.
+    """
+    ids = set()
+    for pattern in ("*.pyx", "*.pyd", "*.so"):
+        for path in _MODELS_DIR.glob(pattern):
+            stem = path.name.split(".", 1)[0]
+            if stem and stem not in _EXCLUDED_STEMS:
+                ids.add(stem)
+    return sorted(ids)
+
+
 def _list_models() -> list[dict]:
     # Probed once per listing, not once per model: every entry is rated against
     # the same machine, and detection lazily initializes CUDA.
     specs = hardware.detect_specs()
     entries = []
-    for path in sorted(_MODELS_DIR.glob("*.pyx")):
-        stem = path.stem
-        if stem in _EXCLUDED_STEMS:
-            continue
+    for stem in _discover_model_ids():
         try:
             module = _load_model_module(stem)
         except Exception:
