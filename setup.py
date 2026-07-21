@@ -30,7 +30,15 @@ setup(
     version="0.1",
     packages=["multi_ai", "multi_ai.models"],
     package_dir={"": SRC_ROOT},
-    ext_modules=cythonize(extensions, compiler_directives={"language_level": "3"}),
+    # force=True regenerates every .c from its .pyx on each build. Without it,
+    # cythonize skips a .pyx whose .c is not strictly newer — and a fresh git
+    # checkout gives .pyx and its committed .c near-identical mtimes, so CI
+    # would compile a stale .c and silently ship code that doesn't match the
+    # .pyx source of truth. (This is exactly what broke the v1.0.1 release: a
+    # server.pyx fix whose .c hadn't been regenerated listed zero models.)
+    ext_modules=cythonize(
+        extensions, force=True, compiler_directives={"language_level": "3"}
+    ),
     # A compiled extension module can't be run as a __main__ script the way
     # `python server.pyx` used to be, so the server gets a real entry point.
     entry_points={"console_scripts": ["multi-ai-server = multi_ai.server:run"]},
