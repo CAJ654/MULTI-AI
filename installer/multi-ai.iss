@@ -62,7 +62,17 @@ Name: "{group}\Uninstall {#AppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent
+; runasoriginaluser is essential, not cosmetic. The installer runs elevated
+; (PrivilegesRequired=admin), and without this flag the post-install launch
+; inherits that admin token — so the app, and the Python backend it spawns,
+; run as administrator. An elevated process refuses to traverse symbolic links
+; created by a non-elevated one (Windows' anti-symlink-attack mitigation), and
+; the Hugging Face weights cache under %USERPROFILE%\.cache is built entirely
+; from such symlinks, so every model load then fails with
+; "[WinError 448] ... untrusted mount point". Launching as the original
+; (non-elevated) user keeps the app at the same integrity level as every later
+; Start-menu launch, so the cache reads consistently.
+Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent runasoriginaluser
 
 [UninstallDelete]
 ; The compiled .pyd files and __pycache__ the backend writes next to itself
