@@ -39,6 +39,13 @@ dependencies:
   file_picker: ^11.0.2
   record: ^7.1.1
 
+  # In-app delta updates. See lib/update_service.dart; releases are packaged by
+  # the `vpk` CLI in .github/workflows/release.yml rather than by Inno Setup.
+  # This wraps Velopack's Rust core through flutter_rust_bridge, so
+  # `flutter build windows` now compiles Rust as part of the build — the build
+  # machine needs a toolchain on PATH, which the release workflow installs.
+  velopack_flutter: ^0.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

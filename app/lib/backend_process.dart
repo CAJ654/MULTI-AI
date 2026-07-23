@@ -50,10 +50,18 @@ class BackendRuntime {
 
   /// User-writable state: the pip-installed dependencies and the marker
   /// recording which requirements they satisfy.
+  ///
+  /// Deliberately *not* `%LOCALAPPDATA%\MultiAI`. That is Velopack's install
+  /// root — it derives it as `%LOCALAPPDATA%\<packId>`, and the packId is
+  /// `MultiAI` (see .github/workflows/release.yml) — so it holds `current\`,
+  /// `packages\` and `Update.exe`, and Velopack rewrites it on every update.
+  /// Putting a 2.5GB dependency tree inside a directory the updater manages is
+  /// asking for it to be cleaned up mid-update. The `-Runtime` suffix keeps it
+  /// adjacent and obvious without being inside.
   static Directory get userDir {
     final local = Platform.environment['LOCALAPPDATA'] ??
         '${Platform.environment['USERPROFILE']}\\AppData\\Local';
-    return Directory('$local\\MultiAI');
+    return Directory('$local\\MultiAI-Runtime');
   }
 
   static Directory get sitePackages =>
@@ -82,6 +90,65 @@ class BackendRuntime {
   static void _markProvisioned() {
     userDir.createSync(recursive: true);
     _marker.writeAsStringSync(_requirementsText);
+  }
+
+  /// Opt-out marker for [removeRuntimeOnUninstall].
+  ///
+  /// Kept inside [userDir] rather than with the app's other settings because
+  /// it is a property of the runtime, not of the user: if the runtime is gone
+  /// the question is moot, and deleting the runtime takes the preference with
+  /// it, so a later reinstall starts from the default again.
+  static File get _keepMarker => File('${userDir.path}\\.keep-on-uninstall');
+
+  /// Whether the ~2.5GB dependency stack should survive uninstalling the app.
+  /// False by default — uninstalling removes what the app downloaded, and
+  /// anyone who plans to reinstall can opt out first to keep the reinstall
+  /// instant. Surfaced in [StorageSettingsDialog].
+  static bool get keepsRuntimeOnUninstall => _keepMarker.existsSync();
+
+  static void setKeepRuntimeOnUninstall(bool keep) {
+    if (keep) {
+      userDir.createSync(recursive: true);
+      _keepMarker.writeAsStringSync(
+        'Multi-AI keeps this directory when the app is uninstalled.\n'
+        'Delete this file to have uninstall remove it instead.\n',
+      );
+    } else if (_keepMarker.existsSync()) {
+      _keepMarker.deleteSync();
+    }
+  }
+
+  /// Removes the dependency stack, unless [keepsRuntimeOnUninstall].
+  ///
+  /// Called from the `--veloapp-uninstall` hook. Velopack deletes its own
+  /// install root and nothing else, so without this the 2.5GB outlives an
+  /// uninstall with nothing to indicate it is still there.
+  ///
+  /// Two details exist to fit the hook's 30-second budget, which a recursive
+  /// delete of tens of thousands of small files can easily blow:
+  ///
+  ///  1. The provisioned marker goes first, synchronously. It is one small
+  ///     file, so it always completes — and it means an interrupted delete
+  ///     leaves the runtime unambiguously *un*provisioned rather than looking
+  ///     complete while half its packages are missing.
+  ///  2. The bulk delete is handed to a detached `rmdir`, which outlives this
+  ///     process and so is not subject to the timeout at all. It runs from
+  ///     system32, not from the directory being removed, so nothing it needs
+  ///     disappears underneath it.
+  static void removeRuntimeOnUninstall() {
+    try {
+      if (!userDir.existsSync() || keepsRuntimeOnUninstall) return;
+      if (_marker.existsSync()) _marker.deleteSync();
+      Process.start(
+        'cmd.exe',
+        ['/c', 'rmdir', '/s', '/q', userDir.path],
+        mode: ProcessStartMode.detached,
+        runInShell: false,
+      );
+    } catch (_) {
+      // Best-effort cleanup during an uninstall that is happening regardless.
+      // Failing loudly here would only produce an error nobody can act on.
+    }
   }
 
   /// Environment for a spawned backend process. MULTI_AI_PATH carries what
@@ -121,6 +188,14 @@ Stream<ProvisionProgress> provision() async* {
       'install',
       '--target', BackendRuntime.sitePackages.path,
       '--requirement', BackendRuntime.requirements.path,
+      // Required, not an optimisation. With `--target`, pip refuses to touch a
+      // package directory that already exists unless `--upgrade` is given — it
+      // logs "Specify --upgrade to force replacement" and skips it, then exits
+      // 0. On a fresh machine that never happens, but it is exactly the case
+      // on an app update whose requirements.txt changed: without this the old
+      // packages survive, pip reports success, and [_markProvisioned] records
+      // the new requirements against dependencies that never moved.
+      '--upgrade',
       // torch resolves from PyTorch's own index (the PyPI Windows wheel is
       // CPU-only, which would make every server model unusably slow); the
       // rest fall through to PyPI.

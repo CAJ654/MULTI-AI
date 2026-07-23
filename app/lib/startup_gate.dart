@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 
 import 'backend_process.dart';
 import 'chat_screen.dart';
+import 'update_service.dart';
 
 enum _Phase { checking, needsSetup, provisioning, starting, ready, failed }
 
@@ -57,6 +58,12 @@ class _StartupGateState extends State<StartupGate> with WidgetsBindingObserver {
       setState(() => _phase = _Phase.ready);
       return;
     }
+    // Same guard, for the same reason: only a packaged build is a Velopack
+    // install with anything to update. Deliberately not awaited — the check is
+    // a network round trip and possibly a download, and none of that belongs
+    // between launch and a usable app. It surfaces later, or never, as a
+    // banner on the chat screen. See update_service.dart.
+    UpdateService.instance.checkNow();
     if (!BackendRuntime.isProvisioned) {
       setState(() => _phase = _Phase.needsSetup);
       return;

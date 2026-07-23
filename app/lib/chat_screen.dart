@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -6,14 +7,17 @@ import 'package:llamadart/llamadart.dart' hide ChatSession;
 
 import 'api_client.dart';
 import 'attachment_input.dart';
+import 'backend_process.dart';
 import 'chat_store.dart';
 import 'model_detail_screen.dart';
 import 'model_fit_badge.dart';
 import 'on_device_engine.dart';
+import 'storage_settings_dialog.dart';
 import 'theme.dart';
 import 'thinking_indicator.dart';
 import 'thinking_settings.dart';
 import 'thinking_settings_dialog.dart';
+import 'update_service.dart';
 
 class _Suggestion {
   const _Suggestion(this.title, this.subtitle);
@@ -139,6 +143,11 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _checkingDownloads = true;
   ModelInfo? _selectedModel;
   String? _loadError;
+  // Mirrors UpdateService's latest status so the banner can react to it. Seeded
+  // from the service rather than from `idle`, because the check starts in
+  // StartupGate and may well have finished before this screen was built.
+  UpdateStatus _updateStatus = UpdateService.instance.status;
+  StreamSubscription<UpdateStatus>? _updateSub;
   bool _loadingModels = true;
   bool _sending = false;
   bool _showScrollToBottom = false;
@@ -165,6 +174,9 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _updateSub = UpdateService.instance.onChange.listen((status) {
+      if (mounted) setState(() => _updateStatus = status);
+    });
     _loadModels();
     _loadStoredSessions();
     _loadThinkingSettings();
@@ -186,6 +198,13 @@ class _ChatScreenState extends State<ChatScreen> {
           _thinkingSettingsStore.save(settings);
         },
       ),
+    );
+  }
+
+  void _openStorageSettings() {
+    showDialog<void>(
+      context: context,
+      builder: (_) => const StorageSettingsDialog(),
     );
   }
 
@@ -212,6 +231,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    _updateSub?.cancel();
     _controller.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
@@ -596,6 +616,7 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             _buildTopBar(showMenuButton: narrow),
             if (_loadError != null) _buildWarningBanner(),
+            if (_updateStatus.state == UpdateState.ready) _buildUpdateBanner(),
             Expanded(child: _buildBody()),
             if (!_loadingModels && !_checkingDownloads && _downloadedModels.isNotEmpty) _buildInputArea(),
           ],
@@ -1042,6 +1063,16 @@ class _ChatScreenState extends State<ChatScreen> {
             icon: const Icon(Icons.tune, size: 20, color: Colors.white54),
             onPressed: _openThinkingSettings,
           ),
+          // Only in a packaged build. Everything it controls is about the
+          // downloaded runtime and what uninstalling does to it, neither of
+          // which exists under `flutter run`.
+          if (BackendRuntime.isBundled)
+            IconButton(
+              tooltip: 'Storage',
+              icon: const Icon(Icons.sd_storage_outlined,
+                  size: 20, color: Colors.white54),
+              onPressed: _openStorageSettings,
+            ),
         ],
       ),
     );
@@ -1058,6 +1089,41 @@ class _ChatScreenState extends State<ChatScreen> {
           const SizedBox(width: 8),
           Expanded(child: Text(_loadError!, style: const TextStyle(fontSize: 13, color: Colors.amber))),
           TextButton(onPressed: _loadModels, child: const Text('Retry')),
+        ],
+      ),
+    );
+  }
+
+  /// Shown only once a new version is fully downloaded and applying it is
+  /// instant. Nothing appears while checking or downloading: an update the
+  /// user cannot act on yet is just noise, and this sits above a conversation
+  /// they are in the middle of.
+  Widget _buildUpdateBanner() {
+    final version = _updateStatus.version;
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFF1B2A3A),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Row(
+        children: [
+          const Icon(Icons.download_done_rounded,
+              size: 16, color: Color(0xFF7DB3E8)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              version == null
+                  ? 'An update is ready to install.'
+                  : 'Multi-AI $version is ready to install.',
+              style: const TextStyle(fontSize: 13, color: Color(0xFF7DB3E8)),
+            ),
+          ),
+          FilledButton(
+            // Does not return on success: Velopack swaps the app files and
+            // starts the new version as a fresh process. If it fails there is
+            // nothing more useful to do than leave the banner up to retry.
+            onPressed: () => UpdateService.instance.applyAndRestart().ignore(),
+            child: const Text('Relaunch to Update'),
+          ),
         ],
       ),
     );

@@ -1,13 +1,20 @@
-# Builds the Windows installer and attaches it to a GitHub release.
+# Builds the Windows release packages and attaches them to a GitHub release.
 #
 # Triggered by pushing a tag like `v1.0.0`, or manually from the Actions tab
-# (which builds and uploads the installer as a workflow artifact without
+# (which builds and uploads the packages as a workflow artifact without
 # publishing a release — useful for testing the pipeline itself).
+#
+# Packaging is Velopack's `vpk`, not Inno Setup. The reason is delta updates:
+# vpk diffs each release against the previous one and emits a patch alongside
+# the full package, so an existing install downloads a few MB instead of the
+# whole app, and the app applies it itself behind a "Relaunch to Update"
+# button. See app/lib/update_service.dart. installer/multi-ai.iss is no longer
+# built by anything and is kept only for reference.
 #
 # The interesting constraint is that this cannot ship a self-contained bundle.
 # The backend's dependencies are ~4.5GB installed (torch alone is 4.12GB,
 # because the cu128 wheel carries the CUDA runtime), and a GitHub release asset
-# is capped at 2GB. So the installer carries the app, an embeddable CPython and
+# is capped at 2GB. So the package carries the app, an embeddable CPython and
 # the Cython-compiled backend — about 200MB — and the app pip-installs the rest
 # on first launch. See app/lib/backend_process.dart.
 
@@ -42,10 +49,25 @@ jobs:
         run: |
           # A tag push releases that version; a manual run is an untagged test
           # build, labelled from the commit so two of them can't collide.
+          #
+          # Two things about the dev version are load-bearing, both learned the
+          # hard way:
+          #
+          #  - It starts 0.0.1, not 0.0.0. `vpk pack` rejects anything below
+          #    0.0.1 outright ("it must be >= 0.0.1"), which would fail every
+          #    manual run - the exact path these builds exist to rehearse.
+          #  - The run number goes in the *prerelease* segment, not just the
+          #    build metadata after '+'. SemVer ignores build metadata when
+          #    ordering versions, so `0.0.1-dev+aaaaaaa` and `0.0.1-dev+bbbbbbb`
+          #    compare as equal and Velopack would treat the second test build
+          #    as "not newer", skipping the delta generation being rehearsed.
+          #    (vpk also drops the '+sha' from package filenames, so the run
+          #    number is what actually keeps two builds distinct on disk. The
+          #    sha stays on for traceability.)
           if ($env:GITHUB_REF -like 'refs/tags/v*') {
             $v = $env:GITHUB_REF -replace '^refs/tags/v', ''
           } else {
-            $v = "0.0.0-dev+$($env:GITHUB_SHA.Substring(0,7))"
+            $v = "0.0.1-dev.${{ github.run_number }}+$($env:GITHUB_SHA.Substring(0,7))"
           }
           "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           Write-Output "Building version $v"
@@ -85,6 +107,12 @@ jobs:
       # 2. Build the Flutter Windows app
       # ---------------------------------------------------------------
 
+      # Must come before the Flutter build, not just before packaging. The app
+      # depends on velopack_flutter, which is a flutter_rust_bridge package —
+      # `flutter build windows` compiles its Rust crate as part of the build
+      # and fails outright without a toolchain on PATH.
+      - uses: dtolnay/rust-toolchain@stable
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -96,55 +124,78 @@ jobs:
         working-directory: app
         run: |
           flutter config --enable-windows-desktop
+          # Redundant on Flutter 3.44 (it defaults to on) but stated because
+          # the build depends on it: velopack_flutter ships its Rust core as a
+          # code asset built by hook/build.dart, and with native assets off it
+          # is silently not built. Cheap insurance against the default changing
+          # under a FLUTTER_VERSION bump.
+          flutter config --enable-native-assets
           flutter pub get
           flutter build windows --release --build-name=${{ steps.version.outputs.version }}
 
       # ---------------------------------------------------------------
-      # 3. Assemble the installer payload
+      # 3. Assemble the package payload
       # ---------------------------------------------------------------
+      # Everything lands in one tree, installer\staging\app, with the backend
+      # nested at staging\app\backend. Inno used to merge two sibling trees at
+      # install time via two [Files] entries; vpk pack takes a single --packDir
+      # and lays it out verbatim, so the nesting has to exist here instead. The
+      # invariant that matters is unchanged: backend\ sits beside the
+      # executable, which is where BackendRuntime.backendDir looks for it.
+      #
+      # These three steps are ordered, not arbitrary. The Flutter tree is
+      # copied first because Copy-Item into an *existing* directory nests the
+      # source inside it rather than merging, so creating staging\app\backend
+      # first would produce staging\app\Release\.
+
+      - name: Stage the Flutter release tree
+        shell: pwsh
+        run: |
+          # exe + DLLs + data\. All of it is required; the exe alone will not
+          # launch.
+          Copy-Item -Recurse -Force app\build\windows\x64\runner\Release installer\staging\app
 
       - name: Fetch embeddable CPython and pip
         shell: pwsh
         run: |
           $ver = "${{ env.PYTHON_EMBED_VERSION }}"
-          New-Item -ItemType Directory -Force installer\staging\backend\python | Out-Null
+          New-Item -ItemType Directory -Force installer\staging\app\backend\python | Out-Null
           Invoke-WebRequest -Uri "https://www.python.org/ftp/python/$ver/python-$ver-embed-amd64.zip" -OutFile embed.zip
-          Expand-Archive embed.zip -DestinationPath installer\staging\backend\python -Force
+          Expand-Archive embed.zip -DestinationPath installer\staging\app\backend\python -Force
 
           # The embeddable distribution's ._pth replaces normal path setup and
           # ships with `import site` commented out. pip's zipapp needs the site
           # module, so re-enable it. (This does NOT make PYTHONPATH work - a
           # ._pth disables it outright, which is why the backend receives its
           # paths through MULTI_AI_PATH instead. See installer/runtime/bootstrap.py.)
-          $pth = Get-ChildItem installer\staging\backend\python -Filter "python*._pth" | Select-Object -First 1
+          $pth = Get-ChildItem installer\staging\app\backend\python -Filter "python*._pth" | Select-Object -First 1
           (Get-Content $pth.FullName) -replace '^#\s*import site', 'import site' | Set-Content $pth.FullName -Encoding ascii
 
           # pip as a zipapp rather than an installed package: the interpreter
-          # lives in Program Files and is not writable at runtime, so there is
-          # nowhere for a real pip install to go. pip.pyz needs no install.
-          Invoke-WebRequest -Uri "https://bootstrap.pypa.io/pip/pip.pyz" -OutFile installer\staging\backend\pip.pyz
+          # lives in the install directory and is replaced wholesale on every
+          # update, so there is nowhere durable for a real pip install to go.
+          # pip.pyz needs no install.
+          Invoke-WebRequest -Uri "https://bootstrap.pypa.io/pip/pip.pyz" -OutFile installer\staging\app\backend\pip.pyz
 
-      - name: Stage app and backend
+      - name: Stage the compiled backend
         shell: pwsh
         run: |
-          # The Flutter release tree: exe + DLLs + data\. All of it is
-          # required; the exe alone will not launch.
-          Copy-Item -Recurse -Force app\build\windows\x64\runner\Release installer\staging\app
-
-          # The compiled backend. .pyx sources and generated .c are build
-          # inputs, not runtime files - excluding them keeps the payload small
-          # and stops anyone assuming the .pyx is what runs.
-          $dest = "installer\staging\backend\multi_ai"
+          # .pyx sources and generated .c are build inputs, not runtime files -
+          # excluding them keeps the payload small and stops anyone assuming
+          # the .pyx is what runs.
+          $dest = "installer\staging\app\backend\multi_ai"
           Copy-Item -Recurse -Force Multi-AI\multi_ai $dest
           Get-ChildItem $dest -Recurse -Include *.pyx,*.c | Remove-Item -Force
           Get-ChildItem $dest -Recurse -Directory -Filter __pycache__ | Remove-Item -Recurse -Force
 
-          Copy-Item installer\runtime\bootstrap.py    installer\staging\backend\
-          Copy-Item installer\runtime\requirements.txt installer\staging\backend\
+          Copy-Item installer\runtime\bootstrap.py     installer\staging\app\backend\
+          Copy-Item installer\runtime\requirements.txt installer\staging\app\backend\
 
           Write-Output "--- staged payload ---"
-          "{0:N1} MB app" -f ((Get-ChildItem installer\staging\app -Recurse -File | Measure-Object Length -Sum).Sum / 1MB)
-          "{0:N1} MB backend" -f ((Get-ChildItem installer\staging\backend -Recurse -File | Measure-Object Length -Sum).Sum / 1MB)
+          $backend = Get-ChildItem installer\staging\app\backend -Recurse -File | Measure-Object Length -Sum
+          $total   = Get-ChildItem installer\staging\app         -Recurse -File | Measure-Object Length -Sum
+          "{0:N1} MB backend" -f ($backend.Sum / 1MB)
+          "{0:N1} MB total (app + backend)" -f ($total.Sum / 1MB)
 
       - name: Verify the staged backend runs
         shell: pwsh
@@ -159,60 +210,123 @@ jobs:
           # enumeration finds the compiled .pyd modules instead — an empty list
           # here means a release that shows the app only its on-device fallback.
           # (Listing needs no torch; that is the first-run download.)
-          $backend = "$PWD\installer\staging\backend"
+          $backend = "$PWD\installer\staging\app\backend"
           $env:MULTI_AI_PATH = $backend
           & "$backend\python\python.exe" -c "import sys; sys.path.insert(0, r'$backend'); from multi_ai.server import run, _list_models; n = len(_list_models()); assert n > 0, 'staged backend lists no models - roster enumeration is not finding the compiled .pyd modules'; print(f'bundled backend imports OK; /api/models lists {n} models')"
 
       # ---------------------------------------------------------------
-      # 4. Compile the installer
+      # 4. Pack the release
       # ---------------------------------------------------------------
 
-      - name: Build installer
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install the Velopack CLI
         shell: pwsh
         run: |
-          # Inno Setup is not preinstalled on windows-latest.
-          choco install innosetup -y --no-progress
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
-              /DAppVersion=${{ steps.version.outputs.version }} `
-              installer\multi-ai.iss
-          Get-ChildItem dist | ForEach-Object {
-            "{0} - {1:N1} MB" -f $_.Name, ($_.Length / 1MB)
+          dotnet tool install -g vpk
+          # `dotnet tool install -g` drops shims in ~\.dotnet\tools, which is
+          # not on PATH for subsequent steps unless it is added explicitly.
+          "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
+      - name: Pack
+        shell: pwsh
+        run: |
+          # Fetch the previous release's packages so pack has something to diff
+          # against. This is what makes the update a delta rather than a full
+          # ~200MB re-download. On the very first release there is nothing to
+          # fetch: vpk logs "No releases found" and exits 0, so this does not
+          # need guarding, and that run legitimately produces no delta.
+          #
+          # It reads the latest *published* release, matching what installed
+          # apps see (see below). If the previous version is still sitting as
+          # an unpublished draft, this diffs against whatever was published
+          # before it - so publish or delete each draft before tagging the next
+          # version, or a release simply ships without a delta.
+          vpk download github `
+              --repoUrl https://github.com/${{ github.repository }} `
+              --token ${{ secrets.GITHUB_TOKEN }} `
+              -o Releases
+
+          # --packId is this app's permanent identity, the way Inno's AppId GUID
+          # was: Velopack matches installs on it and derives the install root
+          # (%LOCALAPPDATA%\MultiAI) from it. Changing it later orphans every
+          # existing install, so it does not change.
+          vpk pack `
+              --packId MultiAI `
+              --packTitle "Multi-AI" `
+              --packAuthors "CAJ654" `
+              --packVersion ${{ steps.version.outputs.version }} `
+              --packDir installer\staging\app `
+              --mainExe multi_ai.exe `
+              -o Releases
+
+          # vpk download left the previous version's full package here purely
+          # as a diff source. Clients never fetch it - an install applying a
+          # delta patches the copy it already has on disk, and one too far
+          # behind for the delta chain falls back to the *new* full package -
+          # so shipping it again would add ~200MB to every release for nothing.
+          $version = "${{ steps.version.outputs.version }}"
+          Get-ChildItem Releases\*-full.nupkg |
+            Where-Object { $_.Name -ne "MultiAI-$version-full.nupkg" } |
+            Remove-Item -Force
+
+          Write-Output "--- release assets ---"
+          Get-ChildItem Releases | ForEach-Object {
+            "{0,-44} {1,8:N1} MB" -f $_.Name, ($_.Length / 1MB)
           }
 
-      - name: Check the installer fits GitHub's asset limit
+      - name: Check the assets fit GitHub's limit
         shell: pwsh
         run: |
-          # A release asset is capped at 2GB. If this ever trips, something
-          # heavy leaked into the payload that belongs in the first-run
-          # download instead.
-          $exe = Get-ChildItem dist\*.exe | Select-Object -First 1
-          if ($exe.Length -gt 2GB) {
-            throw "Installer is $([math]::Round($exe.Length/1GB,2)) GB, over GitHub's 2 GB asset limit"
+          # The 2GB cap is per asset, not per release, so every file has to be
+          # checked rather than just the largest single artifact. If this trips,
+          # something heavy leaked into the payload that belongs in the
+          # first-run download instead.
+          $over = Get-ChildItem Releases -File | Where-Object { $_.Length -gt 2GB }
+          if ($over) {
+            throw "Over GitHub's 2 GB per-asset limit: $($over.Name -join ', ')"
           }
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MultiAI-Setup-${{ steps.version.outputs.version }}
-          path: dist/*.exe
+          name: MultiAI-${{ steps.version.outputs.version }}
+          path: Releases/*
 
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.exe
-          draft: true # reviewed before it goes public
+          # The whole folder, not just the installer. releases.win.json is the
+          # feed installed apps read, and the .nupkg files are what they
+          # download; an installer on its own would leave every existing
+          # install unable to see the release at all.
+          files: Releases/*
+          # Stays a draft until reviewed - and that review is now also the
+          # update gate. Installed apps read the feed from
+          # /releases/latest/download/, which GitHub resolves to the latest
+          # *published* release, so a draft is invisible to them. Publishing is
+          # what ships the update. Do not auto-publish to work around this.
+          draft: true
           generate_release_notes: true
           body: |
             ## Install
 
-            Download **MultiAI-Setup-${{ steps.version.outputs.version }}.exe** below and run it.
+            New here? Download **MultiAI-win-Setup.exe** below and run it. The
+            other files are for the in-app updater.
+
+            **Already running Multi-AI?** Do nothing. The app checks for updates
+            on launch, downloads this version in the background, and shows a
+            **Relaunch to Update** button when it is ready. The download is a
+            small patch, not the whole app.
 
             Windows SmartScreen will warn that the publisher is unknown — the
             installer is unsigned. Choose *More info* → *Run anyway*.
 
             **First launch downloads about 2.5 GB** of AI runtime (PyTorch and
-            friends). That happens once. You can skip it and still use the
-            on-device models, which need no backend.
+            friends). That happens once, and updates do not repeat it. You can
+            skip it and still use the on-device models, which need no backend.
 
             **An NVIDIA GPU is recommended.** The server-backed models are
             4-bit quantized for consumer VRAM; the app rates each model against
