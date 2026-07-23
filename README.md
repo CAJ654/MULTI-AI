@@ -8,9 +8,30 @@
 equivalent to:
 
 ```powershell
+# The app depends on velopack_flutter, whose native-assets build hook compiles a
+# Rust crate — so the build needs rustup/cargo on PATH (see "Rust toolchain" below).
+# run-windows.ps1 prepends this automatically; the bare commands need it explicitly.
+$env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
 cd app
 flutter run -d windows
 ```
+
+> **One-time: install the Rust toolchain.** The app depends on `velopack_flutter`
+> (the in-app updater), a flutter_rust_bridge package whose native-assets build hook
+> compiles a Rust crate as part of `flutter run/build windows`. Without rustup/cargo
+> the build fails with `Building native assets failed` — the hook can't run
+> `rustup show active-toolchain`. Install it once:
+>
+> ```powershell
+> winget install --id Rustlang.Rustup -e --source winget
+> ```
+>
+> rustup installs into `%USERPROFILE%\.cargo\bin` and adds it to your User PATH, but a
+> terminal opened **before** the install keeps a stale PATH and still can't see it —
+> `run-windows.ps1` prepends that directory so it works either way. To get it onto PATH
+> for every new terminal, fully restart your shell (quit and reopen VS Code if you use
+> its integrated terminal) or reboot once. `--source winget` skips the `msstore` source,
+> which fails behind this machine's Norton TLS interception (`0x8a15005e`).
 
 OR
 
