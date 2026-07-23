@@ -474,5 +474,81 @@ def test_pad_token_id_of_zero_is_not_swapped_for_eos(monkeypatch):
     assert model2.last_kwargs["pad_token_id"] == 2
 
 
+# -------------------------------------------------- output to a dead pipe
+
+
+class _DeadPipe:
+    """A stream whose reader has gone away. Windows reports that as EINVAL,
+    not EPIPE, on both write and flush."""
+
+    def __init__(self):
+        self.encoding = "utf-8"
+
+    def write(self, text):
+        raise OSError(22, "Invalid argument")
+
+    def flush(self):
+        raise OSError(22, "Invalid argument")
+
+    def isatty(self):
+        return True
+
+
+def test_writing_to_a_dead_pipe_does_not_raise():
+    """The packaged app supervises this server as a child process and reads
+    its pipes. When that app dies without stopping the server, the server is
+    orphaned, a later app launch adopts it, and every write to the now-dead
+    pipe raises [Errno 22]. transformers builds a tqdm bar around weight
+    loading and tqdm flushes stderr while constructing it, so that error
+    surfaced as "could not load <repo>: [Errno 22] Invalid argument" on
+    *every* model, with nothing tying it to a closed pipe."""
+    server = _server()
+    stream = server._ResilientStream(_DeadPipe())
+
+    # tqdm.std.status_printer does exactly this before drawing a bar.
+    stream.flush()
+    assert stream.write("Loading weights:   0%|") == len("Loading weights:   0%|")
+    stream.flush()
+
+    # print() goes through the same proxy and must stay a no-op too.
+    print("still alive", file=stream)
+
+    # A dead pipe is not a terminal, whatever the underlying stream claims.
+    assert stream.isatty() is False
+
+
+def test_resilient_stream_passes_output_through_while_the_pipe_lives():
+    """Wrapping must not cost the developer their console output — this only
+    degrades once the underlying stream actually fails."""
+    server = _server()
+
+    class _Recorder:
+        def __init__(self):
+            self.written = []
+            self.flushes = 0
+
+        def write(self, text):
+            self.written.append(text)
+            return len(text)
+
+        def flush(self):
+            self.flushes += 1
+
+    recorder = _Recorder()
+    stream = server._ResilientStream(recorder)
+    stream.write("hello")
+    stream.flush()
+    assert recorder.written == ["hello"]
+    assert recorder.flushes == 1
+
+
+def test_resilient_stream_tolerates_no_stream_at_all():
+    """A GUI-subsystem process with no console has sys.stdout set to None."""
+    server = _server()
+    stream = server._ResilientStream(None)
+    stream.write("dropped")
+    stream.flush()
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))

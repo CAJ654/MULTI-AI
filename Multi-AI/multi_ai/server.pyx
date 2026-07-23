@@ -36,6 +36,7 @@ import importlib
 import json
 import os
 import re
+import sys
 import tempfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -886,7 +887,73 @@ class _Server(ThreadingHTTPServer):
     allow_reuse_address = False
 
 
+class _ResilientStream:
+    """A stdout/stderr proxy that keeps working once its pipe is dead.
+
+    In a packaged build the app spawns this server as a child process and
+    reads its output pipes (see app/lib/backend_process.dart). If that app
+    instance goes away without calling stop() — a crash, a Task Manager kill,
+    an update swapping the executable — the server survives as an orphan and
+    the read ends of its pipes close. The *next* app launch then finds port
+    8000 answering and adopts the orphan rather than starting a fresh one, so
+    the broken pipes stay in play indefinitely.
+
+    Writing to a pipe with no reader raises OSError [Errno 22] on Windows.
+    That would be harmless if nothing here wrote to stderr, but transformers
+    wraps weight loading in a tqdm bar and tqdm flushes stderr while
+    constructing it — so *every* model load failed with "could not load
+    <repo>: [Errno 22] Invalid argument", a message with nothing in it to
+    connect the failure to a closed pipe, and no way out but killing the
+    orphan.
+
+    Output is best-effort by nature here: nobody reads the backend's stderr
+    in a packaged build (the app buffers it and only ever shows it if startup
+    fails). Losing it is the correct trade against taking the whole process
+    down with it.
+    """
+
+    def __init__(self, stream):
+        self._stream = stream
+        # A None stream — what a GUI-subsystem process with no console gets —
+        # is simply a pipe that was dead on arrival.
+        self._broken = stream is None
+
+    # Delegated so the proxy still looks like the stream it wraps —
+    # `encoding`, `buffer`, `fileno` and friends are read by libraries that
+    # sniff their output destination.
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
+
+    def _attempt(self, name, *args):
+        if self._broken:
+            return None
+        try:
+            return getattr(self._stream, name)(*args)
+        # ValueError covers "I/O operation on closed file", which is what a
+        # stream closed from under us raises instead of OSError.
+        except (OSError, ValueError):
+            self._broken = True
+            return None
+
+    def write(self, text) -> int:
+        self._attempt("write", text)
+        # Claim the write succeeded regardless: callers that check the return
+        # value treat a short write as an error worth retrying or raising on,
+        # which is exactly what this class exists to prevent.
+        return len(text)
+
+    def flush(self) -> None:
+        self._attempt("flush")
+
+    # A dead pipe is not a terminal, and progress bars that believe they are
+    # writing to one emit far more escape traffic for nobody to read.
+    def isatty(self) -> bool:
+        return False
+
+
 def run(host: str = "localhost", port: int = 8000) -> None:
+    sys.stdout = _ResilientStream(sys.stdout)
+    sys.stderr = _ResilientStream(sys.stderr)
     try:
         server = _Server((host, port), _Handler)
     except OSError as exc:
