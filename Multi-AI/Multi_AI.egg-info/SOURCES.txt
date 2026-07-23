@@ -7,6 +7,7 @@ Multi-AI/Multi_AI.egg-info/dependency_links.txt
 Multi-AI/Multi_AI.egg-info/entry_points.txt
 Multi-AI/Multi_AI.egg-info/top_level.txt
 Multi-AI/multi_ai/__init__.c
+Multi-AI/multi_ai/hardware.c
 Multi-AI/multi_ai/server.c
 Multi-AI/multi_ai/models/TensorFlow.c
 Multi-AI/multi_ai/models/__init__.c
@@ -56,5 +57,9 @@ Multi-AI/multi_ai/models/mistral_7b_on_device.c
 Multi-AI/multi_ai/models/mistral_nemo_12b.c
 Multi-AI/multi_ai/models/mistral_nemo_12b_on_device.c
 Multi-AI/multi_ai/models/pytorch.c
+Multi-AI/multi_ai/models/qwen2_5_coder_1_5b_on_device.c
+Multi-AI/multi_ai/models/qwen2_5_coder_3b_on_device.c
+Multi-AI/multi_ai/models/qwen2_5_coder_7b.c
+Multi-AI/multi_ai/models/qwen2_5_coder_7b_on_device.c
 Multi-AI/multi_ai/models/qwen3_8b.c
 Multi-AI/multi_ai/models/qwen3_8b_on_device.c
