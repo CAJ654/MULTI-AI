@@ -1,0 +1,49 @@
+import 'package:flutter/material.dart';
+
+import '../attachment_input.dart';
+import 'addon.dart';
+import 'chat/chat_addon.dart';
+import 'models/models_addon.dart';
+import 'placeholder_addon.dart';
+
+/// Every add-on this build ships. Adding a feature means adding one entry here
+/// and one file — not editing the shell, the sidebar, or any of its neighbours.
+///
+/// A function rather than a const list on purpose: add-ons take injected
+/// dependencies (tests supply fakes), and a later pass that reads presets off
+/// disk needs somewhere to append the entries it finds. See the preset notes in
+/// the plan.
+List<AddOn> buildRegistry({
+  AttachmentSource? attachmentSource,
+  void Function(String url)? onMarkdownLinkTap,
+}) {
+  return [
+    const ModelsAddOn(),
+    ChatAddOn(
+      attachmentSource: attachmentSource,
+      onMarkdownLinkTap: onMarkdownLinkTap,
+    ),
+    const PlaceholderAddOn(
+      manifest: AddOnManifest(
+        id: 'orchestration',
+        title: 'Orchestration',
+        icon: Icons.account_tree_outlined,
+        order: 2,
+        requires: [HostCapability.modelPool],
+      ),
+      blurb: 'Routing a prompt across several models and combining their '
+          'answers will live here.',
+    ),
+    const PlaceholderAddOn(
+      manifest: AddOnManifest(
+        id: 'code',
+        title: 'Code',
+        icon: Icons.code,
+        order: 3,
+        requires: [HostCapability.modelPool],
+      ),
+      blurb: 'Code-focused workspace — snippets, files and runnable '
+          'output — will live here.',
+    ),
+  ];
+}

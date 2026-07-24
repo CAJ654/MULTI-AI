@@ -77,31 +77,40 @@ class ChatSession {
       );
 }
 
+/// The directory this app keeps its own files in, created if missing.
+///
+/// Resolved from environment variables instead of path_provider: the plugin
+/// needs Windows Developer Mode (symlinks) to build, which this app otherwise
+/// doesn't require.
+///
+/// Shared by everything that persists something (chat history, thinking
+/// settings, which add-ons are enabled) so there is one directory to fix when
+/// this moves to path_provider — the env vars this reads are empty on Android,
+/// where it silently falls through to a relative path that isn't writable.
+Future<File> appDataFile(String name) async {
+  final env = Platform.environment;
+  String? base;
+  if (Platform.isWindows) {
+    base = env['APPDATA'];
+  } else if (Platform.isMacOS) {
+    final home = env['HOME'];
+    if (home != null) base = '$home/Library/Application Support';
+  } else {
+    base = env['XDG_DATA_HOME'] ?? (env['HOME'] != null ? '${env['HOME']}/.local/share' : null);
+  }
+  final sep = Platform.pathSeparator;
+  final dir = Directory(base != null ? '$base${sep}multi_ai' : '.multi_ai_data');
+  await dir.create(recursive: true);
+  return File('${dir.path}$sep$name');
+}
+
 /// Persists chat sessions as a JSON file in the app's data directory, so
 /// chats survive restarts until the user explicitly deletes them.
 class ChatStore {
   // Chains writes so a save never interleaves with a previous one.
   Future<void> _lastWrite = Future.value();
 
-  // Resolved from environment variables instead of path_provider: the plugin
-  // needs Windows Developer Mode (symlinks) to build, which this app otherwise
-  // doesn't require.
-  Future<File> _file() async {
-    final env = Platform.environment;
-    String? base;
-    if (Platform.isWindows) {
-      base = env['APPDATA'];
-    } else if (Platform.isMacOS) {
-      final home = env['HOME'];
-      if (home != null) base = '$home/Library/Application Support';
-    } else {
-      base = env['XDG_DATA_HOME'] ?? (env['HOME'] != null ? '${env['HOME']}/.local/share' : null);
-    }
-    final sep = Platform.pathSeparator;
-    final dir = Directory(base != null ? '$base${sep}multi_ai' : '.multi_ai_data');
-    await dir.create(recursive: true);
-    return File('${dir.path}${sep}chat_sessions.json');
-  }
+  Future<File> _file() => appDataFile('chat_sessions.json');
 
   Future<List<ChatSession>> load() async {
     try {

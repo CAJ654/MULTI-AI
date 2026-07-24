@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:llamadart/llamadart.dart';
 
+import 'package:multi_ai/addons/addon_host.dart';
 import 'package:multi_ai/api_client.dart';
 import 'package:multi_ai/attachment_input.dart';
 import 'package:multi_ai/chat_screen.dart';
@@ -163,7 +164,9 @@ void main() {
       ModelInfo(id: 'gptOSS', name: 'GPT-OSS 20B', gguf: 'hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf'),
     ]);
 
-    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        apiClient: fake, downloadManager: const _FakeDownloadManager())));
     await tester.pumpAndSettle();
 
     // Open the dropdown so its (offstage-when-closed) menu items are findable.
@@ -184,7 +187,9 @@ void main() {
     // path; a real unreachable backend throws instead, which _loadModels
     // catches the same way — either way only the on-device entry should show.
 
-    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        apiClient: fake, downloadManager: const _FakeDownloadManager())));
     await tester.pumpAndSettle();
 
     expect(find.text('$onDeviceModelName (on-device)'), findsOneWidget);
@@ -197,7 +202,9 @@ void main() {
       ModelInfo(id: 'test_model', name: 'Test Model', params: '124M', sizeGb: 0.55),
     ]);
 
-    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        apiClient: fake, downloadManager: const _FakeDownloadManager())));
     await tester.pumpAndSettle();
 
     // Chat tab is the default: New Chat button visible, no model metadata yet.
@@ -246,7 +253,9 @@ void main() {
     );
 
     await tester.pumpWidget(MaterialApp(
-        home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
+        home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        apiClient: fake, downloadManager: const _FakeDownloadManager())));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Models'));
     await tester.pumpAndSettle();
@@ -272,7 +281,9 @@ void main() {
     final fake = _FakeApiClient(const [ModelInfo(id: 'test_model', name: 'Test Model')]);
 
     await tester.pumpWidget(MaterialApp(
-        home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
+        home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        apiClient: fake, downloadManager: const _FakeDownloadManager())));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Models'));
     await tester.pumpAndSettle();
@@ -298,7 +309,9 @@ void main() {
       ),
     ]);
 
-    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        apiClient: fake, downloadManager: const _FakeDownloadManager())));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Models'));
@@ -325,7 +338,9 @@ void main() {
 
     final fake = _FakeApiClient(const [ModelInfo(id: 'test_model', name: 'Test Model')]);
 
-    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager())));
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        apiClient: fake, downloadManager: const _FakeDownloadManager())));
     await tester.pumpAndSettle();
 
     // The dropdown defaults to the on-device model; switch to the (never
@@ -358,7 +373,9 @@ void main() {
     final missingCacheKey = ModelSource.parse(missingGguf).cacheKey;
     final downloads = _FakeDownloadManager(isCached: (key) => key != missingCacheKey);
 
-    await tester.pumpWidget(MaterialApp(home: ChatScreen(apiClient: fake, downloadManager: downloads)));
+    await tester.pumpWidget(MaterialApp(home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        apiClient: fake, downloadManager: downloads)));
     await tester.pumpAndSettle();
 
     // Chat picker: downloaded models only.
@@ -401,7 +418,9 @@ void main() {
     ]);
 
     await tester.pumpWidget(MaterialApp(
-      home: ChatScreen(apiClient: fake, downloadManager: const _FakeDownloadManager()),
+      home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        apiClient: fake, downloadManager: const _FakeDownloadManager()),
     ));
     await tester.pumpAndSettle();
 
@@ -437,7 +456,9 @@ void main() {
     final downloads = _FakeDownloadManager(isCached: (key) => key != mmprojKey);
 
     await tester.pumpWidget(MaterialApp(
-      home: ChatScreen(apiClient: fake, downloadManager: downloads),
+      home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        apiClient: fake, downloadManager: downloads),
     ));
     await tester.pumpAndSettle();
 
@@ -455,7 +476,9 @@ void main() {
       reply: 'Nice to meet you, Alex.',
     );
     await tester.pumpWidget(MaterialApp(
-      home: ChatScreen(apiClient: api, downloadManager: const _FakeDownloadManager()),
+      home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        apiClient: api, downloadManager: const _FakeDownloadManager()),
     ));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButton<ModelInfo>));
@@ -495,7 +518,9 @@ void main() {
           '- second',
     );
     await tester.pumpWidget(MaterialApp(
-      home: ChatScreen(apiClient: api, downloadManager: const _FakeDownloadManager()),
+      home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        apiClient: api, downloadManager: const _FakeDownloadManager()),
     ));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButton<ModelInfo>));
@@ -532,6 +557,8 @@ void main() {
     String? tapped;
     await tester.pumpWidget(MaterialApp(
       home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        
         apiClient: api,
         downloadManager: const _FakeDownloadManager(),
         // Observe the tap instead of opening a browser (no platform channel
@@ -570,7 +597,9 @@ void main() {
       reply: r'\(6 \times 10^{23}\) mol\(^{-1}\)',
     );
     await tester.pumpWidget(MaterialApp(
-      home: ChatScreen(apiClient: api, downloadManager: const _FakeDownloadManager()),
+      home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        apiClient: api, downloadManager: const _FakeDownloadManager()),
     ));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButton<ModelInfo>));
@@ -604,6 +633,8 @@ void main() {
     final source = _FakeAttachmentSource(micAllowed: micAllowed);
     await tester.pumpWidget(MaterialApp(
       home: ChatScreen(
+        addOnStateStore: InMemoryAddOnStateStore(),
+        
         apiClient: api ?? _FakeApiClient(models),
         downloadManager: const _FakeDownloadManager(),
         attachmentSource: source,

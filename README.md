@@ -171,7 +171,17 @@ MULTI-AI/
 │   │       ├── llama_3_2_3b_on_device.pyx # on-device sibling: declares _GGUF_SOURCE
 │   │       └── …                          # falcon, gemma, mistral, qwen, deepseek, …
 │   └── tests/                     # test_imports / test_model_roster / test_model_downloads (.pyx)
-└── app/                           # Flutter frontend (lib/chat_screen.dart, on_device_engine.dart, …)
+└── app/                           # Flutter frontend
+    └── lib/
+        ├── chat_screen.dart       # thin entry point: builds the pool + host, then AppShell
+        ├── app_shell.dart         # sidebar, tab bar, top bar, banners — the frame add-ons draw in
+        ├── model_pool.dart        # the `model_pool` capability: roster, downloads, generate()
+        ├── on_device_engine.dart  # llama.cpp/llamadart, one resident model
+        └── addons/                # one directory per tab — see "Add-on architecture"
+            ├── addon.dart, addon_host.dart, registry.dart
+            ├── chat/              # chat_controller.dart + chat_addon.dart
+            ├── models/            # the roster browser
+            └── placeholder_addon.dart   # Orchestration and Code
 ```
 
 ### What the `.pyx`, `.c`, and `.pyd`/`.so` files are
@@ -771,11 +781,63 @@ Removed (2026-07-17: all models previously marked "unavailable" were deleted fro
 - [ ] Decide if/how `multi_ai.server`'s model roster and the on-device roster should be unified (e.g. one config listing both a `_REPO_ID` for the server and a GGUF source for on-device, per model)
 
 ## TODO: Core + add-on architecture
- The Chat tab, the llama.cpp on-device path, and the model catalog's descriptive metadata all
-exist; **none of the Core infrastructure the add-ons are supposed to sit on
-does**. Ordering below follows the spec's own sequential action items — steps 3
-and 7 are the real unblockers, and the spec warns that retrofitting the plugin
-contract after an add-on is built is the expensive path.
+
+The plugin contract (spec #3) and the `model_pool` capability under it now
+exist — see "Add-on architecture" below. The rest of Core does not. Ordering
+follows the spec's own sequential action items; #7 (tiering) is the remaining
+unblocker.
+
+### Add-on architecture (done)
+
+Every tab is an `AddOn` registered at compile time in
+[`app/lib/addons/registry.dart`](app/lib/addons/registry.dart) — Models, Chat,
+Orchestration and Code all sit on the same contract, with no privileged
+built-in. Adding a feature is one file plus one registry entry.
+
+| Piece | Where |
+|---|---|
+| The contract — `AddOnManifest`, `AddOnSurface`, lifecycle, `HostCapability` | [`addons/addon.dart`](app/lib/addons/addon.dart) |
+| The host — registry, lifecycle, enable/disable, capability gating | [`addons/addon_host.dart`](app/lib/addons/addon_host.dart) |
+| The frame every add-on draws inside | [`app/lib/app_shell.dart`](app/lib/app_shell.dart) |
+| The `model_pool` capability | [`app/lib/model_pool.dart`](app/lib/model_pool.dart) |
+
+An add-on contributes three optional surfaces — a **sidebar panel**, a **main
+pane**, and a **top-bar slot** — so selecting a tab now swaps the whole window,
+not just the sidebar. It declares what it needs (`requires: [HostCapability.modelPool]`)
+and the host hands over exactly that; reaching for an undeclared capability
+throws and names the fix. An add-on whose capabilities this build can't supply
+renders as a disabled tab with the reason, never a broken pane.
+
+**`model_pool`** is the roster, its download state, and the single `generate()`
+that decides between the two run paths (a `gguf` source goes to llama.cpp
+in-process; everything else to the Python backend). That decision used to be
+inline in the chat screen's send handler reading private state, which is why
+nothing else could run a model. On-device calls are serialized behind a queue:
+`OnDeviceEngine` keeps exactly one model resident and evicts on switch, so a
+Model Council asking several GGUFs at once would otherwise thrash multi-gigabyte
+loads against each other.
+
+Two things worth knowing before extending this:
+
+- **Add-ons cannot be installed after the app is.** Flutter ships as machine
+  code with no interpreter, so there is no way to load a new `.dart` file at
+  runtime. Add-ons are registered at compile time and have a *lifecycle* at
+  runtime; new ones reach users through the Velopack updater. `onInstall`
+  accordingly means first-run setup on this machine — it runs once, and again
+  only when a release bumps that add-on's `schemaVersion`, like a migration.
+  The genuinely downloadable half is data, not code: a JSON *preset* naming
+  which models a Council uses and what the lead's prompt is. That's spec #1's
+  manifest, still open below.
+- **Nothing may await the filesystem on the startup path.** Real file IO never
+  completes under `flutter_test`'s fake-async binding, so a host that awaited
+  its state file before enabling add-ons hung every widget test forever (and
+  would hold the first paint behind a disk round trip in production). The shell
+  renders its chrome immediately and the pane catches up; tests inject
+  `InMemoryAddOnStateStore` so they neither read nor write the developer's real
+  `%APPDATA%`. Covered by [`app/test/addon_host_test.dart`](app/test/addon_host_test.dart).
+
+Still open here: nothing calls `AddOnHost.setEnabled` yet — the persistence and
+gating work, but there is no settings UI to turn a tab off.
 
 ### Partially complete
 
@@ -783,11 +845,11 @@ contract after an add-on is built is the expensive path.
 - [ ] **Naming convention fix** (spec action item #2) — filenames still encode no size: `gemma1.pyx`, `gemma2.pyx`, `falcon3.pyx`, `llama3.pyx`. Rename to `gemma2_2b`-style so the variant can't go ambiguous again as the catalog grows.
 - [ ] **Resource management** — `OnDeviceEngine._ensureLoaded` (`app/lib/on_device_engine.dart`) enforces one resident model and evicts on switch, which covers "which model is loaded". There is no RAM/VRAM *budget* — just single-tenancy.
 - [ ] **Desktop vs. mobile catalog split** — models split by `_REPO_ID` (server, 4-bit GPU) vs. `_GGUF_SOURCE` (in-app), but that's a *where it runs* distinction, not the hardware-aware gating layer the spec describes. No `platform_support` field, no per-device labelling.
-- [ ] **Orchestration and Code tabs** — sidebar shells only, marked "under construction" (`_SidebarTab` in `app/lib/chat_screen.dart`). No behavior behind either.
+- [ ] **Orchestration and Code tabs** — real add-ons now ([`addons/placeholder_addon.dart`](app/lib/addons/placeholder_addon.dart)), each owning a sidebar panel and a full main pane, but still marked "under construction". No behavior behind either.
+- [x] **Plugin/add-on interface contract** (spec #3) — landed; see "Add-on architecture" above. One capability so far (`model_pool`); `memory` is deliberately absent until the SQLite-vs-PocketBase question below is settled, and adding it is a new enum case plus a getter, not a redesign.
 
 ### Not started
 
-- [ ] **Plugin/add-on interface contract** (spec #3) — the two new tabs are hardcoded enum cases, not plugins. Needs the mandatory lifecycle (`onInstall`, `onEnable`, `onDisable`, `registerUI`) plus optional declared capabilities (`requires: ["model_pool", "memory"]`). Must land *before* either add-on is fleshed out.
 - [ ] **`model_registry` SQLite table** (spec #5) — no SQLite anywhere in the project; model metadata lives in per-file `.pyx` dicts. Missing every gating column: `quant_level`, `architecture_type`, `min_ram_mb`, `recommended_ram_mb`, `platform_support`, `role_tags`. Since `get_info()` already holds most of the descriptive fields, populating it is largely a migration script.
 - [ ] **Memory layer** (spec #2) — the four-table model (`raw_items`, `wiki_entries`, `outputs`, `memory_index`) doesn't exist. `app/lib/chat_store.dart` is a flat JSON file of chat sessions, not a queryable memory tier.
 - [ ] **Device × model compatibility estimator** (spec #6) — no device-spec probing, no predicted tokens/sec, no thermal/battery estimate. Ship the heuristic v1 but keep the input/output contract swappable for a trained regression later.
