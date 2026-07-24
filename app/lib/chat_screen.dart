@@ -9,6 +9,7 @@ import 'api_client.dart';
 import 'attachment_input.dart';
 import 'backend_process.dart';
 import 'chat_store.dart';
+import 'markdown_text.dart';
 import 'model_detail_screen.dart';
 import 'model_fit_badge.dart';
 import 'on_device_engine.dart';
@@ -1334,13 +1335,20 @@ class _ChatScreenState extends State<ChatScreen> {
                     style: const TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white70)),
                 const SizedBox(height: 4),
-                SelectableText(
-                  message.text,
-                  style: TextStyle(
-                    height: 1.5,
-                    color: message.isError ? Colors.red.shade300 : Colors.white,
+                // Error rows are diagnostic strings, not model Markdown — render
+                // them plain (and red) so a stray * or _ in an exception message
+                // isn't reinterpreted as formatting. Every model reply goes
+                // through the Markdown renderer.
+                if (message.isError)
+                  SelectableText(
+                    message.text,
+                    style: TextStyle(height: 1.5, color: Colors.red.shade300),
+                  )
+                else
+                  MarkdownText(
+                    message.text,
+                    baseStyle: const TextStyle(height: 1.5, color: Colors.white),
                   ),
-                ),
               ],
             ),
           ),

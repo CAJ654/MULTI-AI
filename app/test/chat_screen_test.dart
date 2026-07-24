@@ -7,6 +7,7 @@ import 'package:llamadart/llamadart.dart';
 import 'package:multi_ai/api_client.dart';
 import 'package:multi_ai/attachment_input.dart';
 import 'package:multi_ai/chat_screen.dart';
+import 'package:multi_ai/markdown_text.dart';
 import 'package:multi_ai/on_device_engine.dart';
 
 /// Returns canned models instead of calling the real backend.
@@ -477,6 +478,46 @@ void main() {
     expect(api.lastHistory.map((t) => t.text).toList(),
         ['My name is Alex.', 'Nice to meet you, Alex.']);
     expect(api.lastHistory.map((t) => t.isUser).toList(), [true, false]);
+  });
+
+  testWidgets('a model reply renders as Markdown, not literal markers',
+      (tester) async {
+    _useDesktopSurface(tester);
+
+    // A reply exercising the constructs LLMs actually emit: a heading, inline
+    // bold and code, and a bullet list. Every model's output goes through the
+    // same renderer, so covering it once via the server path covers all of them.
+    final api = _FakeApiClient(
+      const [ModelInfo(id: 'test_model', name: 'Test Model')],
+      reply: '# Heading\n\n'
+          'Hello **world** and `snippet`.\n\n'
+          '- first\n'
+          '- second',
+    );
+    await tester.pumpWidget(MaterialApp(
+      home: ChatScreen(apiClient: api, downloadManager: const _FakeDownloadManager()),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButton<ModelInfo>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Test Model (local server)').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'go');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    // The reply is rendered by the Markdown widget...
+    expect(find.byType(MarkdownText), findsOneWidget);
+    // ...with the markers interpreted, not shown. The paragraph's plain text is
+    // the bold and code content with the ** and ` stripped.
+    expect(find.text('Heading'), findsOneWidget);
+    expect(find.text('Hello world and snippet.'), findsOneWidget);
+    expect(find.text('first'), findsOneWidget);
+    expect(find.text('second'), findsOneWidget);
+    // No raw Markdown leaks through anywhere on screen.
+    expect(find.textContaining('**'), findsNothing);
+    expect(find.textContaining('# Heading'), findsNothing);
   });
 
   // ------------------------------------------------- attachment input gating
