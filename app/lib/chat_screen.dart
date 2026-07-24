@@ -85,6 +85,7 @@ class ChatScreen extends StatefulWidget {
     ApiClient? apiClient,
     ModelDownloadManager? downloadManager,
     AttachmentSource? attachmentSource,
+    this.onMarkdownLinkTap,
   })  : _apiClient = apiClient,
         _downloadManager = downloadManager,
         _attachmentSource = attachmentSource;
@@ -101,6 +102,11 @@ class ChatScreen extends StatefulWidget {
   // Injectable so widget tests can drive the attach/mic buttons without
   // opening a real file dialog or recording from a real microphone.
   final AttachmentSource? _attachmentSource;
+
+  // Injectable so widget tests can observe a Markdown link tap without the
+  // url_launcher platform channel; production leaves this null and links open
+  // in the platform browser.
+  final void Function(String url)? onMarkdownLinkTap;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -1348,6 +1354,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   MarkdownText(
                     message.text,
                     baseStyle: const TextStyle(height: 1.5, color: Colors.white),
+                    onTapLink: widget.onMarkdownLinkTap,
                   ),
               ],
             ),

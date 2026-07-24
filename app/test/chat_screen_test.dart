@@ -520,6 +520,46 @@ void main() {
     expect(find.textContaining('# Heading'), findsNothing);
   });
 
+  testWidgets('a link in a reply renders styled and is tappable', (tester) async {
+    _useDesktopSurface(tester);
+
+    // A link-only reply: the whole rendered paragraph is the link, so a tap on
+    // it lands on the link span rather than surrounding prose.
+    final api = _FakeApiClient(
+      const [ModelInfo(id: 'test_model', name: 'Test Model')],
+      reply: '[click here](https://example.com)',
+    );
+    String? tapped;
+    await tester.pumpWidget(MaterialApp(
+      home: ChatScreen(
+        apiClient: api,
+        downloadManager: const _FakeDownloadManager(),
+        // Observe the tap instead of opening a browser (no platform channel
+        // under `flutter test`).
+        onMarkdownLinkTap: (url) => tapped = url,
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButton<ModelInfo>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Test Model (local server)').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'go');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    // The label shows without its []() syntax...
+    expect(find.byType(MarkdownText), findsOneWidget);
+    expect(find.text('click here'), findsOneWidget);
+    expect(find.textContaining('https://example.com'), findsNothing);
+
+    // ...and tapping it reports the underlying URL.
+    await tester.tap(find.text('click here'));
+    await tester.pump();
+    expect(tapped, 'https://example.com');
+  });
+
   // ------------------------------------------------- attachment input gating
 
   /// Pumps a chat screen whose picker holds [models], with the model named

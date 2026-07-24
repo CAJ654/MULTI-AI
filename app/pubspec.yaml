@@ -45,6 +45,7 @@ dependencies:
   # `flutter build windows` now compiles Rust as part of the build — the build
   # machine needs a toolchain on PATH, which the release workflow installs.
   velopack_flutter: ^0.3.2
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
