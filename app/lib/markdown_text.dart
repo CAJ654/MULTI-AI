@@ -487,6 +487,17 @@ List<InlineSpan> _inlineSpans(
       }
     }
 
+    // Math: \( \), \[ \], $$ $$, or $ … $. The app has no math typesetter, so
+    // the LaTeX is converted to Unicode (10^{23} → 10²³, \times → ×) rather
+    // than shown raw. Its content is never parsed as Markdown.
+    final math = _mathAt(text, i);
+    if (math != null) {
+      flush();
+      spans.add(TextSpan(text: math.rendered, style: base, recognizer: recognizer));
+      i = math.end;
+      continue;
+    }
+
     // Link: [label](url). Its label is tappable, opening the URL; nested
     // emphasis in the label inherits the same recognizer.
     final link = _linkAt(text, i);
@@ -539,6 +550,170 @@ _Link? _linkAt(String text, int i) {
   if (paren < 0) return null;
   return _Link(text.substring(i + 1, close), text.substring(close + 2, paren), paren + 1);
 }
+
+// ------------------------------------------------------------------- math
+
+class _Math {
+  const _Math(this.rendered, this.end);
+  final String rendered;
+  final int end;
+}
+
+/// A math span at [i] — delimited by `\( \)`, `\[ \]`, `$$ $$`, or `$ … $` —
+/// converted from LaTeX to Unicode, or null if [i] doesn't open one. Bare `$`
+/// is only treated as math when its content carries a LaTeX signal (`\`, `^`,
+/// `_`), so prose like "it costs $5 and $10" is left alone.
+_Math? _mathAt(String text, int i) {
+  if (text[i] == r'\' && i + 1 < text.length) {
+    final open = text[i + 1];
+    if (open == '(' || open == '[') {
+      final closer = open == '(' ? r'\)' : r'\]';
+      final end = text.indexOf(closer, i + 2);
+      if (end >= 0) return _Math(_latexToUnicode(text.substring(i + 2, end)), end + 2);
+    }
+    return null;
+  }
+  if (_startsWith(text, i, r'$$')) {
+    final end = text.indexOf(r'$$', i + 2);
+    if (end >= 0) return _Math(_latexToUnicode(text.substring(i + 2, end)), end + 2);
+  }
+  if (text[i] == r'$') {
+    final end = text.indexOf(r'$', i + 1);
+    if (end > i + 1) {
+      final inner = text.substring(i + 1, end);
+      if (inner.contains(r'\') || inner.contains('^') || inner.contains('_')) {
+        return _Math(_latexToUnicode(inner), end + 1);
+      }
+    }
+  }
+  return null;
+}
+
+/// Best-effort LaTeX → Unicode for the inline math LLMs actually emit: symbols,
+/// Greek, and super/subscripts. Anything unmapped degrades to plain text (a
+/// bare `\times` becomes "times", an unmappable exponent keeps its caret) —
+/// always better than the raw source, never a rendering crash.
+String _latexToUnicode(String tex) {
+  var s = tex;
+  // \text{…}, \mathrm{…} etc. — keep the inner text, drop the wrapper.
+  s = s.replaceAllMapped(
+      RegExp(r'\\(?:text|mathrm|mathbf|mathit|mathsf|operatorname)\s*\{([^{}]*)\}'),
+      (m) => m[1]!);
+  // \frac{a}{b} → a/b; \sqrt{x} → √x.
+  s = s.replaceAllMapped(
+      RegExp(r'\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}'), (m) => '${m[1]}/${m[2]}');
+  s = s.replaceAllMapped(RegExp(r'\\sqrt\s*\{([^{}]*)\}'), (m) => '√${m[1]}');
+  // Spacing escapes (\, \; \: \! and backslash-space) → a single space.
+  s = s.replaceAll(RegExp(r'\\[,;:! ]'), ' ');
+  // Named commands: \times → ×, \alpha → α, \left → (removed), else the name.
+  s = s.replaceAllMapped(
+      RegExp(r'\\([a-zA-Z]+)'), (m) => _texCommands[m[1]!] ?? m[1]!);
+  // Super/subscripts, then any grouping braces that are left over.
+  s = _applyScript(s, '^', _superscripts);
+  s = _applyScript(s, '_', _subscripts);
+  s = s.replaceAll('{', '').replaceAll('}', '');
+  return s.replaceAll(RegExp(r' {2,}'), ' ').trim();
+}
+
+/// Replaces `marker{group}` / `marker c` runs (e.g. `^{23}`, `_2`) with their
+/// Unicode equivalents from [map]. A group only converts if every character
+/// maps; otherwise the marker and text are kept literally so nothing is lost.
+String _applyScript(String s, String marker, Map<String, String> map) {
+  final out = StringBuffer();
+  var i = 0;
+  while (i < s.length) {
+    if (s[i] == marker && i + 1 < s.length) {
+      String group;
+      int next;
+      if (s[i + 1] == '{') {
+        final close = s.indexOf('}', i + 2);
+        if (close < 0) {
+          out.write(s[i]);
+          i++;
+          continue;
+        }
+        group = s.substring(i + 2, close);
+        next = close + 1;
+      } else {
+        group = s[i + 1];
+        next = i + 2;
+      }
+      final converted = _mapAll(group, map);
+      out.write(converted ?? '$marker$group');
+      i = next;
+    } else {
+      out.write(s[i]);
+      i++;
+    }
+  }
+  return out.toString();
+}
+
+/// Maps every character of [group] through [map], or null if any is missing.
+String? _mapAll(String group, Map<String, String> map) {
+  final sb = StringBuffer();
+  for (final ch in group.split('')) {
+    final u = map[ch];
+    if (u == null) return null;
+    sb.write(u);
+  }
+  return sb.toString();
+}
+
+const _superscripts = <String, String>{
+  '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+  '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+  '+': '⁺', '-': '⁻', '=': '⁼', '(': '⁽', ')': '⁾', 'n': 'ⁿ', 'i': 'ⁱ',
+  'a': 'ᵃ', 'b': 'ᵇ', 'c': 'ᶜ', 'd': 'ᵈ', 'e': 'ᵉ', 'f': 'ᶠ', 'g': 'ᵍ',
+  'h': 'ʰ', 'j': 'ʲ', 'k': 'ᵏ', 'l': 'ˡ', 'm': 'ᵐ', 'o': 'ᵒ', 'p': 'ᵖ',
+  'r': 'ʳ', 's': 'ˢ', 't': 'ᵗ', 'u': 'ᵘ', 'v': 'ᵛ', 'w': 'ʷ', 'x': 'ˣ',
+  'y': 'ʸ', 'z': 'ᶻ',
+};
+
+const _subscripts = <String, String>{
+  '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+  '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
+  '+': '₊', '-': '₋', '=': '₌', '(': '₍', ')': '₎',
+  'a': 'ₐ', 'e': 'ₑ', 'h': 'ₕ', 'i': 'ᵢ', 'j': 'ⱼ', 'k': 'ₖ', 'l': 'ₗ',
+  'm': 'ₘ', 'n': 'ₙ', 'o': 'ₒ', 'p': 'ₚ', 'r': 'ᵣ', 's': 'ₛ', 't': 'ₜ',
+  'u': 'ᵤ', 'v': 'ᵥ', 'x': 'ₓ',
+};
+
+// LaTeX command name → Unicode. \left/\right map to '' so `\left(` becomes `(`;
+// unmapped names fall through to their bare word in _latexToUnicode.
+const _texCommands = <String, String>{
+  'times': '×', 'div': '÷', 'cdot': '·', 'pm': '±', 'mp': '∓', 'ast': '∗',
+  'star': '⋆', 'circ': '∘', 'bullet': '•', 'oplus': '⊕', 'otimes': '⊗',
+  'leq': '≤', 'le': '≤', 'geq': '≥', 'ge': '≥', 'neq': '≠', 'ne': '≠',
+  'approx': '≈', 'equiv': '≡', 'sim': '∼', 'simeq': '≃', 'cong': '≅',
+  'propto': '∝', 'll': '≪', 'gg': '≫',
+  'subset': '⊂', 'supset': '⊃', 'subseteq': '⊆', 'supseteq': '⊇',
+  'in': '∈', 'notin': '∉', 'ni': '∋', 'cup': '∪', 'cap': '∩',
+  'emptyset': '∅', 'varnothing': '∅', 'forall': '∀', 'exists': '∃',
+  'neg': '¬', 'land': '∧', 'lor': '∨', 'wedge': '∧', 'vee': '∨',
+  'rightarrow': '→', 'to': '→', 'longrightarrow': '⟶', 'leftarrow': '←',
+  'gets': '←', 'leftrightarrow': '↔', 'Rightarrow': '⇒', 'implies': '⇒',
+  'Leftarrow': '⇐', 'Leftrightarrow': '⇔', 'iff': '⇔', 'mapsto': '↦',
+  'uparrow': '↑', 'downarrow': '↓',
+  'infty': '∞', 'partial': '∂', 'nabla': '∇', 'sum': '∑', 'prod': '∏',
+  'int': '∫', 'oint': '∮', 'sqrt': '√', 'angle': '∠', 'degree': '°',
+  'perp': '⊥', 'parallel': '∥', 'therefore': '∴', 'because': '∵',
+  'ldots': '…', 'dots': '…', 'cdots': '⋯', 'vdots': '⋮', 'ddots': '⋱',
+  'prime': '′', 'hbar': 'ℏ', 'ell': 'ℓ', 'Re': 'ℜ', 'Im': 'ℑ', 'aleph': 'ℵ',
+  'left': '', 'right': '', 'big': '', 'Big': '', 'bigg': '', 'Bigg': '',
+  'quad': '  ', 'qquad': '    ', 'displaystyle': '', 'textstyle': '',
+  // Greek — lowercase
+  'alpha': 'α', 'beta': 'β', 'gamma': 'γ', 'delta': 'δ', 'epsilon': 'ε',
+  'varepsilon': 'ε', 'zeta': 'ζ', 'eta': 'η', 'theta': 'θ', 'vartheta': 'ϑ',
+  'iota': 'ι', 'kappa': 'κ', 'lambda': 'λ', 'mu': 'μ', 'nu': 'ν', 'xi': 'ξ',
+  'pi': 'π', 'varpi': 'ϖ', 'rho': 'ρ', 'varrho': 'ϱ', 'sigma': 'σ',
+  'varsigma': 'ς', 'tau': 'τ', 'upsilon': 'υ', 'phi': 'φ', 'varphi': 'φ',
+  'chi': 'χ', 'psi': 'ψ', 'omega': 'ω',
+  // Greek — uppercase
+  'Gamma': 'Γ', 'Delta': 'Δ', 'Theta': 'Θ', 'Lambda': 'Λ', 'Xi': 'Ξ',
+  'Pi': 'Π', 'Sigma': 'Σ', 'Upsilon': 'Υ', 'Phi': 'Φ', 'Psi': 'Ψ',
+  'Omega': 'Ω',
+};
 
 class _Emph {
   const _Emph(this.spans, this.end);

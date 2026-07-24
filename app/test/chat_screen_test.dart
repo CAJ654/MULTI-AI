@@ -560,6 +560,35 @@ void main() {
     expect(tapped, 'https://example.com');
   });
 
+  testWidgets('inline LaTeX math renders as Unicode, not raw TeX',
+      (tester) async {
+    _useDesktopSurface(tester);
+
+    // The exact shape a model emitted: two \(..\) groups around a unit.
+    final api = _FakeApiClient(
+      const [ModelInfo(id: 'test_model', name: 'Test Model')],
+      reply: r'\(6 \times 10^{23}\) mol\(^{-1}\)',
+    );
+    await tester.pumpWidget(MaterialApp(
+      home: ChatScreen(apiClient: api, downloadManager: const _FakeDownloadManager()),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButton<ModelInfo>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Test Model (local server)').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'go');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    // Delimiters and commands are gone; superscripts are real Unicode.
+    expect(find.text('6 × 10²³ mol⁻¹'), findsOneWidget);
+    expect(find.textContaining(r'\('), findsNothing);
+    expect(find.textContaining(r'\times'), findsNothing);
+    expect(find.textContaining('^{'), findsNothing);
+  });
+
   // ------------------------------------------------- attachment input gating
 
   /// Pumps a chat screen whose picker holds [models], with the model named
