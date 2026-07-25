@@ -4,6 +4,7 @@ import '../attachment_input.dart';
 import 'addon.dart';
 import 'chat/chat_addon.dart';
 import 'models/models_addon.dart';
+import 'orchestration/orchestration_addon.dart';
 import 'placeholder_addon.dart';
 
 /// Every add-on this build ships. Adding a feature means adding one entry here
@@ -23,17 +24,7 @@ List<AddOn> buildRegistry({
       attachmentSource: attachmentSource,
       onMarkdownLinkTap: onMarkdownLinkTap,
     ),
-    const PlaceholderAddOn(
-      manifest: AddOnManifest(
-        id: 'orchestration',
-        title: 'Orchestration',
-        icon: Icons.account_tree_outlined,
-        order: 2,
-        requires: [HostCapability.modelPool],
-      ),
-      blurb: 'Routing a prompt across several models and combining their '
-          'answers will live here.',
-    ),
+    OrchestrationAddOn(),
     const PlaceholderAddOn(
       manifest: AddOnManifest(
         id: 'code',

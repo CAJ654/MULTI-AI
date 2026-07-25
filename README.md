@@ -181,7 +181,8 @@ MULTI-AI/
             ├── addon.dart, addon_host.dart, registry.dart
             ├── chat/              # chat_controller.dart + chat_addon.dart
             ├── models/            # the roster browser
-            └── placeholder_addon.dart   # Orchestration and Code
+            ├── orchestration/     # the Model Council (controller + addon)
+            └── placeholder_addon.dart   # the Code tab, for now
 ```
 
 ### What the `.pyx`, `.c`, and `.pyd`/`.so` files are
@@ -366,13 +367,18 @@ pytest -q
 ## TODO
 
 ### AI Orchestration Portion
-  - LangGraph
-  - Create the Orchestration Page
-  - 
+  - [x] Create the Orchestration Page — the Model Council, see "Orchestration" above
+  - LangGraph was the original idea here; it's Python-only and lives on the wrong
+    side of the app/backend split. The Dart-side alternatives (Genkit, Agenix,
+    dart_agent_core) were evaluated and declined — the council needs fan-out, not
+    an agent framework. Revisit a framework only if routing grows real agent loops.
+  - [ ] Multi-round deliberation (parallel and sequential ship; multi-round doesn't)
+  - [ ] Preset manifests — make the member set, lead, mode and lead prompt a
+    downloadable JSON recipe (the add-on contract's preset follow-on)
 
 ### AI Coding Tool Portion
   - Look into models that are great at text output & coding
-  - Create coding page
+  - Create coding page (still the placeholder add-on)
 
 ### Android
 
@@ -839,13 +845,58 @@ Two things worth knowing before extending this:
 Still open here: nothing calls `AddOnHost.setEnabled` yet — the persistence and
 gating work, but there is no settings UI to turn a tab off.
 
+### Orchestration: the Model Council (done)
+
+The Orchestration tab is a real add-on now
+([`app/lib/addons/orchestration/`](app/lib/addons/orchestration/)), not the
+placeholder. Pick two or more **downloaded** models in the sidebar, crown one as
+**lead**, ask a question: the non-lead members answer, and the lead reads every
+answer and returns one consolidated reply.
+
+Built directly on [`ModelPool.generate()`](app/lib/model_pool.dart), **no agent
+framework**. The evaluated options (Genkit Dart, Agenix, dart_agent_core) all
+assume an LLM provider client, so each would have needed a custom adapter for
+this app's two local run paths before doing anything — and the council is
+fan-out plus a synthesis prompt, not the tool-use / planning / delegation those
+frameworks exist for. `dart_agent_core` is the one to revisit *if* a future Code
+tab wants a real agent loop: it's the only local-first option and it takes a
+custom LLM client.
+
+Two **deliberation modes**, picked in the sidebar (the README previously left
+these "to be decided"):
+
+- **Parallel** — each member answers the raw question, seeing nobody else's.
+- **Sequential** — each member answers in turn, seeing the answers already given.
+
+Both **run members serially**, not concurrently — a deliberate call, not a
+missing feature. On one GPU there's nothing to gain: the on-device engine keeps
+one model resident and the Python backend evicts on model switch, so
+"simultaneous" generations would just thrash the same hardware. "Parallel" is
+the *semantic* distinction (independent answers), not a threading one.
+
+Robustness the controller
+([`orchestration_controller.dart`](app/lib/addons/orchestration/orchestration_controller.dart))
+handles, all under test in
+[`app/test/orchestration_controller_test.dart`](app/test/orchestration_controller_test.dart):
+a member that fails to load doesn't sink the run (the lead synthesizes whoever
+answered); if *everyone* fails, the run says so and never asks the lead to
+synthesize nothing; Stop discards late-arriving answers via a run-generation
+guard; deleting a selected model from the Models tab drops it from the council,
+and deselecting the lead promotes another member.
+
+Not done: the synthesizer prompt is a sensible built-in, not yet the preset's
+`leadPrompt` field — that's the downloadable-manifest follow-on. Multi-round
+deliberation (the spec's third mode) is also still open; parallel and sequential
+ship.
+
 ### Partially complete
 
 - [ ] **Model catalog audit** (spec #4/#8) — param counts and sizes are resolved for all 47 entries via `get_info()`, including the previously ambiguous ones (`gemma1`→2B, `gemma2`→2B, `falcon3`→3B, `gptOSS`→20B, `llama3`/`llama3_1`→8B). Still missing as *structured* fields: `quant_level` (only implicit in the GGUF filename/prose) and `architecture_type` (dense vs. MoE vs. Mamba-hybrid — matters because `falcon_mamba_7b`/`falcon_h1` have different compute characteristics than a standard transformer).
 - [ ] **Naming convention fix** (spec action item #2) — filenames still encode no size: `gemma1.pyx`, `gemma2.pyx`, `falcon3.pyx`, `llama3.pyx`. Rename to `gemma2_2b`-style so the variant can't go ambiguous again as the catalog grows.
 - [ ] **Resource management** — `OnDeviceEngine._ensureLoaded` (`app/lib/on_device_engine.dart`) enforces one resident model and evicts on switch, which covers "which model is loaded". There is no RAM/VRAM *budget* — just single-tenancy.
 - [ ] **Desktop vs. mobile catalog split** — models split by `_REPO_ID` (server, 4-bit GPU) vs. `_GGUF_SOURCE` (in-app), but that's a *where it runs* distinction, not the hardware-aware gating layer the spec describes. No `platform_support` field, no per-device labelling.
-- [ ] **Orchestration and Code tabs** — real add-ons now ([`addons/placeholder_addon.dart`](app/lib/addons/placeholder_addon.dart)), each owning a sidebar panel and a full main pane, but still marked "under construction". No behavior behind either.
+- [x] **Orchestration tab** — a working Model Council, see "Orchestration" above. Only the manifest-preset and multi-round pieces remain.
+- [ ] **Code tab** — still the placeholder add-on ([`addons/placeholder_addon.dart`](app/lib/addons/placeholder_addon.dart)): owns a sidebar panel and a full main pane, marked "under construction". No behavior yet.
 - [x] **Plugin/add-on interface contract** (spec #3) — landed; see "Add-on architecture" above. One capability so far (`model_pool`); `memory` is deliberately absent until the SQLite-vs-PocketBase question below is settled, and adding it is a new enum case plus a getter, not a redesign.
 
 ### Not started
