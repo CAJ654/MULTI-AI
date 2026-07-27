@@ -153,6 +153,45 @@ Mobile can't run the `transformers`/`torch`/`bitsandbytes` server backend (no CU
 - [ ] Download progress UI: `llamadart` already exposes an `onProgress`/`ModelDownloadProgress.fraction` callback on `loadModelSource` (confirmed in the installed `llamadart-0.8.11` source) and already resumes partial downloads itself — just thread the callback from `OnDeviceEngine._ensureLoaded`/`generate` (`app/lib/on_device_engine.dart`) up into `chat_screen.dart`'s thinking-row UI (`_buildThinkingRow`, currently a static "Thinking…" string)
 - [ ] Verify: `pytest -q` (roster/import tests) → `flutter run -d windows` (desktop llamadart run, no phone needed) → real Android build (the one thing desktop testing can't catch is the missing `INTERNET` permission)
 
+## TODO: Add Colibri (GLM-5.2) as a BYO external-endpoint model
+
+[Colibri](https://github.com/JustVugg/colibri) runs GLM-5.2 (744B MoE) on consumer
+hardware by streaming experts from disk (~25GB RAM instead of full residency).
+It doesn't fit either existing model path (`_REPO_ID` → transformers/torch,
+`_GGUF_SOURCE` → on-device llamadart) since it needs a separately-downloaded
+~372GB weight set and its own long-running server the user starts themselves
+(`coli serve --model <path>`). Scoped as BYO: MULTI-AI proxies to it, never
+downloads/runs it.
+
+- [ ] New model file `Multi-AI/multi_ai/models/glm_5_2_colibri.pyx` — module-level
+      `_EXTERNAL_ENDPOINT = "colibri"` marker (new, alongside `_REPO_ID`/`_GGUF_SOURCE`)
+      + `get_info()` metadata (744B MoE, ~372GB, license Apache-2.0 engine/MIT weights)
+- [ ] `server.pyx`: third dispatch branch in `_chat_reply`/`_resolve_server_model` —
+      translate `{model, message, history}` into Colibri's OpenAI-compatible
+      `/v1/chat/completions` body, proxy the request, map the reply back to `{reply}`.
+      Clear error message if no Colibri server is reachable (don't hang/stack-trace).
+- [ ] `hardware.pyx`: new rating path (`_rate_external_model` or similar) — existing
+      `rate_model` discriminator (`bool(gguf)`) needs a third case, since neither
+      VRAM-only nor VRAM/RAM-residency math applies to disk streaming. Rate off
+      local RAM against Colibri's stated minimums (16GB min / 24GB+ recommended),
+      note the ~380GB disk requirement in the `reason` text regardless of rating.
+- [ ] Default fixed port `8010` for the Colibri endpoint (avoids colliding with
+      MULTI-AI's own backend on 8000) — documented, no settings UI.
+- [ ] `api_client.dart`/`chat_screen.dart`: verify no Dart changes needed — model
+      has no `gguf` field so it already routes through the normal `_api.sendChat()`
+      path; double-check the model-detail view's "available" badge logic doesn't
+      assume every non-GGUF model has something to download via HF cache.
+- [ ] README: short section explaining this is BYO — user supplies the binary,
+      the weights, and runs `coli serve --port 8010` themselves.
+- [ ] Verify: `pytest -q` (roster/import tests unaffected) → start backend, confirm
+      `/api/models` lists it with a sane fit rating → chat request with no Colibri
+      running returns the "start `coli serve`" error, not a crash → chat request
+      with Colibri running round-trips correctly.
+
+Explicitly out of scope: bundling the Colibri binary or the 372GB weights,
+supervising a Colibri subprocess, any installer/packaging changes, SSE streaming
+in MULTI-AI's own `/api/chat`.
+
 ## File Architecture
 
 ```
