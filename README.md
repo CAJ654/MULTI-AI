@@ -1,4 +1,45 @@
 # Multi-AI
+
+## The Goals & The Problems
+
+MULTI-AI exists to make on-device inference a viable default, not just a
+fallback — every model that runs locally is a query the shared cloud
+infrastructure never has to serve. That's the one lever this project can
+actually pull; here's the full picture of where AI's environmental cost
+actually sits.
+
+### Problem 1: Training — not addressed here
+
+Training a frontier model is a genuinely massive one-time cost — GPT-4-scale
+runs are estimated at nine figures and enough energy to power a city for
+days, largely because of the GPU-parallel compute it demands
+([MIT Technology Review, 2025](https://www.technologyreview.com/2025/05/20/1116327/ai-energy-usage-climate-footprint-big-tech/)).
+This project doesn't touch that side yet — it's out of scope until it
+expands beyond running existing models.
+
+### Problem 2: Inference — the actual target
+
+Training happens once; inference happens every time someone asks a question,
+and it now accounts for roughly 80–90% of AI's total compute demand and
+climbing, precisely because millions of users query the same few
+data-center models
+([MIT Technology Review, 2025](https://www.technologyreview.com/2025/05/20/1116327/ai-energy-usage-climate-footprint-big-tech/)).
+Running the model on the device asking the question removes that query from
+the shared-infrastructure tally entirely — the cost shifts to local battery
+drain, a tradeoff the user controls directly instead of one absorbed by a
+data center's grid draw.
+
+### Problem 3: Hardware — reuse over extraction
+
+Data-center-scale AI runs on lithium, cobalt, copper, and rare earths, and
+the mining behind them carries a real human and environmental cost that
+increasingly lands on communities with the least ability to push back
+([Fortune, 2026](https://fortune.com/2026/04/29/where-do-critical-minerals-come-from-ai-boom-data-centers-africa-middle-east/);
+[Roha, 2026](https://medium.com/@Jamesroha/the-new-strip-mines-how-ai-infrastructure-is-repeating-appalachias-extraction-history-e4ac29c1b88b)).
+A phone or laptop that already exists needs none of that new extraction —
+on-device inference reuses hardware the user already owns instead of adding
+to server-rack demand.
+
 ## Run using
 
 ```powershell
