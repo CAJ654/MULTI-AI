@@ -12,6 +12,10 @@ a model (see server.pyx's module docstring):
   _GGUF_SOURCE      the Flutter app runs them in-process via llama.cpp, which
                     offloads to the GPU when the weights fit and otherwise
                     falls back to CPU + system RAM (correct, but much slower).
+  _EXTERNAL_ENDPOINT  a BYO server (e.g. Colibri) the user runs themselves;
+                    neither VRAM nor a download-size estimate applies, so
+                    rate_external_model() rates off local RAM against the
+                    engine's own stated minimums instead.
 
 ``size_gb`` in a model's ``get_info()`` means different things for those two
 cases — full-precision checkpoint size for a repo, actual quantized file size
@@ -252,3 +256,53 @@ def rate_model(size_gb: float | None, runs_on_device: bool, specs: dict | None =
     if runs_on_device:
         return _rate_on_device_model(size_gb, specs)
     return _rate_server_model(size_gb, specs)
+
+
+def rate_external_model(
+    min_ram_gb: float | None,
+    recommended_ram_gb: float | None,
+    disk_gb: float | None,
+    specs: dict | None = None,
+) -> dict | None:
+    """Rate a BYO _EXTERNAL_ENDPOINT model (e.g. Colibri): this server proxies
+    to a process the user runs themselves, so neither VRAM nor the
+    downloaded/quantized-size math the other two raters use applies. Rate
+    off local RAM against the engine's own stated minimums instead, and
+    always surface the disk requirement in the reason — for these models
+    that one-time download, not runtime fit, is the real commitment.
+
+    None when min_ram_gb is unannotated (mirrors rate_model's contract).
+    """
+    if not min_ram_gb:
+        return None
+    specs = specs if specs is not None else detect_specs()
+    ram = specs.get("ram_gb")
+    recommended = recommended_ram_gb or min_ram_gb
+    disk_note = (
+        f" Needs ~{disk_gb:.0f}GB of local disk for the weights (BYO — not downloaded by this app)."
+        if disk_gb
+        else ""
+    )
+    if not ram:
+        return {
+            "rating": RATING_UNKNOWN,
+            "needs_gb": min_ram_gb,
+            "reason": (
+                f"Needs {min_ram_gb:.0f}GB+ RAM via Colibri ({recommended:.0f}GB+ comfortable); "
+                f"couldn't read this machine's memory.{disk_note}"
+            ),
+        }
+    if ram >= recommended:
+        rating = RATING_YES
+    elif ram >= min_ram_gb:
+        rating = RATING_MAYBE
+    else:
+        rating = RATING_NO
+    return {
+        "rating": rating,
+        "needs_gb": min_ram_gb,
+        "reason": (
+            f"Has {_gb(ram)} RAM; Colibri needs {min_ram_gb:.0f}GB min "
+            f"({recommended:.0f}GB+ comfortable).{disk_note}"
+        ),
+    }

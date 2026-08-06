@@ -26,8 +26,12 @@ def test_models_loadable():
         module = _import_model(stem)
         assert hasattr(module, "get_info"), f"{stem} lacks get_info()"
         assert isinstance(module.get_info().get("name"), str), f"{stem} get_info() lacks a name"
-        runnable = getattr(module, "_REPO_ID", None) or getattr(module, "_GGUF_SOURCE", None)
-        assert runnable, f"{stem} declares neither _REPO_ID nor _GGUF_SOURCE"
+        runnable = (
+            getattr(module, "_REPO_ID", None)
+            or getattr(module, "_GGUF_SOURCE", None)
+            or getattr(module, "_EXTERNAL_ENDPOINT", None)
+        )
+        assert runnable, f"{stem} declares neither _REPO_ID, _GGUF_SOURCE, nor _EXTERNAL_ENDPOINT"
 
 
 if __name__ == "__main__":

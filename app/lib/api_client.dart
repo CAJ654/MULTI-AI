@@ -134,6 +134,7 @@ class ModelInfo {
     this.fit,
     this.gguf,
     this.mmproj,
+    this.externalEndpoint,
     this.params,
     this.sizeGb,
     this.modality,
@@ -164,6 +165,13 @@ class ModelInfo {
   /// encodes images through this separate file, so on-device image input
   /// needs both downloaded — see [OnDeviceEngine.generate].
   final String? mmproj;
+
+  /// Set for a BYO external-server model (currently only `"colibri"`) — the
+  /// backend proxies chat requests to a process the user runs themselves.
+  /// Null for both `_REPO_ID` and `_GGUF_SOURCE` models. Distinguishes this
+  /// from a `_REPO_ID` model (both have no [gguf]), since only the latter
+  /// has server-managed weights this app can download/cache/delete.
+  final String? externalEndpoint;
 
   /// Parameter count as a human label (e.g. `"7B"`, `"124M"`), for the
   /// Models tab. Null for entries the backend hasn't annotated.
@@ -228,6 +236,7 @@ class ModelInfo {
           : ModelFit.fromJson(json['fit'] as Map<String, dynamic>),
       gguf: json['gguf'] as String?,
       mmproj: json['mmproj'] as String?,
+      externalEndpoint: json['external_endpoint'] as String?,
       params: json['params'] as String?,
       sizeGb: (json['size_gb'] as num?)?.toDouble(),
       modality: json['modality'] as String?,

@@ -194,44 +194,117 @@ Mobile can't run the `transformers`/`torch`/`bitsandbytes` server backend (no CU
 - [ ] Download progress UI: `llamadart` already exposes an `onProgress`/`ModelDownloadProgress.fraction` callback on `loadModelSource` (confirmed in the installed `llamadart-0.8.11` source) and already resumes partial downloads itself — just thread the callback from `OnDeviceEngine._ensureLoaded`/`generate` (`app/lib/on_device_engine.dart`) up into `chat_screen.dart`'s thinking-row UI (`_buildThinkingRow`, currently a static "Thinking…" string)
 - [ ] Verify: `pytest -q` (roster/import tests) → `flutter run -d windows` (desktop llamadart run, no phone needed) → real Android build (the one thing desktop testing can't catch is the missing `INTERNET` permission)
 
-## TODO: Add Colibri (GLM-5.2) as a BYO external-endpoint model
+## Colibri: external-endpoint models on this edge server (5 MoE families)
 
-[Colibri](https://github.com/JustVugg/colibri) runs GLM-5.2 (744B MoE) on consumer
-hardware by streaming experts from disk (~25GB RAM instead of full residency).
-It doesn't fit either existing model path (`_REPO_ID` → transformers/torch,
-`_GGUF_SOURCE` → on-device llamadart) since it needs a separately-downloaded
-~372GB weight set and its own long-running server the user starts themselves
-(`coli serve --model <path>`). Scoped as BYO: MULTI-AI proxies to it, never
-downloads/runs it.
+[Colibri](https://github.com/JustVugg/colibri) runs a handful of large MoE
+models on consumer hardware by streaming individual experts from disk instead
+of residing the whole model in RAM. It is **not** a general model loader —
+it's "one C file per model family," hand-written engines that hardcode each
+family's tokenizer, attention mechanism, and MoE routing — so it only runs
+the five families it explicitly implements, and can't be pointed at an
+arbitrary checkpoint. (This is why it can't help with GPT-OSS or this
+project's dense 10–14B models — see the TODO below.)
 
-- [ ] New model file `Multi-AI/multi_ai/models/glm_5_2_colibri.pyx` — module-level
-      `_EXTERNAL_ENDPOINT = "colibri"` marker (new, alongside `_REPO_ID`/`_GGUF_SOURCE`)
-      + `get_info()` metadata (744B MoE, ~372GB, license Apache-2.0 engine/MIT weights)
-- [ ] `server.pyx`: third dispatch branch in `_chat_reply`/`_resolve_server_model` —
-      translate `{model, message, history}` into Colibri's OpenAI-compatible
-      `/v1/chat/completions` body, proxy the request, map the reply back to `{reply}`.
-      Clear error message if no Colibri server is reachable (don't hang/stack-trace).
-- [ ] `hardware.pyx`: new rating path (`_rate_external_model` or similar) — existing
-      `rate_model` discriminator (`bool(gguf)`) needs a third case, since neither
-      VRAM-only nor VRAM/RAM-residency math applies to disk streaming. Rate off
-      local RAM against Colibri's stated minimums (16GB min / 24GB+ recommended),
-      note the ~380GB disk requirement in the `reason` text regardless of rating.
-- [ ] Default fixed port `8010` for the Colibri endpoint (avoids colliding with
-      MULTI-AI's own backend on 8000) — documented, no settings UI.
-- [ ] `api_client.dart`/`chat_screen.dart`: verify no Dart changes needed — model
-      has no `gguf` field so it already routes through the normal `_api.sendChat()`
-      path; double-check the model-detail view's "available" badge logic doesn't
-      assume every non-GGUF model has something to download via HF cache.
-- [ ] README: short section explaining this is BYO — user supplies the binary,
-      the weights, and runs `coli serve --port 8010` themselves.
-- [ ] Verify: `pytest -q` (roster/import tests unaffected) → start backend, confirm
-      `/api/models` lists it with a sane fit rating → chat request with no Colibri
-      running returns the "start `coli serve`" error, not a crash → chat request
-      with Colibri running round-trips correctly.
+None of the five fit either existing model path (`_REPO_ID` →
+transformers/torch, `_GGUF_SOURCE` → on-device llamadart): each needs a
+separately-downloaded weight set (167GB–1.6TB) and runs as its own
+long-running process on this edge server, started separately
+(`coli serve --model <path> --port 8010`) rather than by MULTI-AI itself.
+MULTI-AI proxies chat requests to it; it doesn't download the weights or
+supervise the process.
 
-Explicitly out of scope: bundling the Colibri binary or the 372GB weights,
-supervising a Colibri subprocess, any installer/packaging changes, SSE streaming
-in MULTI-AI's own `/api/chat`.
+| Model | Params (active) | Disk | RAM (min / comfortable) | Context | License |
+|---|---|---|---|---|---|
+| GLM-5.2 | 744B (~40–55B) | ~372GB | 16GB / 24GB | 1M | Apache-2.0 engine / MIT weights |
+| Inkling | 975B (~41B) | ~469GB | 64GB / 120GB | 1M | Apache 2.0 |
+| Kimi K3 | 2.8T (~104B) | ~1.6TB | 32GB / 32GB | ~1.05M | Kimi K3 License (custom) |
+| DeepSeek V4 Flash | 284B (~13B) | ~167GB | 16GB / 22GB | 1M | MIT |
+| OLMoE | 7B (~1B) | ~4GB | 8GB / 8GB | 4096 | Apache 2.0 (+ Gemma ToU note) |
+
+(Inkling's 64GB floor is Colibri's own doc'd threshold — below it the process
+dies mid-generation; a 25GB int4-dense-container fallback mode exists but is
+disk-bound and impractically slow, so it isn't what's rated here.)
+
+- [x] Five new model files under `Multi-AI/multi_ai/models/` — one per family
+      (`glm_5_2_colibri.pyx`, `inkling_colibri.pyx`, `kimi_k3_colibri.pyx`,
+      `deepseek_v4_flash_colibri.pyx`, `olmoe_colibri.pyx`), each declaring
+      `_EXTERNAL_ENDPOINT = "colibri"`, `_EXTERNAL_ENDPOINT_PORT = 8010`,
+      `_EXTERNAL_MIN_RAM_GB`/`_EXTERNAL_RECOMMENDED_RAM_GB`, and a `get_info()`
+      with the figures in the table above.
+- [x] `server.pyx`: a third dispatch branch in `_chat_reply` — `_colibri_generate()`
+      translates `{model, message, history}` into Colibri's OpenAI-compatible
+      `/v1/chat/completions` body (reusing `_coerce_history()`'s existing
+      role/content shape directly), proxies the request, and maps the reply
+      back to a plain string. Connection failures return a clear
+      "start `coli serve --port 8010`" message rather than hanging or
+      stack-tracing. `_resolve_server_model` is untouched — these still return
+      its existing 400 "no server-side weights to manage" since nothing is
+      MULTI-AI-managed here.
+- [x] `hardware.pyx`: new `rate_external_model(min_ram_gb, recommended_ram_gb,
+      disk_gb, specs)` — rates off local RAM against each family's own stated
+      minimums (`rate_model`'s `bool(gguf)` discriminator couldn't grow a third
+      case in place, so this is a sibling function, not a branch inside it).
+      Always notes the disk requirement in the `reason` text regardless of the
+      RAM verdict — for one of these models that one-time download is the real
+      commitment.
+- [x] Shared fixed port `8010` for all five (avoids colliding with MULTI-AI's
+      own backend on 8000). All five default to the same port since realistically
+      only one Colibri process runs at a time — each family needs its own
+      hundreds-of-GB-to-terabyte weight set, so running two simultaneously isn't
+      a realistic scenario. A per-model `_EXTERNAL_ENDPOINT_PORT` override exists
+      if that assumption ever needs to change.
+- [x] Dart side — `api_client.dart`/`model_pool.dart`/`chat_screen.dart` route
+      these through the normal `_api.sendChat()` path unchanged (no `gguf`
+      field), as originally expected. What wasn't anticipated: `ModelInfo` had
+      no way to tell a `_REPO_ID` model (server-managed weights) apart from an
+      `_EXTERNAL_ENDPOINT` one (nothing to manage) — both lack `gguf`. That
+      made `model_detail_screen.dart`'s server-install section call the
+      backend's cache-status endpoint for these models and surface its "no
+      server-side weights to manage" error as if it were a bug, and made
+      `model_pool.dart`'s `isDownloaded()` permanently mark them "not
+      downloaded." Fixed by adding `external_endpoint` to `/api/models` and
+      threading it through both call sites — see `ModelInfo.externalEndpoint`.
+- [ ] Verify: `pytest -q` → start backend, confirm `/api/models` lists all five
+      with a sane fit rating → chat request with no Colibri running returns the
+      "start `coli serve`" error, not a crash → chat request with a real Colibri
+      instance running round-trips correctly, including with prior turns in
+      history.
+
+Explicitly out of scope: bundling the Colibri binary or any family's weights,
+supervising a `coli serve` subprocess, any installer/packaging changes, SSE
+streaming in MULTI-AI's own `/api/chat`, running multiple Colibri families at
+once.
+
+## TODO: A real speedup for GPT-OSS 20B and the dense 10–14B models
+
+Colibri (above) can't be the answer for these — it only implements the five
+MoE families it ships hand-written engines for, GPT-OSS is a different MoE
+architecture Colibri doesn't support (not even on its roadmap), and the
+dense models (`falcon2_11b`, `mistral_nemo_12b`, `ministral_3_14b`) have no
+experts to stream in the first place. Their slowness is a separate,
+still-open problem:
+
+- `gptOSS` on-device: **0.1 tok/s**, 198s for one short reply once it spills
+  onto the CPU (see the Wave 0 benchmarks above) — technically works, not
+  practically usable.
+- `falcon2_11b`, `mistral_nemo_12b`, `ministral_3_14b`: server-side (`_REPO_ID`)
+  they're rated against VRAM after 4-bit quantization same as everything
+  else, and on-device they're the partial-offload candidates Wave 4 hasn't
+  run yet.
+
+Possible directions, none investigated yet:
+
+- [ ] A dedicated llama.cpp **server** process instead of running GGUF
+      in-app via llamadart — decouples generation from the Flutter process
+      and might expose batching/scheduling llamadart's embedded use doesn't.
+- [ ] Better quantization for the CPU-spill cases (a smaller quant, or one
+      more suited to CPU inference than Q4_K_M).
+- [ ] Tuning `_gpuLayerLadder` (`app/lib/on_device_engine.dart`) — it was
+      calibrated on Vulkan against this machine's 11.7GB VRAM; revisit once
+      Wave 3/4 (the 7–14B on-device entries) actually run.
+- [ ] Whether `_CPU_FALLBACK_LIMIT_GB` in `hardware.pyx` (currently 10.0GB,
+      calibrated on the single `gptOSS` data point) should apply more
+      granularly once more large-model benchmarks exist.
 
 ## File Architecture
 

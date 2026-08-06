@@ -128,6 +128,13 @@ class ModelPool extends ChangeNotifier {
 
   Future<bool> isDownloaded(ModelInfo m) async {
     if (!m.available) return false;
+    // A BYO external-server model (e.g. Colibri) has no weights this app
+    // downloads or caches — it's either ready to chat with (if the user's
+    // own server is running) or fails with a clear error at chat time, never
+    // "not downloaded". Calling the server-cache-status endpoint for one of
+    // these always throws (no _REPO_ID to check), which used to be caught
+    // and misread as "not downloaded" forever.
+    if (m.externalEndpoint != null) return true;
     final source = localSourceOf(m);
     if (source != null) {
       final entry = await _downloads.get(ModelSource.parse(source).cacheKey);

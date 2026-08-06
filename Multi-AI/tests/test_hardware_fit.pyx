@@ -32,6 +32,10 @@ _SMALL_GPU = {"gpu_name": "Test GPU", "vram_gb": 4.0, "ram_gb": 16.0, "platform"
 # No CUDA at all — the on-device GGUF path still works via CPU, the
 # transformers path can't run.
 _NO_GPU = {"gpu_name": None, "vram_gb": None, "ram_gb": 16.0, "platform": "linux"}
+# A low-RAM box: below most Colibri families' stated minimums.
+_LOW_RAM = {"gpu_name": None, "vram_gb": None, "ram_gb": 8.0, "platform": "linux"}
+# RAM couldn't be measured at all (distinct from "measured and low").
+_UNREADABLE_RAM = {"gpu_name": None, "vram_gb": None, "ram_gb": None, "platform": "linux"}
 
 
 def test_unannotated_model_is_not_rated():
@@ -104,6 +108,42 @@ def test_ratings_are_monotonic_in_model_size():
         assert ranks == sorted(ranks, reverse=True), (on_device, ranks)
 
 
+def test_external_model_with_no_min_ram_is_not_rated():
+    """Mirrors rate_model's contract: an unannotated model gets no rating
+    rather than a guess."""
+    hardware = _load("hardware")
+    assert hardware.rate_external_model(None, None, 372, specs=_WORKSTATION) is None
+
+
+def test_external_model_rated_against_ram():
+    """A BYO _EXTERNAL_ENDPOINT model (e.g. Colibri) is rated off local RAM
+    against the engine's own stated min/recommended, not VRAM or size_gb."""
+    hardware = _load("hardware")
+
+    comfortable = hardware.rate_external_model(16, 24, 372, specs=_WORKSTATION)
+    assert comfortable["rating"] == hardware.RATING_YES, comfortable
+
+    tight = hardware.rate_external_model(16, 24, 372, specs=_SMALL_GPU)
+    assert tight["rating"] == hardware.RATING_MAYBE, tight
+
+    insufficient = hardware.rate_external_model(16, 24, 372, specs=_LOW_RAM)
+    assert insufficient["rating"] == hardware.RATING_NO, insufficient
+
+
+def test_external_model_disk_requirement_always_noted():
+    """The disk footprint is the real commitment for a BYO model (hundreds of
+    GB), so it belongs in the reason text regardless of the RAM verdict."""
+    hardware = _load("hardware")
+    fit = hardware.rate_external_model(16, 24, 372, specs=_LOW_RAM)
+    assert "372" in fit["reason"], fit
+
+
+def test_external_model_without_ram_reading_is_unknown():
+    hardware = _load("hardware")
+    fit = hardware.rate_external_model(16, 24, 372, specs=_UNREADABLE_RAM)
+    assert fit["rating"] == hardware.RATING_UNKNOWN, fit
+
+
 def test_every_listed_model_carries_a_fit():
     """The app shows a badge per model card, so a model that reaches the
     roster without a rating leaves a visible hole."""
@@ -146,6 +186,10 @@ if __name__ == "__main__":
     test_oversized_on_device_model_is_not_recommended_despite_running()
     test_on_device_model_beyond_ram_is_not_recommended()
     test_ratings_are_monotonic_in_model_size()
+    test_external_model_with_no_min_ram_is_not_rated()
+    test_external_model_rated_against_ram()
+    test_external_model_disk_requirement_always_noted()
+    test_external_model_without_ram_reading_is_unknown()
     test_every_listed_model_carries_a_fit()
     test_api_device_endpoint()
     print("ok — hardware fit ratings behave")

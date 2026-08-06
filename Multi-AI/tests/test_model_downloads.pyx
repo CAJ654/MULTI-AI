@@ -47,7 +47,15 @@ def _check_source(path: Path) -> None:
     module = _import_model(path)
     repo_id = getattr(module, "_REPO_ID", None)
     gguf = getattr(module, "_GGUF_SOURCE", None)
-    assert repo_id or gguf, f"{path.stem} declares neither _REPO_ID nor _GGUF_SOURCE"
+    external_endpoint = getattr(module, "_EXTERNAL_ENDPOINT", None)
+    assert repo_id or gguf or external_endpoint, (
+        f"{path.stem} declares neither _REPO_ID, _GGUF_SOURCE, nor _EXTERNAL_ENDPOINT"
+    )
+
+    if external_endpoint:
+        # BYO: the weights live on the user's own machine, not the Hugging
+        # Face Hub, so there's no source to resolve here.
+        return
 
     # These mean the source itself is wrong — a real test failure. Anything
     # else (timeouts, DNS, 5xx) means we couldn't check, not that it's broken.

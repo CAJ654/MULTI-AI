@@ -58,7 +58,15 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
   bool _serverBusy = false;
   String? _serverError;
 
-  bool get _isServerModel => !widget.runsInApp && widget.model.available && widget.api != null;
+  // A BYO external-endpoint model (e.g. Colibri) has no server-managed
+  // weights — _resolve_server_model rejects it with "no server-side weights
+  // to manage", so this section must not be shown for one even though it's
+  // !runsInApp and available, same as a real _REPO_ID model.
+  bool get _isServerModel =>
+      !widget.runsInApp &&
+      widget.model.available &&
+      widget.model.externalEndpoint == null &&
+      widget.api != null;
 
   ModelSource? get _parsedSource {
     final source = widget.source;
@@ -281,6 +289,7 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
                 const SizedBox(height: 24),
                 _buildInstallSection(),
                 _buildServerInstallSection(),
+                _buildExternalEndpointSection(),
                 _buildSection(Icons.category_outlined, 'Modality', model.modalityLabel),
                 _buildSection(
                   Icons.auto_awesome_outlined,
@@ -586,6 +595,61 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
                 icon: const Icon(Icons.download_outlined, size: 16),
                 label: Text(_serverError != null ? 'Retry download' : 'Download & install'),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// An _EXTERNAL_ENDPOINT model (e.g. Colibri) runs as a separate process on
+  /// this same edge server rather than something this app downloads, caches,
+  /// or deletes itself — this replaces the server-install section with an
+  /// explanation of that instead of leaving a silent gap.
+  Widget _buildExternalEndpointSection() {
+    final endpoint = widget.model.externalEndpoint;
+    if (endpoint == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.dns_outlined, size: 16, color: Colors.deepPurple.shade200),
+                const SizedBox(width: 8),
+                const Text('Runs via Colibri on this edge server',
+                    style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white70)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Colibri runs as its own process on this edge server, started separately from '
+              'the rest of the app — this page just proxies chat requests to it once it\'s '
+              'running. Start it, then chat normally:',
+              style: TextStyle(fontSize: 12, height: 1.45, color: Colors.white70),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black26,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'coli serve --model <path> --port 8010',
+                style: TextStyle(fontSize: 12, fontFamily: 'monospace', color: Colors.white),
+              ),
+            ),
           ],
         ),
       ),

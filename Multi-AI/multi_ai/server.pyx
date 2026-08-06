@@ -9,6 +9,10 @@ Each models/<id>.pyx declares how it runs:
                     (4-bit quantized on GPU so 7B+ models fit in laptop VRAM)
   _GGUF_SOURCE    — llama.cpp GGUF source; the Flutter app runs these
                     on-device via llamadart, the server never loads them
+  _EXTERNAL_ENDPOINT — a BYO server the user runs themselves (currently only
+                    "colibri"); this server proxies chat requests to it over
+                    HTTP on _EXTERNAL_ENDPOINT_PORT rather than loading or
+                    downloading anything itself
   _GGUF_MMPROJ_SOURCE — companion multimodal-projector GGUF for a vision
                     GGUF. llama.cpp encodes images through this separate
                     file (libmtmd), so a GGUF entry without one is text-only
@@ -38,6 +42,8 @@ import os
 import re
 import sys
 import tempfile
+import urllib.error
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -118,7 +124,8 @@ def _list_models() -> list[dict]:
         repo_id = getattr(module, "_REPO_ID", None)
         gguf = getattr(module, "_GGUF_SOURCE", None)
         mmproj = getattr(module, "_GGUF_MMPROJ_SOURCE", None)
-        available = bool(repo_id or gguf)
+        external_endpoint = getattr(module, "_EXTERNAL_ENDPOINT", None)
+        available = bool(repo_id or gguf or external_endpoint)
         entry = {
             "id": stem,
             "name": name if available else f"{name} (unavailable)",
@@ -133,6 +140,12 @@ def _list_models() -> list[dict]:
             entry["gguf"] = gguf
         if mmproj:
             entry["mmproj"] = mmproj
+        if external_endpoint:
+            # Distinguishes a BYO proxy target from a _REPO_ID model: neither
+            # has a `gguf` field, but only the latter has server-managed
+            # weights this app can download/cache/delete. Without this the
+            # app can't tell the two apart and wrongly offers a download.
+            entry["external_endpoint"] = external_endpoint
         # Informational only (shown in the app's Models tab) — absent for any
         # model file that hasn't been annotated yet, never required.
         if info.get("params"):
@@ -141,8 +154,20 @@ def _list_models() -> list[dict]:
             entry["size_gb"] = info["size_gb"]
         # Can this machine actually run it? A GGUF entry is rated against the
         # llama.cpp path (VRAM, else CPU + RAM), a repo against the 4-bit
-        # transformers path (VRAM only). Absent when size_gb isn't annotated.
-        if available:
+        # transformers path (VRAM only), and a BYO external endpoint against
+        # its own stated RAM minimums (VRAM/download-size math don't apply to
+        # a disk-streaming process the user runs themselves). Absent when the
+        # relevant size/RAM fields aren't annotated.
+        if external_endpoint:
+            fit = hardware.rate_external_model(
+                getattr(module, "_EXTERNAL_MIN_RAM_GB", None),
+                getattr(module, "_EXTERNAL_RECOMMENDED_RAM_GB", None),
+                info.get("size_gb"),
+                specs=specs,
+            )
+            if fit:
+                entry["fit"] = fit
+        elif available:
             fit = hardware.rate_model(info.get("size_gb"), runs_on_device=bool(gguf), specs=specs)
             if fit:
                 entry["fit"] = fit
@@ -754,6 +779,33 @@ def _delete_hf_weights(repo_id: str) -> dict:
     return _model_cache_status(repo_id)
 
 
+def _colibri_generate(port: int, model_id: str, message: str, history: list | None = None) -> str:
+    """Proxy a chat request to a user-run Colibri instance's OpenAI-compatible
+    /v1/chat/completions endpoint. Colibri is BYO — this app never starts,
+    downloads for, or supervises it — so an unreachable port is an expected,
+    not exceptional, outcome and must produce a clear message rather than a
+    hang or a stack trace."""
+    messages = _coerce_history(history) + [{"role": "user", "content": message}]
+    body = json.dumps({"model": "colibri", "messages": messages}).encode("utf-8")
+    req = urllib.request.Request(
+        f"http://localhost:{port}/v1/chat/completions",
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=300) as resp:
+            payload = json.load(resp)
+        return payload["choices"][0]["message"]["content"]
+    except (urllib.error.URLError, ConnectionError, TimeoutError, OSError) as exc:
+        return (
+            f"[{model_id}] no Colibri server responding on port {port} — start it with "
+            f"`coli serve --model <path> --port {port}` first. ({exc})"
+        )
+    except (KeyError, IndexError, json.JSONDecodeError) as exc:
+        return f"[{model_id}] Colibri returned an unexpected response: {exc}"
+
+
 def _chat_reply(
     model_id: str,
     message: str,
@@ -763,6 +815,8 @@ def _chat_reply(
     module = _load_model_module(model_id)
     repo_id = getattr(module, "_REPO_ID", None)
     gguf = getattr(module, "_GGUF_SOURCE", None)
+    external_endpoint = getattr(module, "_EXTERNAL_ENDPOINT", None)
+    external_port = getattr(module, "_EXTERNAL_ENDPOINT_PORT", None)
     unsupported_reason = getattr(module, "_UNSUPPORTED_REASON", None)
 
     if attachments and not repo_id:
@@ -794,6 +848,8 @@ def _chat_reply(
             f"[{model_id}] runs on-device in the app (via llama.cpp), not on this server — "
             "update the app if you're seeing this message."
         )
+    if external_endpoint and external_port:
+        return _colibri_generate(external_port, model_id, message, history=history)
     if unsupported_reason:
         return f"[{model_id}] isn't wired up: {unsupported_reason}."
     return f"[{model_id}] is a stub — it can't generate real responses yet. You said: {message!r}"

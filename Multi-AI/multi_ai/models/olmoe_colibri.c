@@ -3,12 +3,12 @@
 /* BEGIN: Cython Metadata
 {
     "distutils": {
-        "name": "multi_ai.models.gemma3n_on_device",
+        "name": "multi_ai.models.olmoe_colibri",
         "sources": [
-            "Multi-AI\\multi_ai\\models\\gemma3n_on_device.pyx"
+            "Multi-AI\\multi_ai\\models\\olmoe_colibri.pyx"
         ]
     },
-    "module_name": "multi_ai.models.gemma3n_on_device"
+    "module_name": "multi_ai.models.olmoe_colibri"
 }
 END: Cython Metadata */
 
@@ -1137,8 +1137,8 @@ static int __Pyx_init_co_variables(void) {
   #endif
 #endif
 
-#define __PYX_HAVE__multi_ai__models__gemma3n_on_device
-#define __PYX_HAVE_API__multi_ai__models__gemma3n_on_device
+#define __PYX_HAVE__multi_ai__models__olmoe_colibri
+#define __PYX_HAVE_API__multi_ai__models__olmoe_colibri
 /* Early includes */
 #ifdef _OPENMP
 #include <omp.h>
@@ -1356,7 +1356,7 @@ static const char *__pyx_filename;
 /* #### Code section: filename_table ### */
 
 static const char* const __pyx_f[] = {
-  "Multi-AI/multi_ai/models/gemma3n_on_device.pyx",
+  "Multi-AI/multi_ai/models/olmoe_colibri.pyx",
 };
 /* #### Code section: utility_code_proto_before_types ### */
 /* IncludeStructmemberH.proto (used by FixUpExtensionType) */
@@ -2172,20 +2172,20 @@ static int __Pyx_State_RemoveModule(void*);
 #define __PYX_TYPE_MODULE_PREFIX __PYX_ABI_MODULE_NAME "."
 
 
-/* Module declarations from "multi_ai.models.gemma3n_on_device" */
+/* Module declarations from "multi_ai.models.olmoe_colibri" */
 /* #### Code section: typeinfo ### */
 /* #### Code section: before_global_var ### */
-#define __Pyx_MODULE_NAME "multi_ai.models.gemma3n_on_device"
-extern int __pyx_module_is_main_multi_ai__models__gemma3n_on_device;
-int __pyx_module_is_main_multi_ai__models__gemma3n_on_device = 0;
+#define __Pyx_MODULE_NAME "multi_ai.models.olmoe_colibri"
+extern int __pyx_module_is_main_multi_ai__models__olmoe_colibri;
+int __pyx_module_is_main_multi_ai__models__olmoe_colibri = 0;
 
-/* Implementation of "multi_ai.models.gemma3n_on_device" */
+/* Implementation of "multi_ai.models.olmoe_colibri" */
 /* #### Code section: global_var ### */
 static PyObject *__pyx_builtin_print;
 /* #### Code section: string_decls ### */
-static const char __pyx_k_Gemma_3n_E2B_run_on_device_On_de[] = "Gemma 3n E2B, run on-device.\n\nOn-device sibling of ``gemma3n.pyx``: instead of the transformers repo, this\npoints at a llama.cpp GGUF quantization (Q4_K_M) that the Flutter app runs\nlocally through llamadart.\n";
+static const char __pyx_k_OLMoE_AI2_s_7B_MoE_model_run_via[] = "OLMoE: AI2's 7B MoE model, run via a user-run Colibri server.\n\nSame _EXTERNAL_ENDPOINT shape as glm_5_2_colibri.pyx, included because it's\none of Colibri's five supported families \342\200\224 but at 7B total/1B active it's\nfar smaller than Colibri's other entries, and would likely run through the\nexisting _REPO_ID/_GGUF_SOURCE paths just as well. It's here for completeness\nof Colibri support, not because this is the only way to run it.\n";
 /* #### Code section: decls ### */
-static PyObject *__pyx_pf_8multi_ai_6models_17gemma3n_on_device_get_info(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_8multi_ai_6models_13olmoe_colibri_get_info(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
 /* #### Code section: late_includes ### */
 /* #### Code section: module_state ### */
 /* SmallCodeConfig */
@@ -2209,8 +2209,8 @@ typedef struct {
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_items;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_values;
   PyObject *__pyx_codeobj_tab[1];
-  PyObject *__pyx_string_tab[40];
-  PyObject *__pyx_number_tab[2];
+  PyObject *__pyx_string_tab[43];
+  PyObject *__pyx_number_tab[4];
 /* #### Code section: module_state_contents ### */
 /* CommonTypesMetaclass.module_state_decls */
 PyTypeObject *__pyx_CommonTypesMetaclassType;
@@ -2253,46 +2253,51 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 /* #### Code section: constant_name_defines ### */
 #define __pyx_kp_u_ __pyx_string_tab[0]
 #define __pyx_kp_u_0_1_0 __pyx_string_tab[1]
-#define __pyx_kp_u_Designed_to_run_efficiently_on_d __pyx_string_tab[2]
-#define __pyx_kp_u_Fast_for_a_multimodal_model_good __pyx_string_tab[3]
-#define __pyx_kp_u_Gemma_3n_E2B_On_Device __pyx_string_tab[4]
-#define __pyx_kp_u_Gemma_Terms_of_Use __pyx_string_tab[5]
-#define __pyx_kp_u_Multi_AI_multi_ai_models_gemma3n __pyx_string_tab[6]
-#define __pyx_kp_u_hf_unsloth_gemma_3n_E2B_it_GGUF __pyx_string_tab[7]
-#define __pyx_n_u_E2B __pyx_string_tab[8]
-#define __pyx_n_u_GGUF_SOURCE __pyx_string_tab[9]
-#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[10]
-#define __pyx_n_u_Text __pyx_string_tab[11]
-#define __pyx_n_u_annotate __pyx_string_tab[12]
-#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[13]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[14]
-#define __pyx_n_u_context_tokens __pyx_string_tab[15]
-#define __pyx_n_u_func __pyx_string_tab[16]
-#define __pyx_n_u_get_info __pyx_string_tab[17]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[18]
-#define __pyx_n_u_items __pyx_string_tab[19]
-#define __pyx_n_u_license __pyx_string_tab[20]
-#define __pyx_n_u_main __pyx_string_tab[21]
-#define __pyx_n_u_modality __pyx_string_tab[22]
-#define __pyx_n_u_module __pyx_string_tab[23]
-#define __pyx_n_u_multi_ai_models_gemma3n_on_devic __pyx_string_tab[24]
-#define __pyx_n_u_name __pyx_string_tab[25]
-#define __pyx_n_u_name_2 __pyx_string_tab[26]
-#define __pyx_n_u_params __pyx_string_tab[27]
-#define __pyx_n_u_print __pyx_string_tab[28]
-#define __pyx_n_u_qualname __pyx_string_tab[29]
-#define __pyx_n_u_repo_id __pyx_string_tab[30]
-#define __pyx_n_u_set_name __pyx_string_tab[31]
-#define __pyx_n_u_setdefault __pyx_string_tab[32]
-#define __pyx_n_u_size_gb __pyx_string_tab[33]
-#define __pyx_n_u_speed_profile __pyx_string_tab[34]
-#define __pyx_n_u_strengths __pyx_string_tab[35]
-#define __pyx_n_u_test __pyx_string_tab[36]
-#define __pyx_n_u_values __pyx_string_tab[37]
-#define __pyx_n_u_version __pyx_string_tab[38]
-#define __pyx_kp_b_iso88591_1_1_1_A_1_Q __pyx_string_tab[39]
-#define __pyx_float_3_03 __pyx_number_tab[0]
-#define __pyx_int_32768 __pyx_number_tab[1]
+#define __pyx_kp_u_7B_1B_active __pyx_string_tab[2]
+#define __pyx_kp_u_AI2_s_fully_open_7B_Mixture_of_E __pyx_string_tab[3]
+#define __pyx_kp_u_Apache_2_0_instruct_variant_also __pyx_string_tab[4]
+#define __pyx_kp_u_Multi_AI_multi_ai_models_olmoe_c __pyx_string_tab[5]
+#define __pyx_kp_u_OLMoE_via_Colibri __pyx_string_tab[6]
+#define __pyx_kp_u_Runs_via_Colibri_on_this_edge_se __pyx_string_tab[7]
+#define __pyx_n_u_EXTERNAL_ENDPOINT __pyx_string_tab[8]
+#define __pyx_n_u_EXTERNAL_ENDPOINT_PORT __pyx_string_tab[9]
+#define __pyx_n_u_EXTERNAL_MIN_RAM_GB __pyx_string_tab[10]
+#define __pyx_n_u_EXTERNAL_RECOMMENDED_RAM_GB __pyx_string_tab[11]
+#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[12]
+#define __pyx_n_u_Text __pyx_string_tab[13]
+#define __pyx_n_u_annotate __pyx_string_tab[14]
+#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[15]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[16]
+#define __pyx_n_u_colibri __pyx_string_tab[17]
+#define __pyx_n_u_context_tokens __pyx_string_tab[18]
+#define __pyx_n_u_func __pyx_string_tab[19]
+#define __pyx_n_u_get_info __pyx_string_tab[20]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[21]
+#define __pyx_n_u_items __pyx_string_tab[22]
+#define __pyx_n_u_license __pyx_string_tab[23]
+#define __pyx_n_u_main __pyx_string_tab[24]
+#define __pyx_n_u_modality __pyx_string_tab[25]
+#define __pyx_n_u_module __pyx_string_tab[26]
+#define __pyx_n_u_multi_ai_models_olmoe_colibri __pyx_string_tab[27]
+#define __pyx_n_u_name __pyx_string_tab[28]
+#define __pyx_n_u_name_2 __pyx_string_tab[29]
+#define __pyx_n_u_params __pyx_string_tab[30]
+#define __pyx_n_u_print __pyx_string_tab[31]
+#define __pyx_n_u_qualname __pyx_string_tab[32]
+#define __pyx_n_u_repo_id __pyx_string_tab[33]
+#define __pyx_n_u_set_name __pyx_string_tab[34]
+#define __pyx_n_u_setdefault __pyx_string_tab[35]
+#define __pyx_n_u_size_gb __pyx_string_tab[36]
+#define __pyx_n_u_speed_profile __pyx_string_tab[37]
+#define __pyx_n_u_strengths __pyx_string_tab[38]
+#define __pyx_n_u_test __pyx_string_tab[39]
+#define __pyx_n_u_values __pyx_string_tab[40]
+#define __pyx_n_u_version __pyx_string_tab[41]
+#define __pyx_kp_b_iso88591_1_1_1_A_1_Q __pyx_string_tab[42]
+#define __pyx_float_8_0 __pyx_number_tab[0]
+#define __pyx_int_4 __pyx_number_tab[1]
+#define __pyx_int_4096 __pyx_number_tab[2]
+#define __pyx_int_8010 __pyx_number_tab[3]
 /* #### Code section: module_state_clear ### */
 #if CYTHON_USE_MODULE_STATE
 static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
@@ -2308,8 +2313,8 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   __Pyx_State_RemoveModule(NULL);
   #endif
   for (int i=0; i<1; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<40; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
-  for (int i=0; i<2; ++i) { Py_CLEAR(clear_module_state->__pyx_number_tab[i]); }
+  for (int i=0; i<43; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<4; ++i) { Py_CLEAR(clear_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_clear_contents ### */
 /* CommonTypesMetaclass.module_state_clear */
 Py_CLEAR(clear_module_state->__pyx_CommonTypesMetaclassType);
@@ -2333,8 +2338,8 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_bytes);
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_unicode);
   for (int i=0; i<1; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<40; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
-  for (int i=0; i<2; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_number_tab[i]); }
+  for (int i=0; i<43; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<4; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_traverse_contents ### */
 /* CommonTypesMetaclass.module_state_traverse */
 Py_VISIT(traverse_module_state->__pyx_CommonTypesMetaclassType);
@@ -2348,31 +2353,31 @@ return 0;
 #endif
 /* #### Code section: module_code ### */
 
-/* "multi_ai/models/gemma3n_on_device.pyx":12
+/* "multi_ai/models/olmoe_colibri.pyx":17
  * 
  * 
  * def get_info():             # <<<<<<<<<<<<<<
  *     return {
- *         "name": "Gemma 3n E2B (On-Device)",
+ *         "name": "OLMoE (via Colibri)",
 */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8multi_ai_6models_17gemma3n_on_device_1get_info(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyMethodDef __pyx_mdef_8multi_ai_6models_17gemma3n_on_device_1get_info = {"get_info", (PyCFunction)__pyx_pw_8multi_ai_6models_17gemma3n_on_device_1get_info, METH_NOARGS, 0};
-static PyObject *__pyx_pw_8multi_ai_6models_17gemma3n_on_device_1get_info(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_8multi_ai_6models_13olmoe_colibri_1get_info(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyMethodDef __pyx_mdef_8multi_ai_6models_13olmoe_colibri_1get_info = {"get_info", (PyCFunction)__pyx_pw_8multi_ai_6models_13olmoe_colibri_1get_info, METH_NOARGS, 0};
+static PyObject *__pyx_pw_8multi_ai_6models_13olmoe_colibri_1get_info(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("get_info (wrapper)", 0);
   __pyx_kwvalues = __Pyx_KwValues_VARARGS(__pyx_args, __pyx_nargs);
-  __pyx_r = __pyx_pf_8multi_ai_6models_17gemma3n_on_device_get_info(__pyx_self);
+  __pyx_r = __pyx_pf_8multi_ai_6models_13olmoe_colibri_get_info(__pyx_self);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8multi_ai_6models_17gemma3n_on_device_get_info(CYTHON_UNUSED PyObject *__pyx_self) {
+static PyObject *__pyx_pf_8multi_ai_6models_13olmoe_colibri_get_info(CYTHON_UNUSED PyObject *__pyx_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -2381,58 +2386,58 @@ static PyObject *__pyx_pf_8multi_ai_6models_17gemma3n_on_device_get_info(CYTHON_
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("get_info", 0);
 
-  /* "multi_ai/models/gemma3n_on_device.pyx":13
+  /* "multi_ai/models/olmoe_colibri.pyx":18
  * 
  * def get_info():
  *     return {             # <<<<<<<<<<<<<<
- *         "name": "Gemma 3n E2B (On-Device)",
+ *         "name": "OLMoE (via Colibri)",
  *         "version": "0.1.0",
 */
   __Pyx_XDECREF(__pyx_r);
 
-  /* "multi_ai/models/gemma3n_on_device.pyx":14
+  /* "multi_ai/models/olmoe_colibri.pyx":19
  * def get_info():
  *     return {
- *         "name": "Gemma 3n E2B (On-Device)",             # <<<<<<<<<<<<<<
+ *         "name": "OLMoE (via Colibri)",             # <<<<<<<<<<<<<<
  *         "version": "0.1.0",
  *         "repo_id": None,
 */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 19, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_name, __pyx_mstate_global->__pyx_kp_u_Gemma_3n_E2B_On_Device) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_version, __pyx_mstate_global->__pyx_kp_u_0_1_0) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_name, __pyx_mstate_global->__pyx_kp_u_OLMoE_via_Colibri) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_version, __pyx_mstate_global->__pyx_kp_u_0_1_0) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
 
-  /* "multi_ai/models/gemma3n_on_device.pyx":16
- *         "name": "Gemma 3n E2B (On-Device)",
+  /* "multi_ai/models/olmoe_colibri.pyx":21
+ *         "name": "OLMoE (via Colibri)",
  *         "version": "0.1.0",
  *         "repo_id": None,             # <<<<<<<<<<<<<<
- *         "params": "E2B",
- *         "size_gb": 3.03,
+ *         "params": "7B (~1B active)",
+ *         "size_gb": 4,
 */
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_repo_id, Py_None) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_params, __pyx_mstate_global->__pyx_n_u_E2B) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_float_3_03) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_modality, __pyx_mstate_global->__pyx_n_u_Text) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_context_tokens, __pyx_mstate_global->__pyx_int_32768) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_Gemma_Terms_of_Use) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_strengths, __pyx_mstate_global->__pyx_kp_u_Designed_to_run_efficiently_on_d) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_speed_profile, __pyx_mstate_global->__pyx_kp_u_Fast_for_a_multimodal_model_good) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_repo_id, Py_None) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_params, __pyx_mstate_global->__pyx_kp_u_7B_1B_active) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_int_4) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_modality, __pyx_mstate_global->__pyx_n_u_Text) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_context_tokens, __pyx_mstate_global->__pyx_int_4096) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_Apache_2_0_instruct_variant_also) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_strengths, __pyx_mstate_global->__pyx_kp_u_AI2_s_fully_open_7B_Mixture_of_E) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_speed_profile, __pyx_mstate_global->__pyx_kp_u_Runs_via_Colibri_on_this_edge_se) < (0)) __PYX_ERR(0, 19, __pyx_L1_error)
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "multi_ai/models/gemma3n_on_device.pyx":12
+  /* "multi_ai/models/olmoe_colibri.pyx":17
  * 
  * 
  * def get_info():             # <<<<<<<<<<<<<<
  *     return {
- *         "name": "Gemma 3n E2B (On-Device)",
+ *         "name": "OLMoE (via Colibri)",
 */
 
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("multi_ai.models.gemma3n_on_device.get_info", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("multi_ai.models.olmoe_colibri.get_info", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -2524,10 +2529,10 @@ static int __Pyx_modinit_function_import_code(__pyx_mstatetype *__pyx_mstate) {
 
 #if CYTHON_PEP489_MULTI_PHASE_INIT
 static PyObject* __pyx_pymod_create(PyObject *spec, PyModuleDef *def); /*proto*/
-static int __pyx_pymod_exec_gemma3n_on_device(PyObject* module); /*proto*/
+static int __pyx_pymod_exec_olmoe_colibri(PyObject* module); /*proto*/
 static PyModuleDef_Slot __pyx_moduledef_slots[] = {
   {Py_mod_create, (void*)__pyx_pymod_create},
-  {Py_mod_exec, (void*)__pyx_pymod_exec_gemma3n_on_device},
+  {Py_mod_exec, (void*)__pyx_pymod_exec_olmoe_colibri},
   #if CYTHON_COMPILING_IN_CPYTHON_FREETHREADING
   {Py_mod_gil, __Pyx_FREETHREADING_COMPATIBLE},
   #endif
@@ -2546,8 +2551,8 @@ namespace {
   #endif
   {
       PyModuleDef_HEAD_INIT,
-      "gemma3n_on_device",
-      __pyx_k_Gemma_3n_E2B_run_on_device_On_de, /* m_doc */
+      "olmoe_colibri",
+      __pyx_k_OLMoE_AI2_s_7B_MoE_model_run_via, /* m_doc */
     #if CYTHON_USE_MODULE_STATE
       sizeof(__pyx_mstatetype), /* m_size */
     #else
@@ -2584,8 +2589,8 @@ namespace {
   #endif
 #endif
 
-__Pyx_PyMODINIT_FUNC PyInit_gemma3n_on_device(void) CYTHON_SMALL_CODE; /*proto*/
-__Pyx_PyMODINIT_FUNC PyInit_gemma3n_on_device(void)
+__Pyx_PyMODINIT_FUNC PyInit_olmoe_colibri(void) CYTHON_SMALL_CODE; /*proto*/
+__Pyx_PyMODINIT_FUNC PyInit_olmoe_colibri(void)
 #if CYTHON_PEP489_MULTI_PHASE_INIT
 {
   return PyModuleDef_Init(&__pyx_moduledef);
@@ -2692,7 +2697,7 @@ bad:
 }
 
 
-static CYTHON_SMALL_CODE int __pyx_pymod_exec_gemma3n_on_device(PyObject *__pyx_pyinit_module)
+static CYTHON_SMALL_CODE int __pyx_pymod_exec_olmoe_colibri(PyObject *__pyx_pyinit_module)
 #endif
 {
   int stringtab_initialized = 0;
@@ -2715,7 +2720,7 @@ static CYTHON_SMALL_CODE int __pyx_pymod_exec_gemma3n_on_device(PyObject *__pyx_
   #if CYTHON_PEP489_MULTI_PHASE_INIT
   if (__pyx_m) {
     if (__pyx_m == __pyx_pyinit_module) return 0;
-    PyErr_SetString(PyExc_RuntimeError, "Module 'gemma3n_on_device' has already been imported. Re-initialisation is not supported.");
+    PyErr_SetString(PyExc_RuntimeError, "Module 'olmoe_colibri' has already been imported. Re-initialisation is not supported.");
     return -1;
   }
   #else
@@ -2731,7 +2736,7 @@ static CYTHON_SMALL_CODE int __pyx_pymod_exec_gemma3n_on_device(PyObject *__pyx_
   #if CYTHON_USE_MODULE_STATE
   {
     int add_module_result = __Pyx_State_AddModule(__pyx_t_1, &__pyx_moduledef);
-    __pyx_t_1 = 0; /* transfer ownership from __pyx_t_1 to "gemma3n_on_device" pseudovariable */
+    __pyx_t_1 = 0; /* transfer ownership from __pyx_t_1 to "olmoe_colibri" pseudovariable */
     if (unlikely((add_module_result < 0))) __PYX_ERR(0, 1, __pyx_L1_error)
     pystate_addmodule_run = 1;
   }
@@ -2759,7 +2764,7 @@ static CYTHON_SMALL_CODE int __pyx_pymod_exec_gemma3n_on_device(PyObject *__pyx_
   }
   #endif
   
-__Pyx_RefNannySetupContext("PyInit_gemma3n_on_device", 0);
+__Pyx_RefNannySetupContext("PyInit_olmoe_colibri", 0);
   __Pyx_init_runtime_version();
   if (__Pyx_check_binary_version(__PYX_LIMITED_VERSION_HEX, __Pyx_get_runtime_version(), CYTHON_COMPILING_IN_LIMITED_API) < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_mstate->__pyx_empty_tuple = PyTuple_New(0); if (unlikely(!__pyx_mstate->__pyx_empty_tuple)) __PYX_ERR(0, 1, __pyx_L1_error)
@@ -2770,13 +2775,13 @@ __Pyx_RefNannySetupContext("PyInit_gemma3n_on_device", 0);
   if (__Pyx_InitConstants(__pyx_mstate) < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
   stringtab_initialized = 1;
   if (__Pyx_InitGlobals() < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
-  if (__pyx_module_is_main_multi_ai__models__gemma3n_on_device) {
+  if (__pyx_module_is_main_multi_ai__models__olmoe_colibri) {
     if (PyObject_SetAttr(__pyx_m, __pyx_mstate_global->__pyx_n_u_name_2, __pyx_mstate_global->__pyx_n_u_main) < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
   }
   {
     PyObject *modules = PyImport_GetModuleDict(); if (unlikely(!modules)) __PYX_ERR(0, 1, __pyx_L1_error)
-    if (!PyDict_GetItemString(modules, "multi_ai.models.gemma3n_on_device")) {
-      if (unlikely((PyDict_SetItemString(modules, "multi_ai.models.gemma3n_on_device", __pyx_m) < 0))) __PYX_ERR(0, 1, __pyx_L1_error)
+    if (!PyDict_GetItemString(modules, "multi_ai.models.olmoe_colibri")) {
+      if (unlikely((PyDict_SetItemString(modules, "multi_ai.models.olmoe_colibri", __pyx_m) < 0))) __PYX_ERR(0, 1, __pyx_L1_error)
     }
   }
   /*--- Builtin init code ---*/
@@ -2794,50 +2799,77 @@ __Pyx_RefNannySetupContext("PyInit_gemma3n_on_device", 0);
   (void)__Pyx_modinit_function_import_code(__pyx_mstate);
   /*--- Execution code ---*/
 
-  /* "multi_ai/models/gemma3n_on_device.pyx":9
+  /* "multi_ai/models/olmoe_colibri.pyx":11
  * from __future__ import annotations
  * 
- * _GGUF_SOURCE = "hf://unsloth/gemma-3n-E2B-it-GGUF/gemma-3n-E2B-it-Q4_K_M.gguf"             # <<<<<<<<<<<<<<
+ * _EXTERNAL_ENDPOINT = "colibri"             # <<<<<<<<<<<<<<
+ * _EXTERNAL_ENDPOINT_PORT = 8010
+ * _EXTERNAL_MIN_RAM_GB = 8.0
+*/
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_EXTERNAL_ENDPOINT, __pyx_mstate_global->__pyx_n_u_colibri) < (0)) __PYX_ERR(0, 11, __pyx_L1_error)
+
+  /* "multi_ai/models/olmoe_colibri.pyx":12
+ * 
+ * _EXTERNAL_ENDPOINT = "colibri"
+ * _EXTERNAL_ENDPOINT_PORT = 8010             # <<<<<<<<<<<<<<
+ * _EXTERNAL_MIN_RAM_GB = 8.0
+ * _EXTERNAL_RECOMMENDED_RAM_GB = 8.0
+*/
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_EXTERNAL_ENDPOINT_PORT, __pyx_mstate_global->__pyx_int_8010) < (0)) __PYX_ERR(0, 12, __pyx_L1_error)
+
+  /* "multi_ai/models/olmoe_colibri.pyx":13
+ * _EXTERNAL_ENDPOINT = "colibri"
+ * _EXTERNAL_ENDPOINT_PORT = 8010
+ * _EXTERNAL_MIN_RAM_GB = 8.0             # <<<<<<<<<<<<<<
+ * _EXTERNAL_RECOMMENDED_RAM_GB = 8.0
+ * 
+*/
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_EXTERNAL_MIN_RAM_GB, __pyx_mstate_global->__pyx_float_8_0) < (0)) __PYX_ERR(0, 13, __pyx_L1_error)
+
+  /* "multi_ai/models/olmoe_colibri.pyx":14
+ * _EXTERNAL_ENDPOINT_PORT = 8010
+ * _EXTERNAL_MIN_RAM_GB = 8.0
+ * _EXTERNAL_RECOMMENDED_RAM_GB = 8.0             # <<<<<<<<<<<<<<
  * 
  * 
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_GGUF_SOURCE, __pyx_mstate_global->__pyx_kp_u_hf_unsloth_gemma_3n_E2B_it_GGUF) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_EXTERNAL_RECOMMENDED_RAM_GB, __pyx_mstate_global->__pyx_float_8_0) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
 
-  /* "multi_ai/models/gemma3n_on_device.pyx":12
+  /* "multi_ai/models/olmoe_colibri.pyx":17
  * 
  * 
  * def get_info():             # <<<<<<<<<<<<<<
  *     return {
- *         "name": "Gemma 3n E2B (On-Device)",
+ *         "name": "OLMoE (via Colibri)",
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_6models_17gemma3n_on_device_1get_info, 0, __pyx_mstate_global->__pyx_n_u_get_info, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_models_gemma3n_on_devic, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 12, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_6models_13olmoe_colibri_1get_info, 0, __pyx_mstate_global->__pyx_n_u_get_info, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_models_olmoe_colibri, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 17, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_info, __pyx_t_2) < (0)) __PYX_ERR(0, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_info, __pyx_t_2) < (0)) __PYX_ERR(0, 17, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "multi_ai/models/gemma3n_on_device.pyx":37
+  /* "multi_ai/models/olmoe_colibri.pyx":35
  * 
  * 
  * if __name__ == "__main__":             # <<<<<<<<<<<<<<
  *     print(get_info())
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_name_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_name_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 35, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_main, Py_EQ)); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(0, 37, __pyx_L1_error)
+  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_main, Py_EQ)); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(0, 35, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_3) {
 
-    /* "multi_ai/models/gemma3n_on_device.pyx":38
+    /* "multi_ai/models/olmoe_colibri.pyx":36
  * 
  * if __name__ == "__main__":
  *     print(get_info())             # <<<<<<<<<<<<<<
 */
     __pyx_t_4 = NULL;
     __pyx_t_6 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_get_info); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_get_info); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 36, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_t_8 = 1;
     {
@@ -2845,7 +2877,7 @@ __Pyx_RefNannySetupContext("PyInit_gemma3n_on_device", 0);
       __pyx_t_5 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_7, __pyx_callargs+__pyx_t_8, (1-__pyx_t_8) | (__pyx_t_8*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 38, __pyx_L1_error)
+      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 36, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
     }
     __pyx_t_8 = 1;
@@ -2854,12 +2886,12 @@ __Pyx_RefNannySetupContext("PyInit_gemma3n_on_device", 0);
       __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_8, (2-__pyx_t_8) | (__pyx_t_8*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 36, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "multi_ai/models/gemma3n_on_device.pyx":37
+    /* "multi_ai/models/olmoe_colibri.pyx":35
  * 
  * 
  * if __name__ == "__main__":             # <<<<<<<<<<<<<<
@@ -2867,10 +2899,10 @@ __Pyx_RefNannySetupContext("PyInit_gemma3n_on_device", 0);
 */
   }
 
-  /* "multi_ai/models/gemma3n_on_device.pyx":1
- * """Gemma 3n E2B, run on-device.             # <<<<<<<<<<<<<<
+  /* "multi_ai/models/olmoe_colibri.pyx":1
+ * """OLMoE: AI2's 7B MoE model, run via a user-run Colibri server.             # <<<<<<<<<<<<<<
  * 
- * On-device sibling of ``gemma3n.pyx``: instead of the transformers repo, this
+ * Same _EXTERNAL_ENDPOINT shape as glm_5_2_colibri.pyx, included because it's
 */
   __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
@@ -2888,7 +2920,7 @@ __Pyx_RefNannySetupContext("PyInit_gemma3n_on_device", 0);
   __Pyx_XDECREF(__pyx_t_7);
   if (__pyx_m) {
     if (__pyx_mstate->__pyx_d && stringtab_initialized) {
-      __Pyx_AddTraceback("init multi_ai.models.gemma3n_on_device", __pyx_clineno, __pyx_lineno, __pyx_filename);
+      __Pyx_AddTraceback("init multi_ai.models.olmoe_colibri", __pyx_clineno, __pyx_lineno, __pyx_filename);
     }
     #if !CYTHON_USE_MODULE_STATE
     Py_CLEAR(__pyx_m);
@@ -2902,7 +2934,7 @@ __Pyx_RefNannySetupContext("PyInit_gemma3n_on_device", 0);
     }
     #endif
   } else if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_ImportError, "init multi_ai.models.gemma3n_on_device");
+    PyErr_SetString(PyExc_ImportError, "init multi_ai.models.olmoe_colibri");
   }
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
@@ -2917,7 +2949,7 @@ __Pyx_RefNannySetupContext("PyInit_gemma3n_on_device", 0);
 
 static int __Pyx_InitCachedBuiltins(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
-  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_print); if (!__pyx_builtin_print) __PYX_ERR(0, 38, __pyx_L1_error)
+  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_print); if (!__pyx_builtin_print) __PYX_ERR(0, 36, __pyx_L1_error)
 
   /* Cached unbound methods */
   __pyx_mstate->__pyx_umethod_PyDict_Type_items.type = (PyObject*)&PyDict_Type;
@@ -2942,39 +2974,39 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 9; } index[] = {{1},{5},{321},{54},{24},{18},{46},{61},{3},{12},{20},{4},{12},{18},{18},{14},{8},{8},{13},{5},{7},{8},{8},{10},{33},{4},{8},{6},{5},{12},{7},{12},{10},{7},{13},{9},{8},{6},{7},{59}};
-    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (597 bytes) */
-const char* const cstring = "(\265/\375`\210\002]\022\000\026\247u3PU\322\0010W\343\316\314\314\314LA\340N\321\312j\266\021\271=\310\226\204\306d#$\261m{I\375\021y(!\314\365@\215\024U\301@\rYW\004\241g\000d\000g\000\235\025\207\357d\310\342\227\r\372IJVFe\234\254\315R\222\003\245\243#A\364C)HR\212\360\375\253\301\206%K\203y\370\256|/\026?e\307\347\362\216\017O\361\346?\333\356\030\022.\031\337\217?%\003\206\304\006C\302\274\310\344\335~>m\370e\310j\376\272\245\250'g0_\347t\2566^\003B\212\220 ,\002\016\032\033\026i\310;~\265\226\365\346M\253\301\363\253\234\336\253\362\301z\266\216\215C\352\014\343\315\267S\326r\342\226\257\332\265\t\037\225!\330\374\344\211l\327\365\016\206\234\356q-e\003\377\201\217\036\267X\247\033\326\031{\263c\246\202aNjW\263\254\354\007\253M\357\332\266\262\253q\306\315\346}\230\307\275\343\362\235\032W\037\305\253\375J\325qF\251F\276\347u\363sw\r\266\362\352y-\027\317\333\331\203\317Io\035\207bS}\267~\314M\225zI\203\036\242\355V\003\024\032Q\335\310(A\0211Q\245\262\252\2226\275\233\rOl:\375\254\310\031\207SAu@!L\371)OT\234\310\331\246\034\217\213\r\310#JR/\343\005\177\022\0061\n\004\000\232\031\022Q\302B\214\202ft!J \000(\230Y\020\035D\210\0204\243\000Q\201f4 0\nx\341\267\021\376\023\237Y\355\243\332\361\255\032;]\361a\307[K=\210\351\364c1\245\322\267ll\324\247~T\235V\037vh\265lE\265y!\026U\1775\226$\325[Y\250W\225\267]\252\217|\267V\274\336\0330( \204 \304\224\036`\2202I\241\315\036L\017N\200l@\225\235\320\346\244\270\364\023\202\360Q \307`\r\326k;T\237kP\260\236\231W\\0\367\350\216\036K\224PI\352@\005\3548A\205(\324\325\246Bg\356S\016\205\300\022\277\211\345c\260\223\312\341\"\n|)\314\203\036##\231\372'>\362\330[\274\023\027\014H=\033\225\330\307\t^\350Q";
-    PyObject *data = __Pyx_DecompressString(cstring, 597, 3);
+    const struct { const unsigned int length: 8; } index[] = {{1},{5},{15},{141},{104},{42},{19},{116},{18},{23},{20},{28},{20},{4},{12},{18},{18},{7},{14},{8},{8},{13},{5},{7},{8},{8},{10},{29},{4},{8},{6},{5},{12},{7},{12},{10},{7},{13},{9},{8},{6},{7},{55}};
+    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (596 bytes) */
+const char* const cstring = "(\265/\375`z\002U\022\000\346\246v0`o:\342\020\004A\020\244\332u\360\201\325\237\354\224\324R\312A\226\204\3544\231\222\354\2241\352\335\237\364-\3527\324\336O\261y=y\226_{\002j\000f\000j\000\356\272!#\246\211\\\230\231H\361\363}:wkk\253\244\370\343\203\360\362t\206\352\301\345\020K\312m\276skkyr\334*I\"\231\202\322\222\035E\272\275\213\014\201\256\027C\237\356\212\331\230zV\372G\206#\rD\365 8^?jN:\206/I\255]U:\303\304&\343\300\242~\266i!q\322\220\026\024\021\223\304\024Q\021#\336T\266e\2579\345\0302\225\177\301\310\242\310\236\014\2428\275_\246\273\353\343\260-jH\315\343pxF$81\345g\265\207qL\257Z\230M\006\242\277]\034\207\375\245\022\344\332\365\306OO\007\006&c\203\343\223\376\235\326\213\0359\344:\037\330A\334\212\374\221kY\254\021\343\262|\3366\337m\307\025\345\263+~\256\365\031\244\312\334U\251\272\343\221\367\357\036\033a+\302l\343\253km\314\331\365_/>6\275f\216\344\374\373\317\271U\375\250\370\363#\356\350\263\306\030\221:\024C\303\341x.4\037\013\r\345d>\332\331p>\236\216\217\316\246\243Q\216L\347\243\371\010\321\350\024\372\205\351^\377Fv\014JW\362\322\031 \334\177.\037(f\350\031\004*\t\027\026\217\022\302\205EE\341\262\222)\035,\224\n$J\006\227\025\200\322\300eE `\005\000\305\275\366\310\"\347\253\255H\365U=\364 \307\361\235[W/B\025\001)\233\264\177\273\266b\352\331U\251\326\0079\266\275HT\337u\204nm\\\250\312\326\272ij\027\351\273-\365\\\257\245\312\356\230us\213\277\325[_\025.( \002\002!+\036Q\265\223\n\245\206\335b\233\006C\230\003/\243\030\264>h7\325\275\342\234\002:\220I\301\356\302u#\303\202H\306A$\263\361?(4\235\312\377M\276b\nP.\036\251\324(7,u^\"1\307{K\020d\004\205\221c\372\027\304\217r\365g\374\2200/\3330\301\237\240\215\300rdn\003{\317\377\366\010\016\031";
+    PyObject *data = __Pyx_DecompressString(cstring, 596, 3);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (672 bytes) */
-const char* const cstring = "BZh91AY&SY\205\370\263\206\000\000N\177\343\346`z\020`\347\374\020\277\253\376\000\277\377\377\361@\000D@\000@\020\000@\000@\002!\271\267r\313\206\246\206\223!'\204\323I\240\310\323@\r=@\320z\203M0&\032A\251\251\351)\370jS\365'\223\002\214A\240\000\003 \32024\001\352\006\243\010MS\315\010\233(b\006\200\320\000\320\000\000\000\032&F\220\231'\352e4=@\000\000h2\000\000\r\001\207\375\247c\333R\000x%\225\022\004\004EW\255\354\003\020\277mEN_\206\337\343P\271\236\030T\255z\034\325>\354\331Z\032I\\O\030 z\212V6\r\nm\031\315K\313j\334\303\241\007 \220f\235\022\t\222\032!m\024=]\366p@\332\362o0\375\373\374\356\013\000{TH\026G\220\214a\021\362_7`B?7Wz\016bPu8\321!\236O\264D\352~\214\005\226?\224\207:Xn\231\210\253#\365\\\270F!\017\311\261aJ\361{\026<\342b\267u\256=a\020o\004\255\306N#`$\004\366\260\031\227\311H\310o\374\007(4b\373\374\3010\017\023G\224V\353\211\007\332\327s\361\274@V\001\356\270!\241\240\205\234\324\354D\332\0027\344\212hY\006L)\023\n\326\254\031\2313^U\001\307%:\254\201T\214m\211\227,\375v\254\003N\341\010\356\242P\027ZU\002d+\262\371\271\370\242\327\t\314\226i\240\357[S\305\216{Y\030}\021fJ6\212d@\224\353fh\301\306\3146*\231\233\256\320\005\251\260a\340\205J\025B\3650|u\335d\217\010\326\030Y\224\326EZ!\350`\020\245h\201\206\322\240\356\0235\227N)\010E\231 \201\001%\211<m \363\023\324\204 D\201'\277\224\211z\014\257x\306)\331p\220\240\303\203\246\215'\030\250\325\241\255529\326H\254\034\r\312\214\301E)OR\356\251RM\033\014@\025\016\203\303\226\255\021\244\201\034\362\240\212\030\034q\272\222\250>\246\334\021C\010\271F\324\004\025\215X\n\3514\225!\330\036\273\t4\341!4]\250\247<\257#\n\260\366\246x\220\"\272\325W\203\201>\016#J$\256C\026\\`\234N\347\271\242CF\225\2547\334\277_d\3002u\220\277kl\234Kp2Z\024\022\360\211Ar\201m\214L\016\236}\243F\255`l\032\205CeY\002v\204\323XbW\370\273\222)\302\204\204/\305\2340";
-    PyObject *data = __Pyx_DecompressString(cstring, 672, 2);
+    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (668 bytes) */
+const char* const cstring = "BZh91AY&SY\261\243\004\250\000\000?\177\343&@~0`\347\360\200\277\347\366@\277\357\377\361@\000D@\000@P\000@\002#\254\000\203T\364&(\332\236\246\203 M\r4mL\201\241\223F\232yC\321\246\223\323H514\320\215\023h\231F\247\250\365=@\001\351\032\000h\000\032=A\303M21\030M0\020\300&\230F\t\211\220\323#C@4\251\345\036\247\250\006\200h42\000\320\000\003F\206\010\004\3748\240\234r\220J\244\234\002\376<Z\244\323\363\254\333RF9\367\004S,r;\372\224PFfM\2469\324a*\214\352\337\033Q\275i\rF\312\356\235\345`\273\236gr\270\333\2075\263\\:\274\360A~\302\337-E\254\376\232HSl\007l\260\262\350\321\030\037\202\255Oqk`\211\340\027\360@\360\300\366\3117\t@ &\266a'\263b\370Ls\034\003\240\347\010E\030\240K%I=\313\347\203(P\311XE! V\314\311\200\205\244\254\204\260\037\034\320\217X\002\030\213U\336\260\225\252,s\233\313\t\234t\263\022O\020`xy\231n54p2\2018\034M\207\231\374\334?Z0\202\3354\351\207\362\3206E\362\245\350\264\215\255m\3136\224\334\357U\226\352>u#y\326\236\202\201m\252A\254r\024\347y\270\320\2259\350X\335\252G\351\326\004G\031\3138\212\nk\033\364\211;\306\3120\325\245\214\225\225:\351,r\020\311\364<\356a\272p\326\354\262\004v \3452\301\016\300\373#R$0\204\352\200\\\206F*\023P\000\267L\323\251\262*\253\020\223\244?mF\313A,!\214\355\217bByR9G\221\\\3466a\005\0078\203x\005\025\302\351\253\203$z\274\022B\3703\3258\330\353nt$I\276Q\200\"q\020;u\301B\251H]T\256\335.\305\316\240\346\306^ 3v\274\325\250Jfb\334B\200\364\341\232`+\227wY\304\363\204v^j\325\006l\217\355\270)\\S`ZLP2\231J\3432*\216\223\323j\005\313\224\025\221\177\365\363\300akZ\263,\022`I\347ze\211a\246dJ\366\010\320C\272\202\370\276\307\r\367\272\201\364V\005@R\234h\234^\206\210!\303d5H\212\264\027\252\207\337\257QG\304\236\221\335u\305\336\265W;X\323\251\227\371\t\267\316\007\017\351\305\034h\343\0305 \335\345\313\010\377\027rE8P\220\261\243\004\250";
+    PyObject *data = __Pyx_DecompressString(cstring, 668, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (587 bytes) */
-const char* const cstring = "x\332eR\313N\334@\020\004)\221\226[\036\342\302\2519\221H\261\227GN\\\"\010\017E\021!\0208\267\206q\333\236\354x\306\231io\330\034\">a\0179\360i{\316\027\360\t\351\261W\021\022\007\217\3325\345\352\256r\177\330\316w\362\355#\212\246rT\000{\010\235\003*K\243\r9\2663\360.+hj4\301\337\273?\260u\274{\270\005\0059\317\024\341\367\356a\342\222f3%0\256\244@N\230\332G\026Rl\r\0234>\020\004\365\023Z\025TCL!\346p\361\036?\343\031\234\236^\237\300Mgl\221\372F(;\373\270e\016Wt\313\362.`-\332\373\300\265\250\327\244'\2557\216\301Dp*5\027B\323Y6\215/\224}'\222\014\326\252F\345\272m\007\351\357\235\314d8\002'\311Vq\335\033j\215\236\364\252\221\302\224Bv\243\364D\202\330:\245\246Q\260\347\2407,Q\204\031\224>\200iTE\240\\\001\252+\214\027\323m\307\371\211\022\361t\255\036\215!\316\013\222a*\357\013\250\310Q\020L\246&kM\225rz\334\003\336\234\273\354\250w\375v\300\257(4\021|\t\327\221\316\222hv\360i\334\253\2432\343^;\216\253D\335s\350\035.#kg\267u\271?\036\213g\353\271\036\030\331\236\313\244If8K\221?\001\207\337\221WUW\n\202\211\203\337\316\257/?\036#~\235\335\312sd4\343\027\211\356\222\312\364S\020\225\223%PLR\305\231\323\306\347\332\007\337\261q\024\265\225\023\215C\016JS\312T{\227\202G\366\023r\021\261\354\234F\254\210\205Uz4\021\377\177-K\323D+^\\\024\361F\211\014\366\201\032\236\365Ug\023\276L\"\037\222\310\237$\341d\331\020\207\263_\275\330\006I\037\361G\247\354\000\007j\245u\201\030e\216\001\222\252\240R\211x4\277\010\253\233\330\022\025\330\006_\032K\221e\301+\256\305\200\354\277hM\225\355(\312\342D\343\335\335\352\342\331\363\305\350\305|u1z=\337Y\036\257\346\233}\365\360bem}~\260\030m\334o.\257\326\347\027\017\243\225\265\215\373\227\377\000\270\032L\243";
-    PyObject *data = __Pyx_DecompressString(cstring, 587, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (586 bytes) */
+const char* const cstring = "x\332mRMo\0231\020U%\220r\344\363\000\247\341D*\265\233\266\027\216(m\227\022\251I\312*H\334\254\211wvc\325k\033\333\033\262\034P\177B\016\034\372\323r\254\370%\314fS(\022\207L\306\3173\3173\357\355\373\243\34489zw\n\375\037\307\247\2002\252%\355\017G'o\003\024\265\326\rXG\006\370~\254V\261\366th\213\303t\345\310\307\000\225\315I\203\257\r\304\205\267u\271\2003\253\325\334+\370u\363\023\346\r\024\350\371\212 T\2505\205\010hr\220\013B\327\036lq_\317\217\205\3329\353#\345\334T)\255(@\264\020}\223\014\035r\013\234$G\320W&D_\313\010K\364\n\r\023\352`A\242\367m\303\005U\025\302\214|\025Z\362\317\201\016@\231\005y\265\345\365\266\002\305cg\227\037?\014\316\257\246\314\216\312(SB\216\021\367\307\265\216\352p8\032Tm\"P\r\266\373\205\201\325\225%!\273Q\023\327\254\246\227c\233B\177\251\360~\201\375\2546\001\036\000`[QT\000\312K\336\237\374\222\374V\225\235R\256\216\220\023K\233\207\266T[\211\032r\025\256!8\242\374\000\214\215\035\001:\307\362\330o\006J2\3441*\256w\030\027\211H\277\314\322l2\274\024\351\204\327\031Mf\377A\256\246\331\003x<\232\210l8\026\027\247\177\261,=\233\216\307\334\220\236\337\337\211\253f\305\277s%\243\230\320*fT\314\370O\0104<\027F\342,4F*\233H\313\373De(H\315Q(#XVIs\224\327;\311\2445\261\355\216\366\232L\020\242\250\215\024\242\244\310\305\205\025*\210?$lT\025\264\222\\\307oTl\017G\233\243V\261\331f\265n\361\235AIgP\362\217A\006+.\351\242C\217Up\014\362\354_k\324\035\354\311\361\263\271\020\201g\350 \316r*\220\211\203\372N\242\234om\020\316\333B\265_\256'S\306\005\017\037\371 \304\022uM\201=\r\354\306\315\336\346\321\343M\357\311zo\323{\276>\336\205g\3537\273\354\305z\270\351\275\276\355\216w\275\227\353Ow\275W\267O\177\003\370nH!";
+    PyObject *data = __Pyx_DecompressString(cstring, 586, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (904 bytes) */
-const char* const bytes = "?0.1.0Designed to run efficiently on-device \342\200\224 'E2B' denotes ~2B effective inference cost despite more raw parameters. Q4_K_M GGUF build runs fully on-device. Text only here: the checkpoint is natively multimodal, but llama.cpp runs just its text path \342\200\224 pick the server-backed 'Gemma 3n E2B' entry for image and audio input.Fast for a multimodal model, good general intelligenceGemma 3n E2B (On-Device)Gemma Terms of UseMulti-AI/multi_ai/models/gemma3n_on_device.pyxhf://unsloth/gemma-3n-E2B-it-GGUF/gemma-3n-E2B-it-Q4_K_M.ggufE2B_GGUF_SOURCE__Pyx_PyDict_NextRefText__annotate__asyncio.coroutinescline_in_tracebackcontext_tokens__func__get_info_is_coroutineitemslicense__main__modality__module__multi_ai.models.gemma3n_on_devicename__name__paramsprint__qualname__repo_id__set_name__setdefaultsize_gbspeed_profilestrengths__test__valuesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\360\020\000\t\025\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\360\010\000\t\032\230\021";
+    #else /* compression: none (890 bytes) */
+const char* const bytes = "?0.1.07B (~1B active)AI2's fully open 7B Mixture-of-Experts model run through Colibri \342\200\224 by far the smallest and cheapest of Colibri's supported families to try.Apache 2.0 (instruct variant also carries Gemma Terms of Use, inherited from its RLHF/DPO training data)Multi-AI/multi_ai/models/olmoe_colibri.pyxOLMoE (via Colibri)Runs via Colibri on this edge server \342\200\224 throughput depends on local disk speed, not this app's own generation path._EXTERNAL_ENDPOINT_EXTERNAL_ENDPOINT_PORT_EXTERNAL_MIN_RAM_GB_EXTERNAL_RECOMMENDED_RAM_GB__Pyx_PyDict_NextRefText__annotate__asyncio.coroutinescline_in_tracebackcolibricontext_tokens__func__get_info_is_coroutineitemslicense__main__modality__module__multi_ai.models.olmoe_colibriname__name__paramsprint__qualname__repo_id__set_name__setdefaultsize_gbspeed_profilestrengths__test__valuesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\340\010\025\220Q\340\010\031\230\021";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
     PyObject **stringtab = __pyx_mstate->__pyx_string_tab;
     Py_ssize_t pos = 0;
-    for (int i = 0; i < 39; i++) {
+    for (int i = 0; i < 42; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyUnicode_DecodeUTF8(bytes + pos, bytes_length, NULL);
       if (likely(string) && i >= 8) PyUnicode_InternInPlace(&string);
@@ -2985,7 +3017,7 @@ const char* const bytes = "?0.1.0Designed to run efficiently on-device \342\200\
       stringtab[i] = string;
       pos += bytes_length;
     }
-    for (int i = 39; i < 40; i++) {
+    for (int i = 42; i < 43; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyBytes_FromStringAndSize(bytes + pos, bytes_length);
       stringtab[i] = string;
@@ -2996,14 +3028,14 @@ const char* const bytes = "?0.1.0Designed to run efficiently on-device \342\200\
       }
     }
     Py_XDECREF(data);
-    for (Py_ssize_t i = 0; i < 40; i++) {
+    for (Py_ssize_t i = 0; i < 43; i++) {
       if (unlikely(PyObject_Hash(stringtab[i]) == -1)) {
         __PYX_ERR(0, 1, __pyx_L1_error)
       }
     }
     #if CYTHON_IMMORTAL_CONSTANTS
     {
-      PyObject **table = stringtab + 39;
+      PyObject **table = stringtab + 42;
       for (Py_ssize_t i=0; i<1; ++i) {
         #if PY_VERSION_HEX >= 0x030F0000
         PyUnstable_SetImmortal(table[i]);
@@ -3027,7 +3059,7 @@ const char* const bytes = "?0.1.0Designed to run efficiently on-device \342\200\
   }
   {
     PyObject **numbertab = __pyx_mstate->__pyx_number_tab;
-    double const c_constants[] = {3.03};
+    double const c_constants[] = {8.0};
     for (int i = 0; i < 1; i++) {
       numbertab[i] = PyFloat_FromDouble(c_constants[i]);
       if (unlikely(!numbertab[i])) __PYX_ERR(0, 1, __pyx_L1_error)
@@ -3035,16 +3067,17 @@ const char* const bytes = "?0.1.0Designed to run efficiently on-device \342\200\
   }
   {
     PyObject **numbertab = __pyx_mstate->__pyx_number_tab + 1;
-    int32_t const cint_constants_4[] = {32768L};
-    for (int i = 0; i < 1; i++) {
-      numbertab[i] = PyLong_FromLong(cint_constants_4[i - 0]);
+    int8_t const cint_constants_1[] = {4};
+    int16_t const cint_constants_2[] = {4096,8010};
+    for (int i = 0; i < 3; i++) {
+      numbertab[i] = PyLong_FromLong((i < 1 ? cint_constants_1[i - 0] : cint_constants_2[i - 1]));
       if (unlikely(!numbertab[i])) __PYX_ERR(0, 1, __pyx_L1_error)
     }
   }
   #if CYTHON_IMMORTAL_CONSTANTS
   {
     PyObject **table = __pyx_mstate->__pyx_number_tab;
-    for (Py_ssize_t i=0; i<2; ++i) {
+    for (Py_ssize_t i=0; i<4; ++i) {
       #if PY_VERSION_HEX >= 0x030F0000
       PyUnstable_SetImmortal(table[i]);
       #elif CYTHON_COMPILING_IN_CPYTHON_FREETHREADING
@@ -3075,7 +3108,7 @@ typedef struct {
     unsigned int num_kwonly_args : 1;
     unsigned int nlocals : 1;
     unsigned int flags : 10;
-    unsigned int first_line : 4;
+    unsigned int first_line : 5;
 } __Pyx_PyCode_New_function_description;
 /* NewCodeObj.proto */
 static PyObject* __Pyx_PyCode_New(
@@ -3092,9 +3125,9 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
   PyObject* tuple_dedup_map = PyDict_New();
   if (unlikely(!tuple_dedup_map)) return -1;
   {
-    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 12};
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 17};
     PyObject* const varnames[] = {0};
-    __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_Multi_AI_multi_ai_models_gemma3n, __pyx_mstate->__pyx_n_u_get_info, __pyx_mstate->__pyx_kp_b_iso88591_1_1_1_A_1_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_Multi_AI_multi_ai_models_olmoe_c, __pyx_mstate->__pyx_n_u_get_info, __pyx_mstate->__pyx_kp_b_iso88591_1_1_1_A_1_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
   }
   Py_DECREF(tuple_dedup_map);
   return 0;

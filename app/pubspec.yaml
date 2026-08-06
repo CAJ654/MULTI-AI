@@ -72,6 +72,20 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
+
+# velopack_flutter 0.3.2 (latest published) pins code_assets ^1.0.0 / hooks
+# ^1.0.3, but Flutter >=3.44.0's native-assets build daemon speaks a newer
+# protocol only code_assets >=1.1.0 / hooks >=2.0.0 understand — without this
+# override, velopack_flutter's build hook crashes with a null-check failure
+# parsing the hook config before it even gets to compiling its Rust crate.
+# Pinned to hooks 2.0.x rather than the newer 2.1.0: hooks 2.1.0 needs
+# meta ^1.19.0, but this Flutter SDK's own flutter_test pins meta to exactly
+# 1.18.0 — 2.0.x still needs only meta ^1.16.0, which satisfies both.
+# Remove this whole override once velopack_flutter publishes a release built
+# against the newer protocol.
+dependency_overrides:
+  code_assets: ^1.2.1
+  hooks: ^2.0.2
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
