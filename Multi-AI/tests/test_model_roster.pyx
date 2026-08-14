@@ -51,6 +51,13 @@ def test_roster_matches_model_files():
         assert entry.get("license"), f"{entry['id']} has no license in get_info()"
         assert entry.get("strengths"), f"{entry['id']} has no strengths in get_info()"
         assert entry.get("speed_profile"), f"{entry['id']} has no speed_profile in get_info()"
+        # Colibri entries declare _COLIBRI_REPO_ID (server-downloads-and-spawns-coli),
+        # so they must report has_server_weights the same as a _REPO_ID model —
+        # this is what gates the app's download/cache/delete UI for them.
+        if entry["id"].endswith("_colibri"):
+            assert entry["has_server_weights"] is True, (
+                f"{entry['id']} is a Colibri model but has_server_weights is False"
+            )
 
 
 def test_api_models_endpoint_matches_roster():

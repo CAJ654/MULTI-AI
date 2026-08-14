@@ -2450,7 +2450,7 @@ int __pyx_module_is_main_multi_ai__hardware = 0;
 /* #### Code section: global_var ### */
 static PyObject *__pyx_builtin_round;
 /* #### Code section: string_decls ### */
-static const char __pyx_k_Host_hardware_detection_and_per[] = "Host hardware detection and per-model fit ratings.\n\nAnswers \"can this machine actually run that model?\" so the app can colour each\nmodel green (optimal) / yellow (possible) / red (not recommended) instead of\nletting the user discover the answer as an OOM ten minutes into a download.\n\nTwo very different budgets are at play, matching the two ways this project runs\na model (see server.pyx's module docstring):\n\n  _REPO_ID models   the Python backend loads them through transformers, 4-bit\n                    quantized on the GPU, so the binding constraint is VRAM.\n  _GGUF_SOURCE      the Flutter app runs them in-process via llama.cpp, which\n                    offloads to the GPU when the weights fit and otherwise\n                    falls back to CPU + system RAM (correct, but much slower).\n  _EXTERNAL_ENDPOINT  a BYO server (e.g. Colibri) the user runs themselves;\n                    neither VRAM nor a download-size estimate applies, so\n                    rate_external_model() rates off local RAM against the\n                    engine's own stated minimums instead.\n\n``size_gb`` in a model's ``get_info()`` means different things for those two\ncases \342\200\224 full-precision checkpoint size for a repo, actual quantized file size\nfor a GGUF \342\200\224 so each gets its own estimator rather than one shared formula.\n\nDetection is stdlib-only for RAM and lazily imports torch for VRAM: listing\nmodels must keep working on a machine that never installed the heavy deps, so\nanything undetectable degrades to a null budget and an \"unknown\" rating rather\nthan an error.\n";
+static const char __pyx_k_Host_hardware_detection_and_per[] = "Host hardware detection and per-model fit ratings.\n\nAnswers \"can this machine actually run that model?\" so the app can colour each\nmodel green (optimal) / yellow (possible) / red (not recommended) instead of\nletting the user discover the answer as an OOM ten minutes into a download.\n\nTwo very different budgets are at play, matching the two ways this project runs\na model (see server.pyx's module docstring):\n\n  _REPO_ID models   the Python backend loads them through transformers, 4-bit\n                    quantized on the GPU, so the binding constraint is VRAM.\n  _GGUF_SOURCE      the Flutter app runs them in-process via llama.cpp, which\n                    offloads to the GPU when the weights fit and otherwise\n                    falls back to CPU + system RAM (correct, but much slower).\n  _EXTERNAL_ENDPOINT  a separate engine this server proxies chat requests to\n                    (currently only Colibri, whose weight download and\n                    process lifecycle this server now manages itself \342\200\224 see\n                    server.pyx's _ensure_colibri_running); neither VRAM nor\n                    the usual download-size estimate applies, so\n                    rate_external_model() rates off local RAM against the\n                    engine's own stated minimums instead.\n\n``size_gb`` in a model's ``get_info()`` means different things for those two\ncases \342\200\224 full-precision checkpoint size for a repo, actual quantized file size\nfor a GGUF \342\200\224 so each gets its own estimator rather than one shared formula.\n\nDetection is stdlib-only for RAM and lazily imports torch for VRAM: listing\nmodels must keep working on a machine that never installed the heavy deps, so\nanything undetectable degrades to a null budget and an \"unknown\" rating rather\nthan an error.\n";
 /* #### Code section: decls ### */
 static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
 static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
@@ -2760,7 +2760,7 @@ return 0;
 #endif
 /* #### Code section: module_code ### */
 
-/* "multi_ai/hardware.pyx":75
+/* "multi_ai/hardware.pyx":78
  * 
  * 
  * def _total_ram_gb() -> float | None:             # <<<<<<<<<<<<<<
@@ -2815,266 +2815,266 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_total_ram_gb", 0);
 
-  /* "multi_ai/hardware.pyx":77
+  /* "multi_ai/hardware.pyx":80
  * def _total_ram_gb() -> float | None:
  *     """Total physical RAM, or None if this platform won't say."""
  *     if sys.platform == "win32":             # <<<<<<<<<<<<<<
  *         class _MemoryStatusEx(ctypes.Structure):
  *             _fields_ = [
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_sys); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 77, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_sys); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 80, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_platform); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 77, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_platform); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 80, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_win32, Py_EQ)); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(0, 77, __pyx_L1_error)
+  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_win32, Py_EQ)); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(0, 80, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_3) {
 
-    /* "multi_ai/hardware.pyx":78
+    /* "multi_ai/hardware.pyx":81
  *     """Total physical RAM, or None if this platform won't say."""
  *     if sys.platform == "win32":
  *         class _MemoryStatusEx(ctypes.Structure):             # <<<<<<<<<<<<<<
  *             _fields_ = [
  *                 ("dwLength", ctypes.c_uint32),
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 81, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_Structure); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_Structure); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 81, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 81, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_GIVEREF(__pyx_t_1);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1) != (0)) __PYX_ERR(0, 78, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1) != (0)) __PYX_ERR(0, 81, __pyx_L1_error);
     __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PEP560_update_bases(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PEP560_update_bases(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 81, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = __Pyx_CalculateMetaclass(NULL, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_CalculateMetaclass(NULL, __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 81, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_5 = __Pyx_Py3MetaclassPrepare(__pyx_t_4, __pyx_t_1, __pyx_mstate_global->__pyx_n_u_MemoryStatusEx, __pyx_mstate_global->__pyx_n_u_total_ram_gb_locals__MemoryStat, (PyObject *) NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, (PyObject *) NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_Py3MetaclassPrepare(__pyx_t_4, __pyx_t_1, __pyx_mstate_global->__pyx_n_u_MemoryStatusEx, __pyx_mstate_global->__pyx_n_u_total_ram_gb_locals__MemoryStat, (PyObject *) NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, (PyObject *) NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 81, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     if (__pyx_t_1 != __pyx_t_2) {
-      if (unlikely((PyDict_SetItemString(__pyx_t_5, "__orig_bases__", __pyx_t_2) < 0))) __PYX_ERR(0, 78, __pyx_L1_error)
+      if (unlikely((PyDict_SetItemString(__pyx_t_5, "__orig_bases__", __pyx_t_2) < 0))) __PYX_ERR(0, 81, __pyx_L1_error)
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "multi_ai/hardware.pyx":80
+    /* "multi_ai/hardware.pyx":83
  *         class _MemoryStatusEx(ctypes.Structure):
  *             _fields_ = [
  *                 ("dwLength", ctypes.c_uint32),             # <<<<<<<<<<<<<<
  *                 ("dwMemoryLoad", ctypes.c_uint32),
  *                 ("ullTotalPhys", ctypes.c_uint64),
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 80, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 83, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_c_uint32); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 80, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_c_uint32); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 83, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 80, __pyx_L1_error)
+    __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 83, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_INCREF(__pyx_mstate_global->__pyx_n_u_dwLength);
     __Pyx_GIVEREF(__pyx_mstate_global->__pyx_n_u_dwLength);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_mstate_global->__pyx_n_u_dwLength) != (0)) __PYX_ERR(0, 80, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_mstate_global->__pyx_n_u_dwLength) != (0)) __PYX_ERR(0, 83, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_6);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_6) != (0)) __PYX_ERR(0, 80, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_6) != (0)) __PYX_ERR(0, 83, __pyx_L1_error);
     __pyx_t_6 = 0;
 
-    /* "multi_ai/hardware.pyx":81
+    /* "multi_ai/hardware.pyx":84
  *             _fields_ = [
  *                 ("dwLength", ctypes.c_uint32),
  *                 ("dwMemoryLoad", ctypes.c_uint32),             # <<<<<<<<<<<<<<
  *                 ("ullTotalPhys", ctypes.c_uint64),
  *                 ("ullAvailPhys", ctypes.c_uint64),
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 81, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 84, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_c_uint32); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 81, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_c_uint32); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 84, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 81, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 84, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_INCREF(__pyx_mstate_global->__pyx_n_u_dwMemoryLoad);
     __Pyx_GIVEREF(__pyx_mstate_global->__pyx_n_u_dwMemoryLoad);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_mstate_global->__pyx_n_u_dwMemoryLoad) != (0)) __PYX_ERR(0, 81, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_mstate_global->__pyx_n_u_dwMemoryLoad) != (0)) __PYX_ERR(0, 84, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_7);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_6, 1, __pyx_t_7) != (0)) __PYX_ERR(0, 81, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_6, 1, __pyx_t_7) != (0)) __PYX_ERR(0, 84, __pyx_L1_error);
     __pyx_t_7 = 0;
 
-    /* "multi_ai/hardware.pyx":82
+    /* "multi_ai/hardware.pyx":85
  *                 ("dwLength", ctypes.c_uint32),
  *                 ("dwMemoryLoad", ctypes.c_uint32),
  *                 ("ullTotalPhys", ctypes.c_uint64),             # <<<<<<<<<<<<<<
  *                 ("ullAvailPhys", ctypes.c_uint64),
  *                 ("ullTotalPageFile", ctypes.c_uint64),
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 82, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 85, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 82, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 85, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 82, __pyx_L1_error)
+    __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 85, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_INCREF(__pyx_mstate_global->__pyx_n_u_ullTotalPhys);
     __Pyx_GIVEREF(__pyx_mstate_global->__pyx_n_u_ullTotalPhys);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_mstate_global->__pyx_n_u_ullTotalPhys) != (0)) __PYX_ERR(0, 82, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_mstate_global->__pyx_n_u_ullTotalPhys) != (0)) __PYX_ERR(0, 85, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_8);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_7, 1, __pyx_t_8) != (0)) __PYX_ERR(0, 82, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_7, 1, __pyx_t_8) != (0)) __PYX_ERR(0, 85, __pyx_L1_error);
     __pyx_t_8 = 0;
 
-    /* "multi_ai/hardware.pyx":83
+    /* "multi_ai/hardware.pyx":86
  *                 ("dwMemoryLoad", ctypes.c_uint32),
  *                 ("ullTotalPhys", ctypes.c_uint64),
  *                 ("ullAvailPhys", ctypes.c_uint64),             # <<<<<<<<<<<<<<
  *                 ("ullTotalPageFile", ctypes.c_uint64),
  *                 ("ullAvailPageFile", ctypes.c_uint64),
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 83, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 86, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 83, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 86, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    __pyx_t_8 = PyTuple_New(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 83, __pyx_L1_error)
+    __pyx_t_8 = PyTuple_New(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 86, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_INCREF(__pyx_mstate_global->__pyx_n_u_ullAvailPhys);
     __Pyx_GIVEREF(__pyx_mstate_global->__pyx_n_u_ullAvailPhys);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_mstate_global->__pyx_n_u_ullAvailPhys) != (0)) __PYX_ERR(0, 83, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_mstate_global->__pyx_n_u_ullAvailPhys) != (0)) __PYX_ERR(0, 86, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_9);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 1, __pyx_t_9) != (0)) __PYX_ERR(0, 83, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_8, 1, __pyx_t_9) != (0)) __PYX_ERR(0, 86, __pyx_L1_error);
     __pyx_t_9 = 0;
 
-    /* "multi_ai/hardware.pyx":84
+    /* "multi_ai/hardware.pyx":87
  *                 ("ullTotalPhys", ctypes.c_uint64),
  *                 ("ullAvailPhys", ctypes.c_uint64),
  *                 ("ullTotalPageFile", ctypes.c_uint64),             # <<<<<<<<<<<<<<
  *                 ("ullAvailPageFile", ctypes.c_uint64),
  *                 ("ullTotalVirtual", ctypes.c_uint64),
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_9, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 84, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_9, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 87, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
-    __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 84, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 87, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __pyx_t_9 = PyTuple_New(2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 84, __pyx_L1_error)
+    __pyx_t_9 = PyTuple_New(2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 87, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_INCREF(__pyx_mstate_global->__pyx_n_u_ullTotalPageFile);
     __Pyx_GIVEREF(__pyx_mstate_global->__pyx_n_u_ullTotalPageFile);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_mstate_global->__pyx_n_u_ullTotalPageFile) != (0)) __PYX_ERR(0, 84, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_mstate_global->__pyx_n_u_ullTotalPageFile) != (0)) __PYX_ERR(0, 87, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_10);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_9, 1, __pyx_t_10) != (0)) __PYX_ERR(0, 84, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_9, 1, __pyx_t_10) != (0)) __PYX_ERR(0, 87, __pyx_L1_error);
     __pyx_t_10 = 0;
 
-    /* "multi_ai/hardware.pyx":85
+    /* "multi_ai/hardware.pyx":88
  *                 ("ullAvailPhys", ctypes.c_uint64),
  *                 ("ullTotalPageFile", ctypes.c_uint64),
  *                 ("ullAvailPageFile", ctypes.c_uint64),             # <<<<<<<<<<<<<<
  *                 ("ullTotalVirtual", ctypes.c_uint64),
  *                 ("ullAvailVirtual", ctypes.c_uint64),
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 85, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 88, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
-    __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 85, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 88, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_11);
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-    __pyx_t_10 = PyTuple_New(2); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 85, __pyx_L1_error)
+    __pyx_t_10 = PyTuple_New(2); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 88, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
     __Pyx_INCREF(__pyx_mstate_global->__pyx_n_u_ullAvailPageFile);
     __Pyx_GIVEREF(__pyx_mstate_global->__pyx_n_u_ullAvailPageFile);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_10, 0, __pyx_mstate_global->__pyx_n_u_ullAvailPageFile) != (0)) __PYX_ERR(0, 85, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_10, 0, __pyx_mstate_global->__pyx_n_u_ullAvailPageFile) != (0)) __PYX_ERR(0, 88, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_11);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_10, 1, __pyx_t_11) != (0)) __PYX_ERR(0, 85, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_10, 1, __pyx_t_11) != (0)) __PYX_ERR(0, 88, __pyx_L1_error);
     __pyx_t_11 = 0;
 
-    /* "multi_ai/hardware.pyx":86
+    /* "multi_ai/hardware.pyx":89
  *                 ("ullTotalPageFile", ctypes.c_uint64),
  *                 ("ullAvailPageFile", ctypes.c_uint64),
  *                 ("ullTotalVirtual", ctypes.c_uint64),             # <<<<<<<<<<<<<<
  *                 ("ullAvailVirtual", ctypes.c_uint64),
  *                 ("ullAvailExtendedVirtual", ctypes.c_uint64),
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_11, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 86, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_11, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 89, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_11);
-    __pyx_t_12 = __Pyx_PyObject_GetAttrStr(__pyx_t_11, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 86, __pyx_L1_error)
+    __pyx_t_12 = __Pyx_PyObject_GetAttrStr(__pyx_t_11, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 89, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_12);
     __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-    __pyx_t_11 = PyTuple_New(2); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 86, __pyx_L1_error)
+    __pyx_t_11 = PyTuple_New(2); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 89, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_11);
     __Pyx_INCREF(__pyx_mstate_global->__pyx_n_u_ullTotalVirtual);
     __Pyx_GIVEREF(__pyx_mstate_global->__pyx_n_u_ullTotalVirtual);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_11, 0, __pyx_mstate_global->__pyx_n_u_ullTotalVirtual) != (0)) __PYX_ERR(0, 86, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_11, 0, __pyx_mstate_global->__pyx_n_u_ullTotalVirtual) != (0)) __PYX_ERR(0, 89, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_12);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_11, 1, __pyx_t_12) != (0)) __PYX_ERR(0, 86, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_11, 1, __pyx_t_12) != (0)) __PYX_ERR(0, 89, __pyx_L1_error);
     __pyx_t_12 = 0;
 
-    /* "multi_ai/hardware.pyx":87
+    /* "multi_ai/hardware.pyx":90
  *                 ("ullAvailPageFile", ctypes.c_uint64),
  *                 ("ullTotalVirtual", ctypes.c_uint64),
  *                 ("ullAvailVirtual", ctypes.c_uint64),             # <<<<<<<<<<<<<<
  *                 ("ullAvailExtendedVirtual", ctypes.c_uint64),
  *             ]
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_12, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 87, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_12, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 90, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_12);
-    __pyx_t_13 = __Pyx_PyObject_GetAttrStr(__pyx_t_12, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 87, __pyx_L1_error)
+    __pyx_t_13 = __Pyx_PyObject_GetAttrStr(__pyx_t_12, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 90, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_13);
     __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
-    __pyx_t_12 = PyTuple_New(2); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 87, __pyx_L1_error)
+    __pyx_t_12 = PyTuple_New(2); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 90, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_12);
     __Pyx_INCREF(__pyx_mstate_global->__pyx_n_u_ullAvailVirtual);
     __Pyx_GIVEREF(__pyx_mstate_global->__pyx_n_u_ullAvailVirtual);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_12, 0, __pyx_mstate_global->__pyx_n_u_ullAvailVirtual) != (0)) __PYX_ERR(0, 87, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_12, 0, __pyx_mstate_global->__pyx_n_u_ullAvailVirtual) != (0)) __PYX_ERR(0, 90, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_13);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_12, 1, __pyx_t_13) != (0)) __PYX_ERR(0, 87, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_12, 1, __pyx_t_13) != (0)) __PYX_ERR(0, 90, __pyx_L1_error);
     __pyx_t_13 = 0;
 
-    /* "multi_ai/hardware.pyx":88
+    /* "multi_ai/hardware.pyx":91
  *                 ("ullTotalVirtual", ctypes.c_uint64),
  *                 ("ullAvailVirtual", ctypes.c_uint64),
  *                 ("ullAvailExtendedVirtual", ctypes.c_uint64),             # <<<<<<<<<<<<<<
  *             ]
  * 
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_13, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 88, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_13, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 91, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_13);
-    __pyx_t_14 = __Pyx_PyObject_GetAttrStr(__pyx_t_13, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 88, __pyx_L1_error)
+    __pyx_t_14 = __Pyx_PyObject_GetAttrStr(__pyx_t_13, __pyx_mstate_global->__pyx_n_u_c_uint64); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 91, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_14);
     __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
-    __pyx_t_13 = PyTuple_New(2); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 88, __pyx_L1_error)
+    __pyx_t_13 = PyTuple_New(2); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 91, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_13);
     __Pyx_INCREF(__pyx_mstate_global->__pyx_n_u_ullAvailExtendedVirtual);
     __Pyx_GIVEREF(__pyx_mstate_global->__pyx_n_u_ullAvailExtendedVirtual);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_13, 0, __pyx_mstate_global->__pyx_n_u_ullAvailExtendedVirtual) != (0)) __PYX_ERR(0, 88, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_13, 0, __pyx_mstate_global->__pyx_n_u_ullAvailExtendedVirtual) != (0)) __PYX_ERR(0, 91, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_14);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_13, 1, __pyx_t_14) != (0)) __PYX_ERR(0, 88, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_13, 1, __pyx_t_14) != (0)) __PYX_ERR(0, 91, __pyx_L1_error);
     __pyx_t_14 = 0;
 
-    /* "multi_ai/hardware.pyx":79
+    /* "multi_ai/hardware.pyx":82
  *     if sys.platform == "win32":
  *         class _MemoryStatusEx(ctypes.Structure):
  *             _fields_ = [             # <<<<<<<<<<<<<<
  *                 ("dwLength", ctypes.c_uint32),
  *                 ("dwMemoryLoad", ctypes.c_uint32),
 */
-    __pyx_t_14 = PyList_New(9); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 79, __pyx_L1_error)
+    __pyx_t_14 = PyList_New(9); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 82, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_14);
     __Pyx_GIVEREF(__pyx_t_2);
-    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 0, __pyx_t_2) != (0)) __PYX_ERR(0, 79, __pyx_L1_error);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 0, __pyx_t_2) != (0)) __PYX_ERR(0, 82, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_6);
-    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 1, __pyx_t_6) != (0)) __PYX_ERR(0, 79, __pyx_L1_error);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 1, __pyx_t_6) != (0)) __PYX_ERR(0, 82, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_7);
-    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 2, __pyx_t_7) != (0)) __PYX_ERR(0, 79, __pyx_L1_error);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 2, __pyx_t_7) != (0)) __PYX_ERR(0, 82, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_8);
-    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 3, __pyx_t_8) != (0)) __PYX_ERR(0, 79, __pyx_L1_error);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 3, __pyx_t_8) != (0)) __PYX_ERR(0, 82, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_9);
-    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 4, __pyx_t_9) != (0)) __PYX_ERR(0, 79, __pyx_L1_error);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 4, __pyx_t_9) != (0)) __PYX_ERR(0, 82, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_10);
-    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 5, __pyx_t_10) != (0)) __PYX_ERR(0, 79, __pyx_L1_error);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 5, __pyx_t_10) != (0)) __PYX_ERR(0, 82, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_11);
-    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 6, __pyx_t_11) != (0)) __PYX_ERR(0, 79, __pyx_L1_error);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 6, __pyx_t_11) != (0)) __PYX_ERR(0, 82, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_12);
-    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 7, __pyx_t_12) != (0)) __PYX_ERR(0, 79, __pyx_L1_error);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 7, __pyx_t_12) != (0)) __PYX_ERR(0, 82, __pyx_L1_error);
     __Pyx_GIVEREF(__pyx_t_13);
-    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 8, __pyx_t_13) != (0)) __PYX_ERR(0, 79, __pyx_L1_error);
+    if (__Pyx_PyList_SET_ITEM(__pyx_t_14, 8, __pyx_t_13) != (0)) __PYX_ERR(0, 82, __pyx_L1_error);
     __pyx_t_2 = 0;
     __pyx_t_6 = 0;
     __pyx_t_7 = 0;
@@ -3084,17 +3084,17 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
     __pyx_t_11 = 0;
     __pyx_t_12 = 0;
     __pyx_t_13 = 0;
-    if (__Pyx_SetNameInClass(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_fields, __pyx_t_14) < (0)) __PYX_ERR(0, 79, __pyx_L1_error)
+    if (__Pyx_SetNameInClass(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_fields, __pyx_t_14) < (0)) __PYX_ERR(0, 82, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
 
-    /* "multi_ai/hardware.pyx":78
+    /* "multi_ai/hardware.pyx":81
  *     """Total physical RAM, or None if this platform won't say."""
  *     if sys.platform == "win32":
  *         class _MemoryStatusEx(ctypes.Structure):             # <<<<<<<<<<<<<<
  *             _fields_ = [
  *                 ("dwLength", ctypes.c_uint32),
 */
-    __pyx_t_14 = __Pyx_Py3ClassCreate(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_MemoryStatusEx, __pyx_t_1, __pyx_t_5, NULL, 0, 0); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __pyx_t_14 = __Pyx_Py3ClassCreate(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_MemoryStatusEx, __pyx_t_1, __pyx_t_5, NULL, 0, 0); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 81, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_14);
     __pyx_v__MemoryStatusEx = __pyx_t_14;
     __pyx_t_14 = 0;
@@ -3102,19 +3102,19 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "multi_ai/hardware.pyx":91
+    /* "multi_ai/hardware.pyx":94
  *             ]
  * 
  *         status = _MemoryStatusEx()             # <<<<<<<<<<<<<<
  *         status.dwLength = ctypes.sizeof(_MemoryStatusEx)
  *         if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
 */
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_v__MemoryStatusEx); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 91, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_v__MemoryStatusEx); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 94, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_status = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "multi_ai/hardware.pyx":92
+    /* "multi_ai/hardware.pyx":95
  * 
  *         status = _MemoryStatusEx()
  *         status.dwLength = ctypes.sizeof(_MemoryStatusEx)             # <<<<<<<<<<<<<<
@@ -3122,9 +3122,9 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
  *             return None
 */
     __pyx_t_4 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 92, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 95, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_14 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_sizeof); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 92, __pyx_L1_error)
+    __pyx_t_14 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_sizeof); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 95, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_14);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __pyx_t_15 = 1;
@@ -3144,33 +3144,33 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
       __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_14, __pyx_callargs+__pyx_t_15, (2-__pyx_t_15) | (__pyx_t_15*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
+      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 95, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
     }
-    if (__Pyx_PyObject_SetAttrStr(__pyx_v_status, __pyx_mstate_global->__pyx_n_u_dwLength, __pyx_t_1) < (0)) __PYX_ERR(0, 92, __pyx_L1_error)
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_status, __pyx_mstate_global->__pyx_n_u_dwLength, __pyx_t_1) < (0)) __PYX_ERR(0, 95, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "multi_ai/hardware.pyx":93
+    /* "multi_ai/hardware.pyx":96
  *         status = _MemoryStatusEx()
  *         status.dwLength = ctypes.sizeof(_MemoryStatusEx)
  *         if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):             # <<<<<<<<<<<<<<
  *             return None
  *         return status.ullTotalPhys / (1024 ** 3)
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 93, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 96, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_windll); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 93, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_windll); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 96, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_kernel32); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 93, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_kernel32); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 96, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __pyx_t_14 = __pyx_t_4;
     __Pyx_INCREF(__pyx_t_14);
     __pyx_t_13 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_12, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 93, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_12, __pyx_mstate_global->__pyx_n_u_ctypes); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 96, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_12);
-    __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_12, __pyx_mstate_global->__pyx_n_u_byref); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 93, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_12, __pyx_mstate_global->__pyx_n_u_byref); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 96, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_11);
     __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
     __pyx_t_15 = 1;
@@ -3190,7 +3190,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
       __pyx_t_5 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_11, __pyx_callargs+__pyx_t_15, (2-__pyx_t_15) | (__pyx_t_15*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
       __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 93, __pyx_L1_error)
+      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 96, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
     }
     __pyx_t_15 = 0;
@@ -3200,15 +3200,15 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
       __Pyx_XDECREF(__pyx_t_14); __pyx_t_14 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 93, __pyx_L1_error)
+      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 96, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
     }
-    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(0, 93, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(0, 96, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_16 = (!__pyx_t_3);
     if (__pyx_t_16) {
 
-      /* "multi_ai/hardware.pyx":94
+      /* "multi_ai/hardware.pyx":97
  *         status.dwLength = ctypes.sizeof(_MemoryStatusEx)
  *         if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
  *             return None             # <<<<<<<<<<<<<<
@@ -3219,7 +3219,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
       __pyx_r = ((PyObject*)Py_None); __Pyx_INCREF(Py_None);
       goto __pyx_L0;
 
-      /* "multi_ai/hardware.pyx":93
+      /* "multi_ai/hardware.pyx":96
  *         status = _MemoryStatusEx()
  *         status.dwLength = ctypes.sizeof(_MemoryStatusEx)
  *         if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):             # <<<<<<<<<<<<<<
@@ -3228,7 +3228,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
 */
     }
 
-    /* "multi_ai/hardware.pyx":95
+    /* "multi_ai/hardware.pyx":98
  *         if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
  *             return None
  *         return status.ullTotalPhys / (1024 ** 3)             # <<<<<<<<<<<<<<
@@ -3236,17 +3236,17 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
  *     try:
 */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_status, __pyx_mstate_global->__pyx_n_u_ullTotalPhys); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 95, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_status, __pyx_mstate_global->__pyx_n_u_ullTotalPhys); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 98, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = __Pyx_PyLong_TrueDivideObjC(__pyx_t_1, __pyx_mstate_global->__pyx_int_1073741824, 0x40000000, 0, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 95, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyLong_TrueDivideObjC(__pyx_t_1, __pyx_mstate_global->__pyx_int_1073741824, 0x40000000, 0, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 98, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (__Pyx_PyFloat_FromNumber(&__pyx_t_4, NULL, 1) < (0)) __PYX_ERR(0, 95, __pyx_L1_error)
+    if (__Pyx_PyFloat_FromNumber(&__pyx_t_4, NULL, 1) < (0)) __PYX_ERR(0, 98, __pyx_L1_error)
     __pyx_r = ((PyObject*)__pyx_t_4);
     __pyx_t_4 = 0;
     goto __pyx_L0;
 
-    /* "multi_ai/hardware.pyx":77
+    /* "multi_ai/hardware.pyx":80
  * def _total_ram_gb() -> float | None:
  *     """Total physical RAM, or None if this platform won't say."""
  *     if sys.platform == "win32":             # <<<<<<<<<<<<<<
@@ -3255,7 +3255,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
 */
   }
 
-  /* "multi_ai/hardware.pyx":97
+  /* "multi_ai/hardware.pyx":100
  *         return status.ullTotalPhys / (1024 ** 3)
  * 
  *     try:             # <<<<<<<<<<<<<<
@@ -3271,7 +3271,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
     __Pyx_XGOTREF(__pyx_t_19);
     /*try:*/ {
 
-      /* "multi_ai/hardware.pyx":98
+      /* "multi_ai/hardware.pyx":101
  * 
  *     try:
  *         return (os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")) / (1024 ** 3)             # <<<<<<<<<<<<<<
@@ -3280,9 +3280,9 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
 */
       __Pyx_XDECREF(__pyx_r);
       __pyx_t_1 = NULL;
-      __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_os); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 98, __pyx_L5_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_os); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 101, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_14 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_sysconf); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 98, __pyx_L5_error)
+      __pyx_t_14 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_sysconf); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 101, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_14);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __pyx_t_15 = 1;
@@ -3302,13 +3302,13 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
         __pyx_t_4 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_14, __pyx_callargs+__pyx_t_15, (2-__pyx_t_15) | (__pyx_t_15*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
         __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
         __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-        if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 98, __pyx_L5_error)
+        if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 101, __pyx_L5_error)
         __Pyx_GOTREF(__pyx_t_4);
       }
       __pyx_t_1 = NULL;
-      __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_os); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 98, __pyx_L5_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_os); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 101, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_sysconf); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 98, __pyx_L5_error)
+      __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_sysconf); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 101, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_11);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __pyx_t_15 = 1;
@@ -3328,22 +3328,22 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
         __pyx_t_14 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_11, __pyx_callargs+__pyx_t_15, (2-__pyx_t_15) | (__pyx_t_15*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
         __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
         __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-        if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 98, __pyx_L5_error)
+        if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 101, __pyx_L5_error)
         __Pyx_GOTREF(__pyx_t_14);
       }
-      __pyx_t_11 = PyNumber_Multiply(__pyx_t_4, __pyx_t_14); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 98, __pyx_L5_error)
+      __pyx_t_11 = PyNumber_Multiply(__pyx_t_4, __pyx_t_14); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 101, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_11);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-      __pyx_t_14 = __Pyx_PyLong_TrueDivideObjC(__pyx_t_11, __pyx_mstate_global->__pyx_int_1073741824, 0x40000000, 0, 0); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 98, __pyx_L5_error)
+      __pyx_t_14 = __Pyx_PyLong_TrueDivideObjC(__pyx_t_11, __pyx_mstate_global->__pyx_int_1073741824, 0x40000000, 0, 0); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 101, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_14);
       __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-      if (__Pyx_PyFloat_FromNumber(&__pyx_t_14, NULL, 1) < (0)) __PYX_ERR(0, 98, __pyx_L5_error)
+      if (__Pyx_PyFloat_FromNumber(&__pyx_t_14, NULL, 1) < (0)) __PYX_ERR(0, 101, __pyx_L5_error)
       __pyx_r = ((PyObject*)__pyx_t_14);
       __pyx_t_14 = 0;
       goto __pyx_L9_try_return;
 
-      /* "multi_ai/hardware.pyx":97
+      /* "multi_ai/hardware.pyx":100
  *         return status.ullTotalPhys / (1024 ** 3)
  * 
  *     try:             # <<<<<<<<<<<<<<
@@ -3366,7 +3366,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
     __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
 
-    /* "multi_ai/hardware.pyx":99
+    /* "multi_ai/hardware.pyx":102
  *     try:
  *         return (os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")) / (1024 ** 3)
  *     except (ValueError, OSError, AttributeError):             # <<<<<<<<<<<<<<
@@ -3377,7 +3377,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
     if (__pyx_t_20) {
       __Pyx_ErrRestore(0,0,0);
 
-      /* "multi_ai/hardware.pyx":101
+      /* "multi_ai/hardware.pyx":104
  *     except (ValueError, OSError, AttributeError):
  *         # macOS in particular doesn't reliably expose SC_PHYS_PAGES.
  *         return None             # <<<<<<<<<<<<<<
@@ -3390,7 +3390,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
     }
     goto __pyx_L7_except_error;
 
-    /* "multi_ai/hardware.pyx":97
+    /* "multi_ai/hardware.pyx":100
  *         return status.ullTotalPhys / (1024 ** 3)
  * 
  *     try:             # <<<<<<<<<<<<<<
@@ -3417,7 +3417,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
     goto __pyx_L0;
   }
 
-  /* "multi_ai/hardware.pyx":75
+  /* "multi_ai/hardware.pyx":78
  * 
  * 
  * def _total_ram_gb() -> float | None:             # <<<<<<<<<<<<<<
@@ -3450,7 +3450,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware__total_ram_gb(CYTHON_UNUSED PyObje
   return __pyx_r;
 }
 
-/* "multi_ai/hardware.pyx":104
+/* "multi_ai/hardware.pyx":107
  * 
  * 
  * def _gpu_specs() -> tuple:             # <<<<<<<<<<<<<<
@@ -3496,7 +3496,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_gpu_specs", 0);
 
-  /* "multi_ai/hardware.pyx":110
+  /* "multi_ai/hardware.pyx":113
  *     working on a machine that only ever runs on-device GGUF models.
  *     """
  *     try:             # <<<<<<<<<<<<<<
@@ -3512,20 +3512,20 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "multi_ai/hardware.pyx":111
+      /* "multi_ai/hardware.pyx":114
  *     """
  *     try:
  *         import torch             # <<<<<<<<<<<<<<
  *     except Exception:
  *         return None, None
 */
-      __pyx_t_5 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_torch, 0, 0, NULL, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 111, __pyx_L3_error)
+      __pyx_t_5 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_torch, 0, 0, NULL, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 114, __pyx_L3_error)
       __pyx_t_4 = __pyx_t_5;
       __Pyx_GOTREF(__pyx_t_4);
       __pyx_v_torch = __pyx_t_4;
       __pyx_t_4 = 0;
 
-      /* "multi_ai/hardware.pyx":110
+      /* "multi_ai/hardware.pyx":113
  *     working on a machine that only ever runs on-device GGUF models.
  *     """
  *     try:             # <<<<<<<<<<<<<<
@@ -3540,7 +3540,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
     __pyx_L3_error:;
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "multi_ai/hardware.pyx":112
+    /* "multi_ai/hardware.pyx":115
  *     try:
  *         import torch
  *     except Exception:             # <<<<<<<<<<<<<<
@@ -3551,7 +3551,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
     if (__pyx_t_6) {
       __Pyx_ErrRestore(0,0,0);
 
-      /* "multi_ai/hardware.pyx":113
+      /* "multi_ai/hardware.pyx":116
  *         import torch
  *     except Exception:
  *         return None, None             # <<<<<<<<<<<<<<
@@ -3565,7 +3565,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
     }
     goto __pyx_L5_except_error;
 
-    /* "multi_ai/hardware.pyx":110
+    /* "multi_ai/hardware.pyx":113
  *     working on a machine that only ever runs on-device GGUF models.
  *     """
  *     try:             # <<<<<<<<<<<<<<
@@ -3587,7 +3587,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
     __pyx_L8_try_end:;
   }
 
-  /* "multi_ai/hardware.pyx":114
+  /* "multi_ai/hardware.pyx":117
  *     except Exception:
  *         return None, None
  *     try:             # <<<<<<<<<<<<<<
@@ -3603,14 +3603,14 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
     __Pyx_XGOTREF(__pyx_t_1);
     /*try:*/ {
 
-      /* "multi_ai/hardware.pyx":115
+      /* "multi_ai/hardware.pyx":118
  *         return None, None
  *     try:
  *         if not torch.cuda.is_available():             # <<<<<<<<<<<<<<
  *             return None, None
  *         props = torch.cuda.get_device_properties(0)
 */
-      __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_torch, __pyx_mstate_global->__pyx_n_u_cuda); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 115, __pyx_L11_error)
+      __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_torch, __pyx_mstate_global->__pyx_n_u_cuda); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 118, __pyx_L11_error)
       __Pyx_GOTREF(__pyx_t_8);
       __pyx_t_7 = __pyx_t_8;
       __Pyx_INCREF(__pyx_t_7);
@@ -3620,15 +3620,15 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
         __pyx_t_4 = __Pyx_PyObject_FastCallMethod((PyObject*)__pyx_mstate_global->__pyx_n_u_is_available, __pyx_callargs+__pyx_t_9, (1-__pyx_t_9) | (1*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-        if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 115, __pyx_L11_error)
+        if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 118, __pyx_L11_error)
         __Pyx_GOTREF(__pyx_t_4);
       }
-      __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely((__pyx_t_10 < 0))) __PYX_ERR(0, 115, __pyx_L11_error)
+      __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely((__pyx_t_10 < 0))) __PYX_ERR(0, 118, __pyx_L11_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __pyx_t_11 = (!__pyx_t_10);
       if (__pyx_t_11) {
 
-        /* "multi_ai/hardware.pyx":116
+        /* "multi_ai/hardware.pyx":119
  *     try:
  *         if not torch.cuda.is_available():
  *             return None, None             # <<<<<<<<<<<<<<
@@ -3640,7 +3640,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
         __pyx_r = __pyx_mstate_global->__pyx_tuple[0];
         goto __pyx_L15_try_return;
 
-        /* "multi_ai/hardware.pyx":115
+        /* "multi_ai/hardware.pyx":118
  *         return None, None
  *     try:
  *         if not torch.cuda.is_available():             # <<<<<<<<<<<<<<
@@ -3649,14 +3649,14 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
 */
       }
 
-      /* "multi_ai/hardware.pyx":117
+      /* "multi_ai/hardware.pyx":120
  *         if not torch.cuda.is_available():
  *             return None, None
  *         props = torch.cuda.get_device_properties(0)             # <<<<<<<<<<<<<<
  *         return props.name, props.total_memory / (1024 ** 3)
  *     except Exception:
 */
-      __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_torch, __pyx_mstate_global->__pyx_n_u_cuda); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 117, __pyx_L11_error)
+      __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_torch, __pyx_mstate_global->__pyx_n_u_cuda); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 120, __pyx_L11_error)
       __Pyx_GOTREF(__pyx_t_7);
       __pyx_t_8 = __pyx_t_7;
       __Pyx_INCREF(__pyx_t_8);
@@ -3666,13 +3666,13 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
         __pyx_t_4 = __Pyx_PyObject_FastCallMethod((PyObject*)__pyx_mstate_global->__pyx_n_u_get_device_properties, __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (1*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
         __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-        if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 117, __pyx_L11_error)
+        if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 120, __pyx_L11_error)
         __Pyx_GOTREF(__pyx_t_4);
       }
       __pyx_v_props = __pyx_t_4;
       __pyx_t_4 = 0;
 
-      /* "multi_ai/hardware.pyx":118
+      /* "multi_ai/hardware.pyx":121
  *             return None, None
  *         props = torch.cuda.get_device_properties(0)
  *         return props.name, props.total_memory / (1024 ** 3)             # <<<<<<<<<<<<<<
@@ -3680,26 +3680,26 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
  *         return None, None
 */
       __Pyx_XDECREF(__pyx_r);
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_props, __pyx_mstate_global->__pyx_n_u_name); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 118, __pyx_L11_error)
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_props, __pyx_mstate_global->__pyx_n_u_name); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 121, __pyx_L11_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_props, __pyx_mstate_global->__pyx_n_u_total_memory); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 118, __pyx_L11_error)
+      __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_props, __pyx_mstate_global->__pyx_n_u_total_memory); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 121, __pyx_L11_error)
       __Pyx_GOTREF(__pyx_t_7);
-      __pyx_t_8 = __Pyx_PyLong_TrueDivideObjC(__pyx_t_7, __pyx_mstate_global->__pyx_int_1073741824, 0x40000000, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 118, __pyx_L11_error)
+      __pyx_t_8 = __Pyx_PyLong_TrueDivideObjC(__pyx_t_7, __pyx_mstate_global->__pyx_int_1073741824, 0x40000000, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 121, __pyx_L11_error)
       __Pyx_GOTREF(__pyx_t_8);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 118, __pyx_L11_error)
+      __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 121, __pyx_L11_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_GIVEREF(__pyx_t_4);
-      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_4) != (0)) __PYX_ERR(0, 118, __pyx_L11_error);
+      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_4) != (0)) __PYX_ERR(0, 121, __pyx_L11_error);
       __Pyx_GIVEREF(__pyx_t_8);
-      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_7, 1, __pyx_t_8) != (0)) __PYX_ERR(0, 118, __pyx_L11_error);
+      if (__Pyx_PyTuple_SET_ITEM(__pyx_t_7, 1, __pyx_t_8) != (0)) __PYX_ERR(0, 121, __pyx_L11_error);
       __pyx_t_4 = 0;
       __pyx_t_8 = 0;
       __pyx_r = ((PyObject*)__pyx_t_7);
       __pyx_t_7 = 0;
       goto __pyx_L15_try_return;
 
-      /* "multi_ai/hardware.pyx":114
+      /* "multi_ai/hardware.pyx":117
  *     except Exception:
  *         return None, None
  *     try:             # <<<<<<<<<<<<<<
@@ -3712,7 +3712,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
     __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
     __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-    /* "multi_ai/hardware.pyx":119
+    /* "multi_ai/hardware.pyx":122
  *         props = torch.cuda.get_device_properties(0)
  *         return props.name, props.total_memory / (1024 ** 3)
  *     except Exception:             # <<<<<<<<<<<<<<
@@ -3723,7 +3723,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
     if (__pyx_t_6) {
       __Pyx_ErrRestore(0,0,0);
 
-      /* "multi_ai/hardware.pyx":120
+      /* "multi_ai/hardware.pyx":123
  *         return props.name, props.total_memory / (1024 ** 3)
  *     except Exception:
  *         return None, None             # <<<<<<<<<<<<<<
@@ -3737,7 +3737,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
     }
     goto __pyx_L13_except_error;
 
-    /* "multi_ai/hardware.pyx":114
+    /* "multi_ai/hardware.pyx":117
  *     except Exception:
  *         return None, None
  *     try:             # <<<<<<<<<<<<<<
@@ -3764,7 +3764,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
     goto __pyx_L0;
   }
 
-  /* "multi_ai/hardware.pyx":104
+  /* "multi_ai/hardware.pyx":107
  * 
  * 
  * def _gpu_specs() -> tuple:             # <<<<<<<<<<<<<<
@@ -3787,7 +3787,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_2_gpu_specs(CYTHON_UNUSED PyObject
   return __pyx_r;
 }
 
-/* "multi_ai/hardware.pyx":123
+/* "multi_ai/hardware.pyx":126
  * 
  * 
  * def detect_specs(refresh: bool = False) -> dict:             # <<<<<<<<<<<<<<
@@ -3835,37 +3835,37 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_refresh,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 123, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 126, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 123, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 126, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "detect_specs", 0) < (0)) __PYX_ERR(0, 123, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "detect_specs", 0) < (0)) __PYX_ERR(0, 126, __pyx_L3_error)
     } else {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 123, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 126, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
     }
     if (values[0]) {
-      __pyx_v_refresh = __Pyx_PyObject_IsTrue(values[0]); if (unlikely((__pyx_v_refresh == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 123, __pyx_L3_error)
+      __pyx_v_refresh = __Pyx_PyObject_IsTrue(values[0]); if (unlikely((__pyx_v_refresh == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 126, __pyx_L3_error)
     } else {
       __pyx_v_refresh = ((int)((int)0));
     }
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("detect_specs", 0, 0, 1, __pyx_nargs); __PYX_ERR(0, 123, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("detect_specs", 0, 0, 1, __pyx_nargs); __PYX_ERR(0, 126, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -3905,14 +3905,14 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("detect_specs", 0);
 
-  /* "multi_ai/hardware.pyx":130
+  /* "multi_ai/hardware.pyx":133
  *     """
  *     global _cached_specs
  *     if _cached_specs is not None and not refresh:             # <<<<<<<<<<<<<<
  *         return _cached_specs
  * 
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_cached_specs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 130, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_cached_specs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 133, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = (__pyx_t_2 != Py_None);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -3926,7 +3926,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
   __pyx_L4_bool_binop_done:;
   if (__pyx_t_1) {
 
-    /* "multi_ai/hardware.pyx":131
+    /* "multi_ai/hardware.pyx":134
  *     global _cached_specs
  *     if _cached_specs is not None and not refresh:
  *         return _cached_specs             # <<<<<<<<<<<<<<
@@ -3934,14 +3934,14 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
  *     gpu_name, vram_gb = _gpu_specs()
 */
     __Pyx_XDECREF(__pyx_r);
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_cached_specs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 131, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_cached_specs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 134, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (!(likely(PyDict_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_2))) __PYX_ERR(0, 131, __pyx_L1_error)
+    if (!(likely(PyDict_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_2))) __PYX_ERR(0, 134, __pyx_L1_error)
     __pyx_r = ((PyObject*)__pyx_t_2);
     __pyx_t_2 = 0;
     goto __pyx_L0;
 
-    /* "multi_ai/hardware.pyx":130
+    /* "multi_ai/hardware.pyx":133
  *     """
  *     global _cached_specs
  *     if _cached_specs is not None and not refresh:             # <<<<<<<<<<<<<<
@@ -3950,7 +3950,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
 */
   }
 
-  /* "multi_ai/hardware.pyx":133
+  /* "multi_ai/hardware.pyx":136
  *         return _cached_specs
  * 
  *     gpu_name, vram_gb = _gpu_specs()             # <<<<<<<<<<<<<<
@@ -3958,7 +3958,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
  *     _cached_specs = {
 */
   __pyx_t_4 = NULL;
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_gpu_specs); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 133, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_gpu_specs); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 136, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __pyx_t_6 = 1;
   #if CYTHON_UNPACK_METHODS
@@ -3977,7 +3977,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
     __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_5, __pyx_callargs+__pyx_t_6, (1-__pyx_t_6) | (__pyx_t_6*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 133, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 136, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
   }
   if ((likely(PyTuple_CheckExact(__pyx_t_2))) || (PyList_CheckExact(__pyx_t_2))) {
@@ -3986,7 +3986,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
     if (unlikely(size != 2)) {
       if (size > 2) __Pyx_RaiseTooManyValuesError(2);
       else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-      __PYX_ERR(0, 133, __pyx_L1_error)
+      __PYX_ERR(0, 136, __pyx_L1_error)
     }
     #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
     if (likely(PyTuple_CheckExact(sequence))) {
@@ -3996,22 +3996,22 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
       __Pyx_INCREF(__pyx_t_4);
     } else {
       __pyx_t_5 = __Pyx_PyList_GET_ITEM_REF(sequence, 0, __Pyx_ReferenceSharing_SharedReference);
-      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 133, __pyx_L1_error)
+      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 136, __pyx_L1_error)
       __Pyx_XGOTREF(__pyx_t_5);
       __pyx_t_4 = __Pyx_PyList_GET_ITEM_REF(sequence, 1, __Pyx_ReferenceSharing_SharedReference);
-      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 133, __pyx_L1_error)
+      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 136, __pyx_L1_error)
       __Pyx_XGOTREF(__pyx_t_4);
     }
     #else
-    __pyx_t_5 = __Pyx_PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 133, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 136, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_4 = __Pyx_PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 133, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 136, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     #endif
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   } else {
     Py_ssize_t index = -1;
-    __pyx_t_7 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 133, __pyx_L1_error)
+    __pyx_t_7 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 136, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_8 = (CYTHON_COMPILING_IN_LIMITED_API) ? PyIter_Next : __Pyx_PyObject_GetIterNextFunc(__pyx_t_7);
@@ -4019,7 +4019,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
     __Pyx_GOTREF(__pyx_t_5);
     index = 1; __pyx_t_4 = __pyx_t_8(__pyx_t_7); if (unlikely(!__pyx_t_4)) goto __pyx_L6_unpacking_failed;
     __Pyx_GOTREF(__pyx_t_4);
-    if (__Pyx_IternextUnpackEndCheck(__pyx_t_8(__pyx_t_7), 2) < (0)) __PYX_ERR(0, 133, __pyx_L1_error)
+    if (__Pyx_IternextUnpackEndCheck(__pyx_t_8(__pyx_t_7), 2) < (0)) __PYX_ERR(0, 136, __pyx_L1_error)
     __pyx_t_8 = NULL;
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     goto __pyx_L7_unpacking_done;
@@ -4027,7 +4027,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __pyx_t_8 = NULL;
     if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-    __PYX_ERR(0, 133, __pyx_L1_error)
+    __PYX_ERR(0, 136, __pyx_L1_error)
     __pyx_L7_unpacking_done:;
   }
   __pyx_v_gpu_name = __pyx_t_5;
@@ -4035,7 +4035,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
   __pyx_v_vram_gb = __pyx_t_4;
   __pyx_t_4 = 0;
 
-  /* "multi_ai/hardware.pyx":134
+  /* "multi_ai/hardware.pyx":137
  * 
  *     gpu_name, vram_gb = _gpu_specs()
  *     ram_gb = _total_ram_gb()             # <<<<<<<<<<<<<<
@@ -4043,7 +4043,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
  *         "gpu_name": gpu_name,
 */
   __pyx_t_4 = NULL;
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_total_ram_gb); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 134, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_total_ram_gb); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __pyx_t_6 = 1;
   #if CYTHON_UNPACK_METHODS
@@ -4062,31 +4062,31 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
     __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_5, __pyx_callargs+__pyx_t_6, (1-__pyx_t_6) | (__pyx_t_6*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 134, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 137, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
   }
   __pyx_v_ram_gb = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "multi_ai/hardware.pyx":136
+  /* "multi_ai/hardware.pyx":139
  *     ram_gb = _total_ram_gb()
  *     _cached_specs = {
  *         "gpu_name": gpu_name,             # <<<<<<<<<<<<<<
  *         "vram_gb": round(vram_gb, 2) if vram_gb else None,
  *         "ram_gb": round(ram_gb, 2) if ram_gb else None,
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 136, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 139, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gpu_name, __pyx_v_gpu_name) < (0)) __PYX_ERR(0, 136, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gpu_name, __pyx_v_gpu_name) < (0)) __PYX_ERR(0, 139, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":137
+  /* "multi_ai/hardware.pyx":140
  *     _cached_specs = {
  *         "gpu_name": gpu_name,
  *         "vram_gb": round(vram_gb, 2) if vram_gb else None,             # <<<<<<<<<<<<<<
  *         "ram_gb": round(ram_gb, 2) if ram_gb else None,
  *         "platform": sys.platform,
 */
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_vram_gb); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 137, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_vram_gb); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 140, __pyx_L1_error)
   if (__pyx_t_1) {
     __pyx_t_7 = NULL;
     __pyx_t_6 = 1;
@@ -4094,7 +4094,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
       PyObject *__pyx_callargs[3] = {__pyx_t_7, __pyx_v_vram_gb, __pyx_mstate_global->__pyx_int_2};
       __pyx_t_4 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_round, __pyx_callargs+__pyx_t_6, (3-__pyx_t_6) | (__pyx_t_6*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 137, __pyx_L1_error)
+      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 140, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
     }
     __pyx_t_5 = __pyx_t_4;
@@ -4103,17 +4103,17 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
     __Pyx_INCREF(Py_None);
     __pyx_t_5 = Py_None;
   }
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_vram_gb, __pyx_t_5) < (0)) __PYX_ERR(0, 136, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_vram_gb, __pyx_t_5) < (0)) __PYX_ERR(0, 139, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "multi_ai/hardware.pyx":138
+  /* "multi_ai/hardware.pyx":141
  *         "gpu_name": gpu_name,
  *         "vram_gb": round(vram_gb, 2) if vram_gb else None,
  *         "ram_gb": round(ram_gb, 2) if ram_gb else None,             # <<<<<<<<<<<<<<
  *         "platform": sys.platform,
  *     }
 */
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_ram_gb); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 138, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_ram_gb); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 141, __pyx_L1_error)
   if (__pyx_t_1) {
     __pyx_t_7 = NULL;
     __pyx_t_6 = 1;
@@ -4121,7 +4121,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
       PyObject *__pyx_callargs[3] = {__pyx_t_7, __pyx_v_ram_gb, __pyx_mstate_global->__pyx_int_2};
       __pyx_t_4 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_round, __pyx_callargs+__pyx_t_6, (3-__pyx_t_6) | (__pyx_t_6*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 138, __pyx_L1_error)
+      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 141, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
     }
     __pyx_t_5 = __pyx_t_4;
@@ -4130,27 +4130,27 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
     __Pyx_INCREF(Py_None);
     __pyx_t_5 = Py_None;
   }
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_ram_gb, __pyx_t_5) < (0)) __PYX_ERR(0, 136, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_ram_gb, __pyx_t_5) < (0)) __PYX_ERR(0, 139, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "multi_ai/hardware.pyx":139
+  /* "multi_ai/hardware.pyx":142
  *         "vram_gb": round(vram_gb, 2) if vram_gb else None,
  *         "ram_gb": round(ram_gb, 2) if ram_gb else None,
  *         "platform": sys.platform,             # <<<<<<<<<<<<<<
  *     }
  *     return _cached_specs
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_sys); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_sys); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 142, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_platform); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_platform); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 142, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_platform, __pyx_t_4) < (0)) __PYX_ERR(0, 136, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_platform, __pyx_t_4) < (0)) __PYX_ERR(0, 139, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_cached_specs, __pyx_t_2) < (0)) __PYX_ERR(0, 135, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_cached_specs, __pyx_t_2) < (0)) __PYX_ERR(0, 138, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "multi_ai/hardware.pyx":141
+  /* "multi_ai/hardware.pyx":144
  *         "platform": sys.platform,
  *     }
  *     return _cached_specs             # <<<<<<<<<<<<<<
@@ -4158,14 +4158,14 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
  * 
 */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_cached_specs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 141, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_cached_specs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 144, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (!(likely(PyDict_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_2))) __PYX_ERR(0, 141, __pyx_L1_error)
+  if (!(likely(PyDict_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_2))) __PYX_ERR(0, 144, __pyx_L1_error)
   __pyx_r = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "multi_ai/hardware.pyx":123
+  /* "multi_ai/hardware.pyx":126
  * 
  * 
  * def detect_specs(refresh: bool = False) -> dict:             # <<<<<<<<<<<<<<
@@ -4190,7 +4190,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_4detect_specs(CYTHON_UNUSED PyObje
   return __pyx_r;
 }
 
-/* "multi_ai/hardware.pyx":144
+/* "multi_ai/hardware.pyx":147
  * 
  * 
  * def _rate(need_gb: float, budget_gb: float | None) -> str:             # <<<<<<<<<<<<<<
@@ -4238,40 +4238,40 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_need_gb,&__pyx_mstate_global->__pyx_n_u_budget_gb,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 144, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 147, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 144, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 147, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 144, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 147, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_rate", 0) < (0)) __PYX_ERR(0, 144, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_rate", 0) < (0)) __PYX_ERR(0, 147, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 2; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_rate", 1, 2, 2, i); __PYX_ERR(0, 144, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_rate", 1, 2, 2, i); __PYX_ERR(0, 147, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 144, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 147, __pyx_L3_error)
       values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 144, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 147, __pyx_L3_error)
     }
-    __pyx_v_need_gb = __Pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_need_gb == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 144, __pyx_L3_error)
-    if (__Pyx_PyFloat_FromNumber(&values[1], "budget_gb", 1) < (0)) __PYX_ERR(0, 144, __pyx_L3_error)
+    __pyx_v_need_gb = __Pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_need_gb == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 147, __pyx_L3_error)
+    if (__Pyx_PyFloat_FromNumber(&values[1], "budget_gb", 1) < (0)) __PYX_ERR(0, 147, __pyx_L3_error)
     __pyx_v_budget_gb = ((PyObject*)values[1]);
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_rate", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 144, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_rate", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 147, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -4282,7 +4282,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_budget_gb), (&PyFloat_Type), 1, "budget_gb", 2))) __PYX_ERR(0, 144, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_budget_gb), (&PyFloat_Type), 1, "budget_gb", 2))) __PYX_ERR(0, 147, __pyx_L1_error)
   __pyx_r = __pyx_pf_8multi_ai_8hardware_6_rate(__pyx_self, __pyx_v_need_gb, __pyx_v_budget_gb);
 
   /* function exit code */
@@ -4315,18 +4315,18 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_6_rate(CYTHON_UNUSED PyObject *__p
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_rate", 0);
 
-  /* "multi_ai/hardware.pyx":145
+  /* "multi_ai/hardware.pyx":148
  * 
  * def _rate(need_gb: float, budget_gb: float | None) -> str:
  *     if not budget_gb:             # <<<<<<<<<<<<<<
  *         return RATING_UNKNOWN
  *     if need_gb <= budget_gb * _COMFORT:
 */
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_budget_gb); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 145, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_budget_gb); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 148, __pyx_L1_error)
   __pyx_t_2 = (!__pyx_t_1);
   if (__pyx_t_2) {
 
-    /* "multi_ai/hardware.pyx":146
+    /* "multi_ai/hardware.pyx":149
  * def _rate(need_gb: float, budget_gb: float | None) -> str:
  *     if not budget_gb:
  *         return RATING_UNKNOWN             # <<<<<<<<<<<<<<
@@ -4334,14 +4334,14 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_6_rate(CYTHON_UNUSED PyObject *__p
  *         return RATING_YES
 */
     __Pyx_XDECREF(__pyx_r);
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_RATING_UNKNOWN); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 146, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_RATING_UNKNOWN); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 149, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (!(likely(PyUnicode_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None) || __Pyx_RaiseUnexpectedTypeError("str", __pyx_t_3))) __PYX_ERR(0, 146, __pyx_L1_error)
+    if (!(likely(PyUnicode_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None) || __Pyx_RaiseUnexpectedTypeError("str", __pyx_t_3))) __PYX_ERR(0, 149, __pyx_L1_error)
     __pyx_r = ((PyObject*)__pyx_t_3);
     __pyx_t_3 = 0;
     goto __pyx_L0;
 
-    /* "multi_ai/hardware.pyx":145
+    /* "multi_ai/hardware.pyx":148
  * 
  * def _rate(need_gb: float, budget_gb: float | None) -> str:
  *     if not budget_gb:             # <<<<<<<<<<<<<<
@@ -4350,28 +4350,28 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_6_rate(CYTHON_UNUSED PyObject *__p
 */
   }
 
-  /* "multi_ai/hardware.pyx":147
+  /* "multi_ai/hardware.pyx":150
  *     if not budget_gb:
  *         return RATING_UNKNOWN
  *     if need_gb <= budget_gb * _COMFORT:             # <<<<<<<<<<<<<<
  *         return RATING_YES
  *     if need_gb <= budget_gb:
 */
-  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_need_gb); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 147, __pyx_L1_error)
+  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_need_gb); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_COMFORT); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 147, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_COMFORT); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = PyNumber_Multiply(__pyx_v_budget_gb, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 147, __pyx_L1_error)
+  __pyx_t_5 = PyNumber_Multiply(__pyx_v_budget_gb, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = PyObject_RichCompare(__pyx_t_3, __pyx_t_5, Py_LE); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 147, __pyx_L1_error)
+  __pyx_t_4 = PyObject_RichCompare(__pyx_t_3, __pyx_t_5, Py_LE); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 147, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   if (__pyx_t_2) {
 
-    /* "multi_ai/hardware.pyx":148
+    /* "multi_ai/hardware.pyx":151
  *         return RATING_UNKNOWN
  *     if need_gb <= budget_gb * _COMFORT:
  *         return RATING_YES             # <<<<<<<<<<<<<<
@@ -4379,14 +4379,14 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_6_rate(CYTHON_UNUSED PyObject *__p
  *         return RATING_MAYBE
 */
     __Pyx_XDECREF(__pyx_r);
-    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_RATING_YES); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_RATING_YES); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 151, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    if (!(likely(PyUnicode_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None) || __Pyx_RaiseUnexpectedTypeError("str", __pyx_t_4))) __PYX_ERR(0, 148, __pyx_L1_error)
+    if (!(likely(PyUnicode_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None) || __Pyx_RaiseUnexpectedTypeError("str", __pyx_t_4))) __PYX_ERR(0, 151, __pyx_L1_error)
     __pyx_r = ((PyObject*)__pyx_t_4);
     __pyx_t_4 = 0;
     goto __pyx_L0;
 
-    /* "multi_ai/hardware.pyx":147
+    /* "multi_ai/hardware.pyx":150
  *     if not budget_gb:
  *         return RATING_UNKNOWN
  *     if need_gb <= budget_gb * _COMFORT:             # <<<<<<<<<<<<<<
@@ -4395,22 +4395,22 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_6_rate(CYTHON_UNUSED PyObject *__p
 */
   }
 
-  /* "multi_ai/hardware.pyx":149
+  /* "multi_ai/hardware.pyx":152
  *     if need_gb <= budget_gb * _COMFORT:
  *         return RATING_YES
  *     if need_gb <= budget_gb:             # <<<<<<<<<<<<<<
  *         return RATING_MAYBE
  *     return RATING_NO
 */
-  __pyx_t_4 = PyFloat_FromDouble(__pyx_v_need_gb); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 149, __pyx_L1_error)
+  __pyx_t_4 = PyFloat_FromDouble(__pyx_v_need_gb); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 152, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = PyObject_RichCompare(__pyx_t_4, __pyx_v_budget_gb, Py_LE); __Pyx_XGOTREF(__pyx_t_5); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 149, __pyx_L1_error)
+  __pyx_t_5 = PyObject_RichCompare(__pyx_t_4, __pyx_v_budget_gb, Py_LE); __Pyx_XGOTREF(__pyx_t_5); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 152, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 149, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 152, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   if (__pyx_t_2) {
 
-    /* "multi_ai/hardware.pyx":150
+    /* "multi_ai/hardware.pyx":153
  *         return RATING_YES
  *     if need_gb <= budget_gb:
  *         return RATING_MAYBE             # <<<<<<<<<<<<<<
@@ -4418,14 +4418,14 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_6_rate(CYTHON_UNUSED PyObject *__p
  * 
 */
     __Pyx_XDECREF(__pyx_r);
-    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_RATING_MAYBE); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 150, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_RATING_MAYBE); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 153, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    if (!(likely(PyUnicode_CheckExact(__pyx_t_5))||((__pyx_t_5) == Py_None) || __Pyx_RaiseUnexpectedTypeError("str", __pyx_t_5))) __PYX_ERR(0, 150, __pyx_L1_error)
+    if (!(likely(PyUnicode_CheckExact(__pyx_t_5))||((__pyx_t_5) == Py_None) || __Pyx_RaiseUnexpectedTypeError("str", __pyx_t_5))) __PYX_ERR(0, 153, __pyx_L1_error)
     __pyx_r = ((PyObject*)__pyx_t_5);
     __pyx_t_5 = 0;
     goto __pyx_L0;
 
-    /* "multi_ai/hardware.pyx":149
+    /* "multi_ai/hardware.pyx":152
  *     if need_gb <= budget_gb * _COMFORT:
  *         return RATING_YES
  *     if need_gb <= budget_gb:             # <<<<<<<<<<<<<<
@@ -4434,7 +4434,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_6_rate(CYTHON_UNUSED PyObject *__p
 */
   }
 
-  /* "multi_ai/hardware.pyx":151
+  /* "multi_ai/hardware.pyx":154
  *     if need_gb <= budget_gb:
  *         return RATING_MAYBE
  *     return RATING_NO             # <<<<<<<<<<<<<<
@@ -4442,14 +4442,14 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_6_rate(CYTHON_UNUSED PyObject *__p
  * 
 */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_RATING_NO); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 151, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_RATING_NO); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 154, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (!(likely(PyUnicode_CheckExact(__pyx_t_5))||((__pyx_t_5) == Py_None) || __Pyx_RaiseUnexpectedTypeError("str", __pyx_t_5))) __PYX_ERR(0, 151, __pyx_L1_error)
+  if (!(likely(PyUnicode_CheckExact(__pyx_t_5))||((__pyx_t_5) == Py_None) || __Pyx_RaiseUnexpectedTypeError("str", __pyx_t_5))) __PYX_ERR(0, 154, __pyx_L1_error)
   __pyx_r = ((PyObject*)__pyx_t_5);
   __pyx_t_5 = 0;
   goto __pyx_L0;
 
-  /* "multi_ai/hardware.pyx":144
+  /* "multi_ai/hardware.pyx":147
  * 
  * 
  * def _rate(need_gb: float, budget_gb: float | None) -> str:             # <<<<<<<<<<<<<<
@@ -4470,7 +4470,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_6_rate(CYTHON_UNUSED PyObject *__p
   return __pyx_r;
 }
 
-/* "multi_ai/hardware.pyx":154
+/* "multi_ai/hardware.pyx":157
  * 
  * 
  * def _gb(value: float) -> str:             # <<<<<<<<<<<<<<
@@ -4517,32 +4517,32 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_value,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 154, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 157, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 154, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 157, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_gb", 0) < (0)) __PYX_ERR(0, 154, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_gb", 0) < (0)) __PYX_ERR(0, 157, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_gb", 1, 1, 1, i); __PYX_ERR(0, 154, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_gb", 1, 1, 1, i); __PYX_ERR(0, 157, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 154, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 157, __pyx_L3_error)
     }
-    __pyx_v_value = __Pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_value == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 154, __pyx_L3_error)
+    __pyx_v_value = __Pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_value == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 157, __pyx_L3_error)
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_gb", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 154, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_gb", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 157, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -4573,7 +4573,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_8_gb(CYTHON_UNUSED PyObject *__pyx
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_gb", 0);
 
-  /* "multi_ai/hardware.pyx":155
+  /* "multi_ai/hardware.pyx":158
  * 
  * def _gb(value: float) -> str:
  *     return f"{value:.1f} GB"             # <<<<<<<<<<<<<<
@@ -4581,19 +4581,19 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_8_gb(CYTHON_UNUSED PyObject *__pyx
  * 
 */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 155, __pyx_L1_error)
+  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 158, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Format(__pyx_t_1, __pyx_mstate_global->__pyx_kp_u_1f); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 155, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Format(__pyx_t_1, __pyx_mstate_global->__pyx_kp_u_1f); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 158, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyUnicode_Concat__Pyx_ReferenceSharing_OwnStrongReferenceInPlace(__pyx_t_2, __pyx_mstate_global->__pyx_kp_u_GB); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 155, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyUnicode_Concat__Pyx_ReferenceSharing_OwnStrongReferenceInPlace(__pyx_t_2, __pyx_mstate_global->__pyx_kp_u_GB); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 158, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_r = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "multi_ai/hardware.pyx":154
+  /* "multi_ai/hardware.pyx":157
  * 
  * 
  * def _gb(value: float) -> str:             # <<<<<<<<<<<<<<
@@ -4613,7 +4613,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_8_gb(CYTHON_UNUSED PyObject *__pyx
   return __pyx_r;
 }
 
-/* "multi_ai/hardware.pyx":158
+/* "multi_ai/hardware.pyx":161
  * 
  * 
  * def _rate_server_model(size_gb: float, specs: dict) -> dict:             # <<<<<<<<<<<<<<
@@ -4662,39 +4662,39 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_size_gb,&__pyx_mstate_global->__pyx_n_u_specs,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 158, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 161, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 158, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 161, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 158, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 161, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_rate_server_model", 0) < (0)) __PYX_ERR(0, 158, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_rate_server_model", 0) < (0)) __PYX_ERR(0, 161, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 2; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_rate_server_model", 1, 2, 2, i); __PYX_ERR(0, 158, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_rate_server_model", 1, 2, 2, i); __PYX_ERR(0, 161, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 158, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 161, __pyx_L3_error)
       values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 158, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 161, __pyx_L3_error)
     }
-    __pyx_v_size_gb = __Pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_size_gb == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 158, __pyx_L3_error)
+    __pyx_v_size_gb = __Pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_size_gb == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 161, __pyx_L3_error)
     __pyx_v_specs = ((PyObject*)values[1]);
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_rate_server_model", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 158, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_rate_server_model", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 161, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -4705,7 +4705,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_specs), (&PyDict_Type), 0, "specs", 2))) __PYX_ERR(0, 158, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_specs), (&PyDict_Type), 0, "specs", 2))) __PYX_ERR(0, 161, __pyx_L1_error)
   __pyx_r = __pyx_pf_8multi_ai_8hardware_10_rate_server_model(__pyx_self, __pyx_v_size_gb, __pyx_v_specs);
 
   /* function exit code */
@@ -4745,60 +4745,60 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_rate_server_model", 0);
 
-  /* "multi_ai/hardware.pyx":160
+  /* "multi_ai/hardware.pyx":163
  * def _rate_server_model(size_gb: float, specs: dict) -> dict:
  *     """A transformers/_REPO_ID model: 4-bit on the GPU, so VRAM decides."""
  *     need = size_gb / _FP16_TO_4BIT * _QUANT_OVERHEAD + _GPU_WORKSPACE_GB             # <<<<<<<<<<<<<<
  *     vram = specs.get("vram_gb")
  *     if not vram:
 */
-  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_size_gb); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 160, __pyx_L1_error)
+  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_size_gb); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 163, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_FP16_TO_4BIT); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 160, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_FP16_TO_4BIT); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 163, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyNumber_Divide(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 160, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyNumber_Divide(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 163, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_QUANT_OVERHEAD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 160, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_QUANT_OVERHEAD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 163, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = PyNumber_Multiply(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 160, __pyx_L1_error)
+  __pyx_t_1 = PyNumber_Multiply(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 163, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_GPU_WORKSPACE_GB); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 160, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_GPU_WORKSPACE_GB); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 163, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyNumber_Add(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 160, __pyx_L1_error)
+  __pyx_t_3 = PyNumber_Add(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 163, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_need = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "multi_ai/hardware.pyx":161
+  /* "multi_ai/hardware.pyx":164
  *     """A transformers/_REPO_ID model: 4-bit on the GPU, so VRAM decides."""
  *     need = size_gb / _FP16_TO_4BIT * _QUANT_OVERHEAD + _GPU_WORKSPACE_GB
  *     vram = specs.get("vram_gb")             # <<<<<<<<<<<<<<
  *     if not vram:
  *         return {
 */
-  __pyx_t_3 = __Pyx_PyDict_GetItemDefault(__pyx_v_specs, __pyx_mstate_global->__pyx_n_u_vram_gb, Py_None); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 161, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_GetItemDefault(__pyx_v_specs, __pyx_mstate_global->__pyx_n_u_vram_gb, Py_None); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 164, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_v_vram = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "multi_ai/hardware.pyx":162
+  /* "multi_ai/hardware.pyx":165
  *     need = size_gb / _FP16_TO_4BIT * _QUANT_OVERHEAD + _GPU_WORKSPACE_GB
  *     vram = specs.get("vram_gb")
  *     if not vram:             # <<<<<<<<<<<<<<
  *         return {
  *             "rating": RATING_UNKNOWN,
 */
-  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_v_vram); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 162, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_v_vram); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 165, __pyx_L1_error)
   __pyx_t_5 = (!__pyx_t_4);
   if (__pyx_t_5) {
 
-    /* "multi_ai/hardware.pyx":163
+    /* "multi_ai/hardware.pyx":166
  *     vram = specs.get("vram_gb")
  *     if not vram:
  *         return {             # <<<<<<<<<<<<<<
@@ -4807,21 +4807,21 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
 */
     __Pyx_XDECREF(__pyx_r);
 
-    /* "multi_ai/hardware.pyx":164
+    /* "multi_ai/hardware.pyx":167
  *     if not vram:
  *         return {
  *             "rating": RATING_UNKNOWN,             # <<<<<<<<<<<<<<
  *             "needs_gb": round(need, 1),
  *             "reason": f"Needs about {_gb(need)} of VRAM (4-bit); no CUDA GPU detected here.",
 */
-    __pyx_t_3 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 164, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 167, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_RATING_UNKNOWN); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 164, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_RATING_UNKNOWN); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 167, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_2) < (0)) __PYX_ERR(0, 164, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_2) < (0)) __PYX_ERR(0, 167, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "multi_ai/hardware.pyx":165
+    /* "multi_ai/hardware.pyx":168
  *         return {
  *             "rating": RATING_UNKNOWN,
  *             "needs_gb": round(need, 1),             # <<<<<<<<<<<<<<
@@ -4834,41 +4834,41 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
       PyObject *__pyx_callargs[3] = {__pyx_t_1, __pyx_v_need, __pyx_mstate_global->__pyx_int_1};
       __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_round, __pyx_callargs+__pyx_t_6, (3-__pyx_t_6) | (__pyx_t_6*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 165, __pyx_L1_error)
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 168, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
     }
-    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_2) < (0)) __PYX_ERR(0, 164, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_2) < (0)) __PYX_ERR(0, 167, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "multi_ai/hardware.pyx":166
+    /* "multi_ai/hardware.pyx":169
  *             "rating": RATING_UNKNOWN,
  *             "needs_gb": round(need, 1),
  *             "reason": f"Needs about {_gb(need)} of VRAM (4-bit); no CUDA GPU detected here.",             # <<<<<<<<<<<<<<
  *         }
  *     rating = _rate(need, vram)
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 166, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 169, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_need); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 166, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_need); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 169, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_FormatSimple(__pyx_t_1, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 166, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_FormatSimple(__pyx_t_1, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 169, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_7[0] = __pyx_mstate_global->__pyx_kp_u_Needs_about;
     __pyx_t_7[1] = __pyx_t_2;
     __pyx_t_7[2] = __pyx_mstate_global->__pyx_kp_u_of_VRAM_4_bit_no_CUDA_GPU_detec;
     __pyx_t_1 = __Pyx_PyUnicode_Join(__pyx_t_7, 3, 12 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2) + 44, 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2));
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 166, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 169, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_1) < (0)) __PYX_ERR(0, 164, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_1) < (0)) __PYX_ERR(0, 167, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_r = ((PyObject*)__pyx_t_3);
     __pyx_t_3 = 0;
     goto __pyx_L0;
 
-    /* "multi_ai/hardware.pyx":162
+    /* "multi_ai/hardware.pyx":165
  *     need = size_gb / _FP16_TO_4BIT * _QUANT_OVERHEAD + _GPU_WORKSPACE_GB
  *     vram = specs.get("vram_gb")
  *     if not vram:             # <<<<<<<<<<<<<<
@@ -4877,7 +4877,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
 */
   }
 
-  /* "multi_ai/hardware.pyx":168
+  /* "multi_ai/hardware.pyx":171
  *             "reason": f"Needs about {_gb(need)} of VRAM (4-bit); no CUDA GPU detected here.",
  *         }
  *     rating = _rate(need, vram)             # <<<<<<<<<<<<<<
@@ -4885,7 +4885,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
  *         reason = f"Needs about {_gb(need)} of your {_gb(vram)} VRAM  comfortable fit."
 */
   __pyx_t_1 = NULL;
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_rate); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 168, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_rate); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 171, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_6 = 1;
   #if CYTHON_UNPACK_METHODS
@@ -4904,48 +4904,48 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
     __pyx_t_3 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_2, __pyx_callargs+__pyx_t_6, (3-__pyx_t_6) | (__pyx_t_6*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
     __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 168, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 171, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
   }
   __pyx_v_rating = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "multi_ai/hardware.pyx":169
+  /* "multi_ai/hardware.pyx":172
  *         }
  *     rating = _rate(need, vram)
  *     if rating == RATING_YES:             # <<<<<<<<<<<<<<
  *         reason = f"Needs about {_gb(need)} of your {_gb(vram)} VRAM  comfortable fit."
  *     elif rating == RATING_MAYBE:
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_RATING_YES); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 169, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_RATING_YES); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 172, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = PyObject_RichCompare(__pyx_v_rating, __pyx_t_3, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 169, __pyx_L1_error)
+  __pyx_t_2 = PyObject_RichCompare(__pyx_v_rating, __pyx_t_3, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 172, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_5 < 0))) __PYX_ERR(0, 169, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_5 < 0))) __PYX_ERR(0, 172, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_5) {
 
-    /* "multi_ai/hardware.pyx":170
+    /* "multi_ai/hardware.pyx":173
  *     rating = _rate(need, vram)
  *     if rating == RATING_YES:
  *         reason = f"Needs about {_gb(need)} of your {_gb(vram)} VRAM  comfortable fit."             # <<<<<<<<<<<<<<
  *     elif rating == RATING_MAYBE:
  *         reason = (
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 170, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_need); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 170, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_need); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_FormatSimple(__pyx_t_3, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 170, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_FormatSimple(__pyx_t_3, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 170, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_vram); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 170, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_vram); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_1, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 170, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_1, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_8[0] = __pyx_mstate_global->__pyx_kp_u_Needs_about;
@@ -4954,14 +4954,14 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
     __pyx_t_8[3] = __pyx_t_3;
     __pyx_t_8[4] = __pyx_mstate_global->__pyx_kp_u_VRAM_comfortable_fit;
     __pyx_t_1 = __Pyx_PyUnicode_Join(__pyx_t_8, 5, 12 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2) + 9 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_3) + 24, 65535 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_3));
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 170, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_v_reason = ((PyObject*)__pyx_t_1);
     __pyx_t_1 = 0;
 
-    /* "multi_ai/hardware.pyx":169
+    /* "multi_ai/hardware.pyx":172
  *         }
  *     rating = _rate(need, vram)
  *     if rating == RATING_YES:             # <<<<<<<<<<<<<<
@@ -4971,42 +4971,42 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
     goto __pyx_L4;
   }
 
-  /* "multi_ai/hardware.pyx":171
+  /* "multi_ai/hardware.pyx":174
  *     if rating == RATING_YES:
  *         reason = f"Needs about {_gb(need)} of your {_gb(vram)} VRAM  comfortable fit."
  *     elif rating == RATING_MAYBE:             # <<<<<<<<<<<<<<
  *         reason = (
  *             f"Needs about {_gb(need)} of your {_gb(vram)} VRAM  it fits, but with "
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_RATING_MAYBE); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 171, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_RATING_MAYBE); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 174, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyObject_RichCompare(__pyx_v_rating, __pyx_t_1, Py_EQ); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 171, __pyx_L1_error)
+  __pyx_t_3 = PyObject_RichCompare(__pyx_v_rating, __pyx_t_1, Py_EQ); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 174, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_5 < 0))) __PYX_ERR(0, 171, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_5 < 0))) __PYX_ERR(0, 174, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (__pyx_t_5) {
 
-    /* "multi_ai/hardware.pyx":173
+    /* "multi_ai/hardware.pyx":176
  *     elif rating == RATING_MAYBE:
  *         reason = (
  *             f"Needs about {_gb(need)} of your {_gb(vram)} VRAM  it fits, but with "             # <<<<<<<<<<<<<<
  *             "little room for long conversations."
  *         )
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 173, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 176, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_need); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 173, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_need); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 176, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_1, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 173, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_1, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 176, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 173, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 176, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_vram); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 173, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_vram); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 176, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_FormatSimple(__pyx_t_2, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 173, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_FormatSimple(__pyx_t_2, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 176, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_8[0] = __pyx_mstate_global->__pyx_kp_u_Needs_about;
@@ -5015,14 +5015,14 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
     __pyx_t_8[3] = __pyx_t_1;
     __pyx_t_8[4] = __pyx_mstate_global->__pyx_kp_u_VRAM_it_fits_but_with_little_ro;
     __pyx_t_2 = __Pyx_PyUnicode_Join(__pyx_t_8, 5, 12 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_3) + 9 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_1) + 61, 65535 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_3) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_1));
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 173, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 176, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_v_reason = ((PyObject*)__pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "multi_ai/hardware.pyx":171
+    /* "multi_ai/hardware.pyx":174
  *     if rating == RATING_YES:
  *         reason = f"Needs about {_gb(need)} of your {_gb(vram)} VRAM  comfortable fit."
  *     elif rating == RATING_MAYBE:             # <<<<<<<<<<<<<<
@@ -5032,7 +5032,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
     goto __pyx_L4;
   }
 
-  /* "multi_ai/hardware.pyx":177
+  /* "multi_ai/hardware.pyx":180
  *         )
  *     else:
  *         reason = f"Needs about {_gb(need)} of VRAM, more than this GPU's {_gb(vram)}."             # <<<<<<<<<<<<<<
@@ -5040,20 +5040,20 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
  * 
 */
   /*else*/ {
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 177, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_need); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 177, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_need); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_FormatSimple(__pyx_t_1, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 177, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_FormatSimple(__pyx_t_1, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 177, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_vram); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 177, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_vram); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_FormatSimple(__pyx_t_3, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 177, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_FormatSimple(__pyx_t_3, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_t_8[0] = __pyx_mstate_global->__pyx_kp_u_Needs_about;
@@ -5062,7 +5062,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
     __pyx_t_8[3] = __pyx_t_1;
     __pyx_t_8[4] = __pyx_mstate_global->__pyx_kp_u_;
     __pyx_t_3 = __Pyx_PyUnicode_Join(__pyx_t_8, 5, 12 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2) + 31 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_1) + 1, 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_1));
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 177, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -5071,7 +5071,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
   }
   __pyx_L4:;
 
-  /* "multi_ai/hardware.pyx":178
+  /* "multi_ai/hardware.pyx":181
  *     else:
  *         reason = f"Needs about {_gb(need)} of VRAM, more than this GPU's {_gb(vram)}."
  *     return {"rating": rating, "needs_gb": round(need, 1), "reason": reason}             # <<<<<<<<<<<<<<
@@ -5079,26 +5079,26 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
  * 
 */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 178, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_rating, __pyx_v_rating) < (0)) __PYX_ERR(0, 178, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_rating, __pyx_v_rating) < (0)) __PYX_ERR(0, 181, __pyx_L1_error)
   __pyx_t_2 = NULL;
   __pyx_t_6 = 1;
   {
     PyObject *__pyx_callargs[3] = {__pyx_t_2, __pyx_v_need, __pyx_mstate_global->__pyx_int_1};
     __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_round, __pyx_callargs+__pyx_t_6, (3-__pyx_t_6) | (__pyx_t_6*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 178, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 181, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   }
-  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_1) < (0)) __PYX_ERR(0, 178, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_1) < (0)) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_reason, __pyx_v_reason) < (0)) __PYX_ERR(0, 178, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_reason, __pyx_v_reason) < (0)) __PYX_ERR(0, 181, __pyx_L1_error)
   __pyx_r = ((PyObject*)__pyx_t_3);
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "multi_ai/hardware.pyx":158
+  /* "multi_ai/hardware.pyx":161
  * 
  * 
  * def _rate_server_model(size_gb: float, specs: dict) -> dict:             # <<<<<<<<<<<<<<
@@ -5123,7 +5123,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_10_rate_server_model(CYTHON_UNUSED
   return __pyx_r;
 }
 
-/* "multi_ai/hardware.pyx":181
+/* "multi_ai/hardware.pyx":184
  * 
  * 
  * def _rate_on_device_model(size_gb: float, specs: dict) -> dict:             # <<<<<<<<<<<<<<
@@ -5172,39 +5172,39 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_size_gb,&__pyx_mstate_global->__pyx_n_u_specs,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 181, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 184, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 181, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 184, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 181, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 184, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_rate_on_device_model", 0) < (0)) __PYX_ERR(0, 181, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "_rate_on_device_model", 0) < (0)) __PYX_ERR(0, 184, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 2; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_rate_on_device_model", 1, 2, 2, i); __PYX_ERR(0, 181, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("_rate_on_device_model", 1, 2, 2, i); __PYX_ERR(0, 184, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 181, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 184, __pyx_L3_error)
       values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 181, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 184, __pyx_L3_error)
     }
-    __pyx_v_size_gb = __Pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_size_gb == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 181, __pyx_L3_error)
+    __pyx_v_size_gb = __Pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_size_gb == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 184, __pyx_L3_error)
     __pyx_v_specs = ((PyObject*)values[1]);
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_rate_on_device_model", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 181, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_rate_on_device_model", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 184, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -5215,7 +5215,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_specs), (&PyDict_Type), 0, "specs", 2))) __PYX_ERR(0, 181, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_specs), (&PyDict_Type), 0, "specs", 2))) __PYX_ERR(0, 184, __pyx_L1_error)
   __pyx_r = __pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(__pyx_self, __pyx_v_size_gb, __pyx_v_specs);
 
   /* function exit code */
@@ -5258,83 +5258,83 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("_rate_on_device_model", 0);
 
-  /* "multi_ai/hardware.pyx":192
+  /* "multi_ai/hardware.pyx":195
  *                                    _CPU_FALLBACK_LIMIT_GB      -> not recommended
  *     """
  *     need = size_gb * _GGUF_OVERHEAD + _GGUF_WORKSPACE_GB             # <<<<<<<<<<<<<<
  *     vram = specs.get("vram_gb")
  *     ram = specs.get("ram_gb")
 */
-  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_size_gb); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 192, __pyx_L1_error)
+  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_size_gb); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_GGUF_OVERHEAD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 192, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_GGUF_OVERHEAD); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyNumber_Multiply(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 192, __pyx_L1_error)
+  __pyx_t_3 = PyNumber_Multiply(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_GGUF_WORKSPACE_GB); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 192, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_GGUF_WORKSPACE_GB); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = PyNumber_Add(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 192, __pyx_L1_error)
+  __pyx_t_1 = PyNumber_Add(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_need = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "multi_ai/hardware.pyx":193
+  /* "multi_ai/hardware.pyx":196
  *     """
  *     need = size_gb * _GGUF_OVERHEAD + _GGUF_WORKSPACE_GB
  *     vram = specs.get("vram_gb")             # <<<<<<<<<<<<<<
  *     ram = specs.get("ram_gb")
  * 
 */
-  __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_specs, __pyx_mstate_global->__pyx_n_u_vram_gb, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 193, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_specs, __pyx_mstate_global->__pyx_n_u_vram_gb, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 196, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_vram = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "multi_ai/hardware.pyx":194
+  /* "multi_ai/hardware.pyx":197
  *     need = size_gb * _GGUF_OVERHEAD + _GGUF_WORKSPACE_GB
  *     vram = specs.get("vram_gb")
  *     ram = specs.get("ram_gb")             # <<<<<<<<<<<<<<
  * 
  *     if vram:
 */
-  __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_specs, __pyx_mstate_global->__pyx_n_u_ram_gb, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 194, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_GetItemDefault(__pyx_v_specs, __pyx_mstate_global->__pyx_n_u_ram_gb, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 197, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_ram = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "multi_ai/hardware.pyx":196
+  /* "multi_ai/hardware.pyx":199
  *     ram = specs.get("ram_gb")
  * 
  *     if vram:             # <<<<<<<<<<<<<<
  *         if need <= vram * _COMFORT:
  *             return {
 */
-  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_v_vram); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 196, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_v_vram); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 199, __pyx_L1_error)
   if (__pyx_t_4) {
 
-    /* "multi_ai/hardware.pyx":197
+    /* "multi_ai/hardware.pyx":200
  * 
  *     if vram:
  *         if need <= vram * _COMFORT:             # <<<<<<<<<<<<<<
  *             return {
  *                 "rating": RATING_YES,
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_COMFORT); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 197, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_COMFORT); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 200, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = PyNumber_Multiply(__pyx_v_vram, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 197, __pyx_L1_error)
+    __pyx_t_2 = PyNumber_Multiply(__pyx_v_vram, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 200, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = PyObject_RichCompare(__pyx_v_need, __pyx_t_2, Py_LE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 197, __pyx_L1_error)
+    __pyx_t_1 = PyObject_RichCompare(__pyx_v_need, __pyx_t_2, Py_LE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 200, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 197, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 200, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     if (__pyx_t_4) {
 
-      /* "multi_ai/hardware.pyx":198
+      /* "multi_ai/hardware.pyx":201
  *     if vram:
  *         if need <= vram * _COMFORT:
  *             return {             # <<<<<<<<<<<<<<
@@ -5343,21 +5343,21 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
 */
       __Pyx_XDECREF(__pyx_r);
 
-      /* "multi_ai/hardware.pyx":199
+      /* "multi_ai/hardware.pyx":202
  *         if need <= vram * _COMFORT:
  *             return {
  *                 "rating": RATING_YES,             # <<<<<<<<<<<<<<
  *                 "needs_gb": round(need, 1),
  *                 "reason": f"About {_gb(need)}  fits in your {_gb(vram)} VRAM, so it runs fully GPU-accelerated.",
 */
-      __pyx_t_1 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 199, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 202, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_RATING_YES); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 199, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_RATING_YES); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 202, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_2) < (0)) __PYX_ERR(0, 199, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_2) < (0)) __PYX_ERR(0, 202, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-      /* "multi_ai/hardware.pyx":200
+      /* "multi_ai/hardware.pyx":203
  *             return {
  *                 "rating": RATING_YES,
  *                 "needs_gb": round(need, 1),             # <<<<<<<<<<<<<<
@@ -5370,33 +5370,33 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
         PyObject *__pyx_callargs[3] = {__pyx_t_3, __pyx_v_need, __pyx_mstate_global->__pyx_int_1};
         __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_round, __pyx_callargs+__pyx_t_5, (3-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
         __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-        if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 200, __pyx_L1_error)
+        if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 203, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
       }
-      if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_2) < (0)) __PYX_ERR(0, 199, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_2) < (0)) __PYX_ERR(0, 202, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-      /* "multi_ai/hardware.pyx":201
+      /* "multi_ai/hardware.pyx":204
  *                 "rating": RATING_YES,
  *                 "needs_gb": round(need, 1),
  *                 "reason": f"About {_gb(need)}  fits in your {_gb(vram)} VRAM, so it runs fully GPU-accelerated.",             # <<<<<<<<<<<<<<
  *             }
  *         if need <= vram:
 */
-      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 201, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 204, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_need); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 201, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_need); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 204, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_2 = __Pyx_PyObject_FormatSimple(__pyx_t_3, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 201, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_FormatSimple(__pyx_t_3, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 204, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 201, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 204, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_vram); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 201, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_vram); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 204, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_6, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 201, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_6, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 204, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __pyx_t_7[0] = __pyx_mstate_global->__pyx_kp_u_About;
@@ -5405,17 +5405,17 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
       __pyx_t_7[3] = __pyx_t_3;
       __pyx_t_7[4] = __pyx_mstate_global->__pyx_kp_u_VRAM_so_it_runs_fully_GPU_accel;
       __pyx_t_6 = __Pyx_PyUnicode_Join(__pyx_t_7, 5, 6 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2) + 16 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_3) + 40, 65535 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_3));
-      if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 201, __pyx_L1_error)
+      if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 204, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_6) < (0)) __PYX_ERR(0, 199, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_6) < (0)) __PYX_ERR(0, 202, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __pyx_r = ((PyObject*)__pyx_t_1);
       __pyx_t_1 = 0;
       goto __pyx_L0;
 
-      /* "multi_ai/hardware.pyx":197
+      /* "multi_ai/hardware.pyx":200
  * 
  *     if vram:
  *         if need <= vram * _COMFORT:             # <<<<<<<<<<<<<<
@@ -5424,19 +5424,19 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
 */
     }
 
-    /* "multi_ai/hardware.pyx":203
+    /* "multi_ai/hardware.pyx":206
  *                 "reason": f"About {_gb(need)}  fits in your {_gb(vram)} VRAM, so it runs fully GPU-accelerated.",
  *             }
  *         if need <= vram:             # <<<<<<<<<<<<<<
  *             return {
  *                 "rating": RATING_MAYBE,
 */
-    __pyx_t_1 = PyObject_RichCompare(__pyx_v_need, __pyx_v_vram, Py_LE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 203, __pyx_L1_error)
-    __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 203, __pyx_L1_error)
+    __pyx_t_1 = PyObject_RichCompare(__pyx_v_need, __pyx_v_vram, Py_LE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 206, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 206, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     if (__pyx_t_4) {
 
-      /* "multi_ai/hardware.pyx":204
+      /* "multi_ai/hardware.pyx":207
  *             }
  *         if need <= vram:
  *             return {             # <<<<<<<<<<<<<<
@@ -5445,21 +5445,21 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
 */
       __Pyx_XDECREF(__pyx_r);
 
-      /* "multi_ai/hardware.pyx":205
+      /* "multi_ai/hardware.pyx":208
  *         if need <= vram:
  *             return {
  *                 "rating": RATING_MAYBE,             # <<<<<<<<<<<<<<
  *                 "needs_gb": round(need, 1),
  *                 "reason": (
 */
-      __pyx_t_1 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 205, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 208, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_RATING_MAYBE); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 205, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_RATING_MAYBE); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 208, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
-      if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_6) < (0)) __PYX_ERR(0, 205, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_6) < (0)) __PYX_ERR(0, 208, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-      /* "multi_ai/hardware.pyx":206
+      /* "multi_ai/hardware.pyx":209
  *             return {
  *                 "rating": RATING_MAYBE,
  *                 "needs_gb": round(need, 1),             # <<<<<<<<<<<<<<
@@ -5472,33 +5472,33 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
         PyObject *__pyx_callargs[3] = {__pyx_t_3, __pyx_v_need, __pyx_mstate_global->__pyx_int_1};
         __pyx_t_6 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_round, __pyx_callargs+__pyx_t_5, (3-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
         __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-        if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 206, __pyx_L1_error)
+        if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 209, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
       }
-      if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_6) < (0)) __PYX_ERR(0, 205, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_6) < (0)) __PYX_ERR(0, 208, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-      /* "multi_ai/hardware.pyx":208
+      /* "multi_ai/hardware.pyx":211
  *                 "needs_gb": round(need, 1),
  *                 "reason": (
  *                     f"About {_gb(need)} against {_gb(vram)} VRAM  llama.cpp will keep most of "             # <<<<<<<<<<<<<<
  *                     "it on the GPU but drop some layers to the CPU. Usable, not fast."
  *                 ),
 */
-      __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 208, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 211, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_need); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 208, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_need); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 211, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __pyx_t_6 = __Pyx_PyObject_FormatSimple(__pyx_t_3, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 208, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyObject_FormatSimple(__pyx_t_3, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 211, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 208, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 211, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_vram); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 208, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_vram); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 211, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_2, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 208, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_2, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 211, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __pyx_t_7[0] = __pyx_mstate_global->__pyx_kp_u_About;
@@ -5507,17 +5507,17 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
       __pyx_t_7[3] = __pyx_t_3;
       __pyx_t_7[4] = __pyx_mstate_global->__pyx_kp_u_VRAM_llama_cpp_will_keep_most_o;
       __pyx_t_2 = __Pyx_PyUnicode_Join(__pyx_t_7, 5, 6 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6) + 9 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_3) + 100, 65535 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_6) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_3));
-      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 208, __pyx_L1_error)
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 211, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_2) < (0)) __PYX_ERR(0, 205, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_2) < (0)) __PYX_ERR(0, 208, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __pyx_r = ((PyObject*)__pyx_t_1);
       __pyx_t_1 = 0;
       goto __pyx_L0;
 
-      /* "multi_ai/hardware.pyx":203
+      /* "multi_ai/hardware.pyx":206
  *                 "reason": f"About {_gb(need)}  fits in your {_gb(vram)} VRAM, so it runs fully GPU-accelerated.",
  *             }
  *         if need <= vram:             # <<<<<<<<<<<<<<
@@ -5526,7 +5526,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
 */
     }
 
-    /* "multi_ai/hardware.pyx":196
+    /* "multi_ai/hardware.pyx":199
  *     ram = specs.get("ram_gb")
  * 
  *     if vram:             # <<<<<<<<<<<<<<
@@ -5535,18 +5535,18 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
 */
   }
 
-  /* "multi_ai/hardware.pyx":213
+  /* "multi_ai/hardware.pyx":216
  *             }
  * 
  *     if not ram:             # <<<<<<<<<<<<<<
  *         return {
  *             "rating": RATING_UNKNOWN,
 */
-  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_v_ram); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 213, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_v_ram); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 216, __pyx_L1_error)
   __pyx_t_8 = (!__pyx_t_4);
   if (__pyx_t_8) {
 
-    /* "multi_ai/hardware.pyx":214
+    /* "multi_ai/hardware.pyx":217
  * 
  *     if not ram:
  *         return {             # <<<<<<<<<<<<<<
@@ -5555,21 +5555,21 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
 */
     __Pyx_XDECREF(__pyx_r);
 
-    /* "multi_ai/hardware.pyx":215
+    /* "multi_ai/hardware.pyx":218
  *     if not ram:
  *         return {
  *             "rating": RATING_UNKNOWN,             # <<<<<<<<<<<<<<
  *             "needs_gb": round(need, 1),
  *             "reason": f"Needs about {_gb(need)}; couldn't read this machine's memory.",
 */
-    __pyx_t_1 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 215, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 218, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_RATING_UNKNOWN); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 215, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_RATING_UNKNOWN); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 218, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_2) < (0)) __PYX_ERR(0, 215, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_2) < (0)) __PYX_ERR(0, 218, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "multi_ai/hardware.pyx":216
+    /* "multi_ai/hardware.pyx":219
  *         return {
  *             "rating": RATING_UNKNOWN,
  *             "needs_gb": round(need, 1),             # <<<<<<<<<<<<<<
@@ -5582,41 +5582,41 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
       PyObject *__pyx_callargs[3] = {__pyx_t_3, __pyx_v_need, __pyx_mstate_global->__pyx_int_1};
       __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_round, __pyx_callargs+__pyx_t_5, (3-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 216, __pyx_L1_error)
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 219, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
     }
-    if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_2) < (0)) __PYX_ERR(0, 215, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_2) < (0)) __PYX_ERR(0, 218, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "multi_ai/hardware.pyx":217
+    /* "multi_ai/hardware.pyx":220
  *             "rating": RATING_UNKNOWN,
  *             "needs_gb": round(need, 1),
  *             "reason": f"Needs about {_gb(need)}; couldn't read this machine's memory.",             # <<<<<<<<<<<<<<
  *         }
  * 
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 217, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 220, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_need); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 217, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_need); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 220, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_FormatSimple(__pyx_t_3, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 217, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_FormatSimple(__pyx_t_3, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 220, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_t_9[0] = __pyx_mstate_global->__pyx_kp_u_Needs_about;
     __pyx_t_9[1] = __pyx_t_2;
     __pyx_t_9[2] = __pyx_mstate_global->__pyx_kp_u_couldn_t_read_this_machine_s_me;
     __pyx_t_3 = __Pyx_PyUnicode_Join(__pyx_t_9, 3, 12 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2) + 38, 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2));
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 217, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 220, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_3) < (0)) __PYX_ERR(0, 215, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_3) < (0)) __PYX_ERR(0, 218, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_r = ((PyObject*)__pyx_t_1);
     __pyx_t_1 = 0;
     goto __pyx_L0;
 
-    /* "multi_ai/hardware.pyx":213
+    /* "multi_ai/hardware.pyx":216
  *             }
  * 
  *     if not ram:             # <<<<<<<<<<<<<<
@@ -5625,34 +5625,34 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
 */
   }
 
-  /* "multi_ai/hardware.pyx":220
+  /* "multi_ai/hardware.pyx":223
  *         }
  * 
  *     usable = ram * _RAM_USABLE             # <<<<<<<<<<<<<<
  *     if need > usable:
  *         return {
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_RAM_USABLE); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 220, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_RAM_USABLE); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 223, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyNumber_Multiply(__pyx_v_ram, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 220, __pyx_L1_error)
+  __pyx_t_3 = PyNumber_Multiply(__pyx_v_ram, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 223, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_usable = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "multi_ai/hardware.pyx":221
+  /* "multi_ai/hardware.pyx":224
  * 
  *     usable = ram * _RAM_USABLE
  *     if need > usable:             # <<<<<<<<<<<<<<
  *         return {
  *             "rating": RATING_NO,
 */
-  __pyx_t_3 = PyObject_RichCompare(__pyx_v_need, __pyx_v_usable, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 221, __pyx_L1_error)
-  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_8 < 0))) __PYX_ERR(0, 221, __pyx_L1_error)
+  __pyx_t_3 = PyObject_RichCompare(__pyx_v_need, __pyx_v_usable, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 224, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_8 < 0))) __PYX_ERR(0, 224, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (__pyx_t_8) {
 
-    /* "multi_ai/hardware.pyx":222
+    /* "multi_ai/hardware.pyx":225
  *     usable = ram * _RAM_USABLE
  *     if need > usable:
  *         return {             # <<<<<<<<<<<<<<
@@ -5661,21 +5661,21 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
 */
     __Pyx_XDECREF(__pyx_r);
 
-    /* "multi_ai/hardware.pyx":223
+    /* "multi_ai/hardware.pyx":226
  *     if need > usable:
  *         return {
  *             "rating": RATING_NO,             # <<<<<<<<<<<<<<
  *             "needs_gb": round(need, 1),
  *             "reason": f"Needs about {_gb(need)}, more than the ~{_gb(usable)} free of your {_gb(ram)} RAM.",
 */
-    __pyx_t_3 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 223, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 226, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_RATING_NO); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 223, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_RATING_NO); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 226, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_1) < (0)) __PYX_ERR(0, 223, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_1) < (0)) __PYX_ERR(0, 226, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "multi_ai/hardware.pyx":224
+    /* "multi_ai/hardware.pyx":227
  *         return {
  *             "rating": RATING_NO,
  *             "needs_gb": round(need, 1),             # <<<<<<<<<<<<<<
@@ -5688,41 +5688,41 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
       PyObject *__pyx_callargs[3] = {__pyx_t_2, __pyx_v_need, __pyx_mstate_global->__pyx_int_1};
       __pyx_t_1 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_round, __pyx_callargs+__pyx_t_5, (3-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 224, __pyx_L1_error)
+      if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 227, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
     }
-    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_1) < (0)) __PYX_ERR(0, 223, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_1) < (0)) __PYX_ERR(0, 226, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "multi_ai/hardware.pyx":225
+    /* "multi_ai/hardware.pyx":228
  *             "rating": RATING_NO,
  *             "needs_gb": round(need, 1),
  *             "reason": f"Needs about {_gb(need)}, more than the ~{_gb(usable)} free of your {_gb(ram)} RAM.",             # <<<<<<<<<<<<<<
  *         }
  *     if need >= _CPU_FALLBACK_LIMIT_GB:
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 225, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 228, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_need); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 225, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_need); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 228, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_FormatSimple(__pyx_t_2, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 225, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_FormatSimple(__pyx_t_2, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 228, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 225, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 228, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_usable); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 225, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_usable); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 228, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_FormatSimple(__pyx_t_6, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 225, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_FormatSimple(__pyx_t_6, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 228, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 225, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 228, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_10 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_ram); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 225, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_ram); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 228, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = __Pyx_PyObject_FormatSimple(__pyx_t_10, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 225, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_FormatSimple(__pyx_t_10, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 228, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
     __pyx_t_11[0] = __pyx_mstate_global->__pyx_kp_u_Needs_about;
@@ -5733,18 +5733,18 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
     __pyx_t_11[5] = __pyx_t_6;
     __pyx_t_11[6] = __pyx_mstate_global->__pyx_kp_u_RAM;
     __pyx_t_10 = __Pyx_PyUnicode_Join(__pyx_t_11, 7, 12 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_1) + 17 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2) + 14 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6) + 5, 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_1) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_6));
-    if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 225, __pyx_L1_error)
+    if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 228, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_10) < (0)) __PYX_ERR(0, 223, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_10) < (0)) __PYX_ERR(0, 226, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
     __pyx_r = ((PyObject*)__pyx_t_3);
     __pyx_t_3 = 0;
     goto __pyx_L0;
 
-    /* "multi_ai/hardware.pyx":221
+    /* "multi_ai/hardware.pyx":224
  * 
  *     usable = ram * _RAM_USABLE
  *     if need > usable:             # <<<<<<<<<<<<<<
@@ -5753,22 +5753,22 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
 */
   }
 
-  /* "multi_ai/hardware.pyx":227
+  /* "multi_ai/hardware.pyx":230
  *             "reason": f"Needs about {_gb(need)}, more than the ~{_gb(usable)} free of your {_gb(ram)} RAM.",
  *         }
  *     if need >= _CPU_FALLBACK_LIMIT_GB:             # <<<<<<<<<<<<<<
  *         return {
  *             "rating": RATING_NO,
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_CPU_FALLBACK_LIMIT_GB); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 227, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_CPU_FALLBACK_LIMIT_GB); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 230, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_10 = PyObject_RichCompare(__pyx_v_need, __pyx_t_3, Py_GE); __Pyx_XGOTREF(__pyx_t_10); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 227, __pyx_L1_error)
+  __pyx_t_10 = PyObject_RichCompare(__pyx_v_need, __pyx_t_3, Py_GE); __Pyx_XGOTREF(__pyx_t_10); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 230, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_t_10); if (unlikely((__pyx_t_8 < 0))) __PYX_ERR(0, 227, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_t_10); if (unlikely((__pyx_t_8 < 0))) __PYX_ERR(0, 230, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   if (__pyx_t_8) {
 
-    /* "multi_ai/hardware.pyx":228
+    /* "multi_ai/hardware.pyx":231
  *         }
  *     if need >= _CPU_FALLBACK_LIMIT_GB:
  *         return {             # <<<<<<<<<<<<<<
@@ -5777,21 +5777,21 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
 */
     __Pyx_XDECREF(__pyx_r);
 
-    /* "multi_ai/hardware.pyx":229
+    /* "multi_ai/hardware.pyx":232
  *     if need >= _CPU_FALLBACK_LIMIT_GB:
  *         return {
  *             "rating": RATING_NO,             # <<<<<<<<<<<<<<
  *             "needs_gb": round(need, 1),
  *             "reason": (
 */
-    __pyx_t_10 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 229, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 232, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_RATING_NO); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 229, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_RATING_NO); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 232, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (PyDict_SetItem(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_3) < (0)) __PYX_ERR(0, 229, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_3) < (0)) __PYX_ERR(0, 232, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "multi_ai/hardware.pyx":230
+    /* "multi_ai/hardware.pyx":233
  *         return {
  *             "rating": RATING_NO,
  *             "needs_gb": round(need, 1),             # <<<<<<<<<<<<<<
@@ -5804,40 +5804,40 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
       PyObject *__pyx_callargs[3] = {__pyx_t_6, __pyx_v_need, __pyx_mstate_global->__pyx_int_1};
       __pyx_t_3 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_round, __pyx_callargs+__pyx_t_5, (3-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 230, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 233, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
     }
-    if (PyDict_SetItem(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_3) < (0)) __PYX_ERR(0, 229, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_3) < (0)) __PYX_ERR(0, 232, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "multi_ai/hardware.pyx":232
+    /* "multi_ai/hardware.pyx":235
  *             "needs_gb": round(need, 1),
  *             "reason": (
  *                 f"About {_gb(need)}  far too big for this machine's "             # <<<<<<<<<<<<<<
  *                 f"{_gb(vram) if vram else 'available'} VRAM, so most of it runs on the CPU. "
  *                 "It technically works, at roughly a word every few seconds."
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 232, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 235, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_need); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 232, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_need); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 235, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_6, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 232, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_FormatSimple(__pyx_t_6, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 235, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "multi_ai/hardware.pyx":233
+    /* "multi_ai/hardware.pyx":236
  *             "reason": (
  *                 f"About {_gb(need)}  far too big for this machine's "
  *                 f"{_gb(vram) if vram else 'available'} VRAM, so most of it runs on the CPU. "             # <<<<<<<<<<<<<<
  *                 "It technically works, at roughly a word every few seconds."
  *             ),
 */
-    __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_vram); if (unlikely((__pyx_t_8 < 0))) __PYX_ERR(0, 233, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_vram); if (unlikely((__pyx_t_8 < 0))) __PYX_ERR(0, 236, __pyx_L1_error)
     if (__pyx_t_8) {
-      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 233, __pyx_L1_error)
+      __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 236, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_vram); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 233, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_vram); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 236, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __pyx_t_6 = __pyx_t_1;
@@ -5846,7 +5846,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
       __Pyx_INCREF(__pyx_mstate_global->__pyx_n_u_available);
       __pyx_t_6 = __pyx_mstate_global->__pyx_n_u_available;
     }
-    __pyx_t_1 = __Pyx_PyObject_FormatSimple(__pyx_t_6, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 233, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_FormatSimple(__pyx_t_6, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 236, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __pyx_t_7[0] = __pyx_mstate_global->__pyx_kp_u_About;
@@ -5855,7 +5855,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
     __pyx_t_7[3] = __pyx_t_1;
     __pyx_t_7[4] = __pyx_mstate_global->__pyx_kp_u_VRAM_so_most_of_it_runs_on_the;
 
-    /* "multi_ai/hardware.pyx":232
+    /* "multi_ai/hardware.pyx":235
  *             "needs_gb": round(need, 1),
  *             "reason": (
  *                 f"About {_gb(need)}  far too big for this machine's "             # <<<<<<<<<<<<<<
@@ -5863,17 +5863,17 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
  *                 "It technically works, at roughly a word every few seconds."
 */
     __pyx_t_6 = __Pyx_PyUnicode_Join(__pyx_t_7, 5, 6 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_3) + 34 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_1) + 96, 65535 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_3) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_1));
-    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 232, __pyx_L1_error)
+    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 235, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (PyDict_SetItem(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_6) < (0)) __PYX_ERR(0, 229, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_6) < (0)) __PYX_ERR(0, 232, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __pyx_r = ((PyObject*)__pyx_t_10);
     __pyx_t_10 = 0;
     goto __pyx_L0;
 
-    /* "multi_ai/hardware.pyx":227
+    /* "multi_ai/hardware.pyx":230
  *             "reason": f"Needs about {_gb(need)}, more than the ~{_gb(usable)} free of your {_gb(ram)} RAM.",
  *         }
  *     if need >= _CPU_FALLBACK_LIMIT_GB:             # <<<<<<<<<<<<<<
@@ -5882,7 +5882,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
 */
   }
 
-  /* "multi_ai/hardware.pyx":237
+  /* "multi_ai/hardware.pyx":240
  *             ),
  *         }
  *     return {             # <<<<<<<<<<<<<<
@@ -5891,21 +5891,21 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
 */
   __Pyx_XDECREF(__pyx_r);
 
-  /* "multi_ai/hardware.pyx":238
+  /* "multi_ai/hardware.pyx":241
  *         }
  *     return {
  *         "rating": RATING_MAYBE,             # <<<<<<<<<<<<<<
  *         "needs_gb": round(need, 1),
  *         "reason": (
 */
-  __pyx_t_10 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 238, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 241, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_RATING_MAYBE); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 238, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_RATING_MAYBE); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 241, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  if (PyDict_SetItem(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_6) < (0)) __PYX_ERR(0, 238, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_6) < (0)) __PYX_ERR(0, 241, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "multi_ai/hardware.pyx":239
+  /* "multi_ai/hardware.pyx":242
  *     return {
  *         "rating": RATING_MAYBE,
  *         "needs_gb": round(need, 1),             # <<<<<<<<<<<<<<
@@ -5918,41 +5918,41 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
     PyObject *__pyx_callargs[3] = {__pyx_t_1, __pyx_v_need, __pyx_mstate_global->__pyx_int_1};
     __pyx_t_6 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_round, __pyx_callargs+__pyx_t_5, (3-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
     __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 242, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
   }
-  if (PyDict_SetItem(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_6) < (0)) __PYX_ERR(0, 238, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_t_6) < (0)) __PYX_ERR(0, 241, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "multi_ai/hardware.pyx":241
+  /* "multi_ai/hardware.pyx":244
  *         "needs_gb": round(need, 1),
  *         "reason": (
  *             f"About {_gb(need)}  too big for VRAM, so llama.cpp runs much of it on the CPU "             # <<<<<<<<<<<<<<
  *             f"using your {_gb(ram)} RAM. Expect slow replies."
  *         ),
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 244, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_need); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_need); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 244, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyObject_FormatSimple(__pyx_t_1, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_FormatSimple(__pyx_t_1, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 244, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "multi_ai/hardware.pyx":242
+  /* "multi_ai/hardware.pyx":245
  *         "reason": (
  *             f"About {_gb(need)}  too big for VRAM, so llama.cpp runs much of it on the CPU "
  *             f"using your {_gb(ram)} RAM. Expect slow replies."             # <<<<<<<<<<<<<<
  *         ),
  *     }
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 242, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_ram); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 242, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_ram); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_FormatSimple(__pyx_t_3, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 242, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_FormatSimple(__pyx_t_3, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_7[0] = __pyx_mstate_global->__pyx_kp_u_About;
@@ -5961,7 +5961,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
   __pyx_t_7[3] = __pyx_t_1;
   __pyx_t_7[4] = __pyx_mstate_global->__pyx_kp_u_RAM_Expect_slow_replies;
 
-  /* "multi_ai/hardware.pyx":241
+  /* "multi_ai/hardware.pyx":244
  *         "needs_gb": round(need, 1),
  *         "reason": (
  *             f"About {_gb(need)}  too big for VRAM, so llama.cpp runs much of it on the CPU "             # <<<<<<<<<<<<<<
@@ -5969,17 +5969,17 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
  *         ),
 */
   __pyx_t_3 = __Pyx_PyUnicode_Join(__pyx_t_7, 5, 6 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6) + 72 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_1) + 26, 65535 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_6) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_1));
-  if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 241, __pyx_L1_error)
+  if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 244, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_3) < (0)) __PYX_ERR(0, 238, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_3) < (0)) __PYX_ERR(0, 241, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_r = ((PyObject*)__pyx_t_10);
   __pyx_t_10 = 0;
   goto __pyx_L0;
 
-  /* "multi_ai/hardware.pyx":181
+  /* "multi_ai/hardware.pyx":184
  * 
  * 
  * def _rate_on_device_model(size_gb: float, specs: dict) -> dict:             # <<<<<<<<<<<<<<
@@ -6006,7 +6006,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_12_rate_on_device_model(CYTHON_UNU
   return __pyx_r;
 }
 
-/* "multi_ai/hardware.pyx":247
+/* "multi_ai/hardware.pyx":250
  * 
  * 
  * def rate_model(size_gb: float | None, runs_on_device: bool, specs: dict | None = None) -> dict | None:             # <<<<<<<<<<<<<<
@@ -6056,54 +6056,54 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_size_gb,&__pyx_mstate_global->__pyx_n_u_runs_on_device,&__pyx_mstate_global->__pyx_n_u_specs,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 247, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 250, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  3:
         values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 247, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 250, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 247, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 250, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 247, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 250, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "rate_model", 0) < (0)) __PYX_ERR(0, 247, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "rate_model", 0) < (0)) __PYX_ERR(0, 250, __pyx_L3_error)
       if (!values[2]) values[2] = __Pyx_NewRef(((PyObject*)Py_None));
       for (Py_ssize_t i = __pyx_nargs; i < 2; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("rate_model", 0, 2, 3, i); __PYX_ERR(0, 247, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("rate_model", 0, 2, 3, i); __PYX_ERR(0, 250, __pyx_L3_error) }
       }
     } else {
       switch (__pyx_nargs) {
         case  3:
         values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 247, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 250, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 247, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 250, __pyx_L3_error)
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 247, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 250, __pyx_L3_error)
         break;
         default: goto __pyx_L5_argtuple_error;
       }
       if (!values[2]) values[2] = __Pyx_NewRef(((PyObject*)Py_None));
     }
-    if (__Pyx_PyFloat_FromNumber(&values[0], "size_gb", 1) < (0)) __PYX_ERR(0, 247, __pyx_L3_error)
+    if (__Pyx_PyFloat_FromNumber(&values[0], "size_gb", 1) < (0)) __PYX_ERR(0, 250, __pyx_L3_error)
     __pyx_v_size_gb = ((PyObject*)values[0]);
-    __pyx_v_runs_on_device = __Pyx_PyObject_IsTrue(values[1]); if (unlikely((__pyx_v_runs_on_device == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 247, __pyx_L3_error)
+    __pyx_v_runs_on_device = __Pyx_PyObject_IsTrue(values[1]); if (unlikely((__pyx_v_runs_on_device == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 250, __pyx_L3_error)
     __pyx_v_specs = ((PyObject*)values[2]);
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("rate_model", 0, 2, 3, __pyx_nargs); __PYX_ERR(0, 247, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("rate_model", 0, 2, 3, __pyx_nargs); __PYX_ERR(0, 250, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -6114,8 +6114,8 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_size_gb), (&PyFloat_Type), 1, "size_gb", 2))) __PYX_ERR(0, 247, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_specs), (&PyDict_Type), 1, "specs", 2))) __PYX_ERR(0, 247, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_size_gb), (&PyFloat_Type), 1, "size_gb", 2))) __PYX_ERR(0, 250, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_specs), (&PyDict_Type), 1, "specs", 2))) __PYX_ERR(0, 250, __pyx_L1_error)
   __pyx_r = __pyx_pf_8multi_ai_8hardware_14rate_model(__pyx_self, __pyx_v_size_gb, __pyx_v_runs_on_device, __pyx_v_specs);
 
   /* function exit code */
@@ -6151,18 +6151,18 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_14rate_model(CYTHON_UNUSED PyObjec
   __Pyx_RefNannySetupContext("rate_model", 0);
   __Pyx_INCREF(__pyx_v_specs);
 
-  /* "multi_ai/hardware.pyx":253
+  /* "multi_ai/hardware.pyx":256
  *     RATING_* constants above.
  *     """
  *     if not size_gb:             # <<<<<<<<<<<<<<
  *         return None
  *     specs = specs if specs is not None else detect_specs()
 */
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_size_gb); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_size_gb); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 256, __pyx_L1_error)
   __pyx_t_2 = (!__pyx_t_1);
   if (__pyx_t_2) {
 
-    /* "multi_ai/hardware.pyx":254
+    /* "multi_ai/hardware.pyx":257
  *     """
  *     if not size_gb:
  *         return None             # <<<<<<<<<<<<<<
@@ -6173,7 +6173,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_14rate_model(CYTHON_UNUSED PyObjec
     __pyx_r = ((PyObject*)Py_None); __Pyx_INCREF(Py_None);
     goto __pyx_L0;
 
-    /* "multi_ai/hardware.pyx":253
+    /* "multi_ai/hardware.pyx":256
  *     RATING_* constants above.
  *     """
  *     if not size_gb:             # <<<<<<<<<<<<<<
@@ -6182,7 +6182,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_14rate_model(CYTHON_UNUSED PyObjec
 */
   }
 
-  /* "multi_ai/hardware.pyx":255
+  /* "multi_ai/hardware.pyx":258
  *     if not size_gb:
  *         return None
  *     specs = specs if specs is not None else detect_specs()             # <<<<<<<<<<<<<<
@@ -6195,7 +6195,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_14rate_model(CYTHON_UNUSED PyObjec
     __pyx_t_3 = __pyx_v_specs;
   } else {
     __pyx_t_5 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_detect_specs); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 255, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_detect_specs); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 258, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_t_7 = 1;
     #if CYTHON_UNPACK_METHODS
@@ -6214,17 +6214,17 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_14rate_model(CYTHON_UNUSED PyObjec
       __pyx_t_4 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_6, __pyx_callargs+__pyx_t_7, (1-__pyx_t_7) | (__pyx_t_7*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 255, __pyx_L1_error)
+      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 258, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
     }
-    if (!(likely(PyDict_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_4))) __PYX_ERR(0, 255, __pyx_L1_error)
+    if (!(likely(PyDict_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_4))) __PYX_ERR(0, 258, __pyx_L1_error)
     __pyx_t_3 = __pyx_t_4;
     __pyx_t_4 = 0;
   }
   __Pyx_DECREF_SET(__pyx_v_specs, ((PyObject*)__pyx_t_3));
   __pyx_t_3 = 0;
 
-  /* "multi_ai/hardware.pyx":256
+  /* "multi_ai/hardware.pyx":259
  *         return None
  *     specs = specs if specs is not None else detect_specs()
  *     if runs_on_device:             # <<<<<<<<<<<<<<
@@ -6233,7 +6233,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_14rate_model(CYTHON_UNUSED PyObjec
 */
   if (__pyx_v_runs_on_device) {
 
-    /* "multi_ai/hardware.pyx":257
+    /* "multi_ai/hardware.pyx":260
  *     specs = specs if specs is not None else detect_specs()
  *     if runs_on_device:
  *         return _rate_on_device_model(size_gb, specs)             # <<<<<<<<<<<<<<
@@ -6242,7 +6242,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_14rate_model(CYTHON_UNUSED PyObjec
 */
     __Pyx_XDECREF(__pyx_r);
     __pyx_t_4 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_rate_on_device_model); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 257, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_rate_on_device_model); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 260, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_t_7 = 1;
     #if CYTHON_UNPACK_METHODS
@@ -6261,15 +6261,15 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_14rate_model(CYTHON_UNUSED PyObjec
       __pyx_t_3 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_6, __pyx_callargs+__pyx_t_7, (3-__pyx_t_7) | (__pyx_t_7*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 257, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 260, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
     }
-    if (!(likely(PyDict_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_3))) __PYX_ERR(0, 257, __pyx_L1_error)
+    if (!(likely(PyDict_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_3))) __PYX_ERR(0, 260, __pyx_L1_error)
     __pyx_r = ((PyObject*)__pyx_t_3);
     __pyx_t_3 = 0;
     goto __pyx_L0;
 
-    /* "multi_ai/hardware.pyx":256
+    /* "multi_ai/hardware.pyx":259
  *         return None
  *     specs = specs if specs is not None else detect_specs()
  *     if runs_on_device:             # <<<<<<<<<<<<<<
@@ -6278,7 +6278,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_14rate_model(CYTHON_UNUSED PyObjec
 */
   }
 
-  /* "multi_ai/hardware.pyx":258
+  /* "multi_ai/hardware.pyx":261
  *     if runs_on_device:
  *         return _rate_on_device_model(size_gb, specs)
  *     return _rate_server_model(size_gb, specs)             # <<<<<<<<<<<<<<
@@ -6287,7 +6287,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_14rate_model(CYTHON_UNUSED PyObjec
 */
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_6 = NULL;
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_rate_server_model); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 258, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_rate_server_model); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 261, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_7 = 1;
   #if CYTHON_UNPACK_METHODS
@@ -6306,15 +6306,15 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_14rate_model(CYTHON_UNUSED PyObjec
     __pyx_t_3 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_4, __pyx_callargs+__pyx_t_7, (3-__pyx_t_7) | (__pyx_t_7*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 258, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 261, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
   }
-  if (!(likely(PyDict_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_3))) __PYX_ERR(0, 258, __pyx_L1_error)
+  if (!(likely(PyDict_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_3))) __PYX_ERR(0, 261, __pyx_L1_error)
   __pyx_r = ((PyObject*)__pyx_t_3);
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "multi_ai/hardware.pyx":247
+  /* "multi_ai/hardware.pyx":250
  * 
  * 
  * def rate_model(size_gb: float | None, runs_on_device: bool, specs: dict | None = None) -> dict | None:             # <<<<<<<<<<<<<<
@@ -6337,7 +6337,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_14rate_model(CYTHON_UNUSED PyObjec
   return __pyx_r;
 }
 
-/* "multi_ai/hardware.pyx":261
+/* "multi_ai/hardware.pyx":264
  * 
  * 
  * def rate_external_model(             # <<<<<<<<<<<<<<
@@ -6353,7 +6353,7 @@ PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_8multi_ai_8hardware_16rate_external_model, "Rate a BYO _EXTERNAL_ENDPOINT model (e.g. Colibri): this server proxies\n    to a process the user runs themselves, so neither VRAM nor the\n    downloaded/quantized-size math the other two raters use applies. Rate\n    off local RAM against the engine's own stated minimums instead, and\n    always surface the disk requirement in the reason \342\200\224 for these models\n    that one-time download, not runtime fit, is the real commitment.\n\n    None when min_ram_gb is unannotated (mirrors rate_model's contract).\n    ");
+PyDoc_STRVAR(__pyx_doc_8multi_ai_8hardware_16rate_external_model, "Rate an _EXTERNAL_ENDPOINT model (e.g. Colibri): this server proxies to\n    a separate engine process rather than loading weights itself, so neither\n    VRAM nor the downloaded/quantized-size math the other two raters use\n    applies. Rate off local RAM against the engine's own stated minimums\n    instead, and always surface the disk requirement in the reason \342\200\224 for\n    these models that one-time download, not runtime fit, is the real\n    commitment.\n\n    None when min_ram_gb is unannotated (mirrors rate_model's contract).\n    ");
 static PyMethodDef __pyx_mdef_8multi_ai_8hardware_17rate_external_model = {"rate_external_model", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8multi_ai_8hardware_17rate_external_model, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_8multi_ai_8hardware_16rate_external_model};
 static PyObject *__pyx_pw_8multi_ai_8hardware_17rate_external_model(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
@@ -6388,71 +6388,71 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_min_ram_gb,&__pyx_mstate_global->__pyx_n_u_recommended_ram_gb,&__pyx_mstate_global->__pyx_n_u_disk_gb,&__pyx_mstate_global->__pyx_n_u_specs,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 261, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len < 0)) __PYX_ERR(0, 264, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  4:
         values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 261, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 264, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  3:
         values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 261, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 264, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 261, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 264, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 261, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 264, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "rate_external_model", 0) < (0)) __PYX_ERR(0, 261, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "rate_external_model", 0) < (0)) __PYX_ERR(0, 264, __pyx_L3_error)
 
-      /* "multi_ai/hardware.pyx":265
+      /* "multi_ai/hardware.pyx":268
  *     recommended_ram_gb: float | None,
  *     disk_gb: float | None,
  *     specs: dict | None = None,             # <<<<<<<<<<<<<<
  * ) -> dict | None:
- *     """Rate a BYO _EXTERNAL_ENDPOINT model (e.g. Colibri): this server proxies
+ *     """Rate an _EXTERNAL_ENDPOINT model (e.g. Colibri): this server proxies to
 */
       if (!values[3]) values[3] = __Pyx_NewRef(((PyObject*)Py_None));
       for (Py_ssize_t i = __pyx_nargs; i < 3; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("rate_external_model", 0, 3, 4, i); __PYX_ERR(0, 261, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("rate_external_model", 0, 3, 4, i); __PYX_ERR(0, 264, __pyx_L3_error) }
       }
     } else {
       switch (__pyx_nargs) {
         case  4:
         values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 261, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 264, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  3:
         values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 261, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 264, __pyx_L3_error)
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 261, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 264, __pyx_L3_error)
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 261, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 264, __pyx_L3_error)
         break;
         default: goto __pyx_L5_argtuple_error;
       }
       if (!values[3]) values[3] = __Pyx_NewRef(((PyObject*)Py_None));
     }
-    if (__Pyx_PyFloat_FromNumber(&values[0], "min_ram_gb", 1) < (0)) __PYX_ERR(0, 262, __pyx_L3_error)
+    if (__Pyx_PyFloat_FromNumber(&values[0], "min_ram_gb", 1) < (0)) __PYX_ERR(0, 265, __pyx_L3_error)
     __pyx_v_min_ram_gb = ((PyObject*)values[0]);
-    if (__Pyx_PyFloat_FromNumber(&values[1], "recommended_ram_gb", 1) < (0)) __PYX_ERR(0, 263, __pyx_L3_error)
+    if (__Pyx_PyFloat_FromNumber(&values[1], "recommended_ram_gb", 1) < (0)) __PYX_ERR(0, 266, __pyx_L3_error)
     __pyx_v_recommended_ram_gb = ((PyObject*)values[1]);
-    if (__Pyx_PyFloat_FromNumber(&values[2], "disk_gb", 1) < (0)) __PYX_ERR(0, 264, __pyx_L3_error)
+    if (__Pyx_PyFloat_FromNumber(&values[2], "disk_gb", 1) < (0)) __PYX_ERR(0, 267, __pyx_L3_error)
     __pyx_v_disk_gb = ((PyObject*)values[2]);
     __pyx_v_specs = ((PyObject*)values[3]);
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("rate_external_model", 0, 3, 4, __pyx_nargs); __PYX_ERR(0, 261, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("rate_external_model", 0, 3, 4, __pyx_nargs); __PYX_ERR(0, 264, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -6463,13 +6463,13 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_min_ram_gb), (&PyFloat_Type), 1, "min_ram_gb", 2))) __PYX_ERR(0, 262, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_recommended_ram_gb), (&PyFloat_Type), 1, "recommended_ram_gb", 2))) __PYX_ERR(0, 263, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_disk_gb), (&PyFloat_Type), 1, "disk_gb", 2))) __PYX_ERR(0, 264, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_specs), (&PyDict_Type), 1, "specs", 2))) __PYX_ERR(0, 265, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_min_ram_gb), (&PyFloat_Type), 1, "min_ram_gb", 2))) __PYX_ERR(0, 265, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_recommended_ram_gb), (&PyFloat_Type), 1, "recommended_ram_gb", 2))) __PYX_ERR(0, 266, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_disk_gb), (&PyFloat_Type), 1, "disk_gb", 2))) __PYX_ERR(0, 267, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_specs), (&PyDict_Type), 1, "specs", 2))) __PYX_ERR(0, 268, __pyx_L1_error)
   __pyx_r = __pyx_pf_8multi_ai_8hardware_16rate_external_model(__pyx_self, __pyx_v_min_ram_gb, __pyx_v_recommended_ram_gb, __pyx_v_disk_gb, __pyx_v_specs);
 
-  /* "multi_ai/hardware.pyx":261
+  /* "multi_ai/hardware.pyx":264
  * 
  * 
  * def rate_external_model(             # <<<<<<<<<<<<<<
@@ -6519,18 +6519,18 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
   __Pyx_RefNannySetupContext("rate_external_model", 0);
   __Pyx_INCREF(__pyx_v_specs);
 
-  /* "multi_ai/hardware.pyx":276
+  /* "multi_ai/hardware.pyx":280
  *     None when min_ram_gb is unannotated (mirrors rate_model's contract).
  *     """
  *     if not min_ram_gb:             # <<<<<<<<<<<<<<
  *         return None
  *     specs = specs if specs is not None else detect_specs()
 */
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_min_ram_gb); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 276, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_min_ram_gb); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 280, __pyx_L1_error)
   __pyx_t_2 = (!__pyx_t_1);
   if (__pyx_t_2) {
 
-    /* "multi_ai/hardware.pyx":277
+    /* "multi_ai/hardware.pyx":281
  *     """
  *     if not min_ram_gb:
  *         return None             # <<<<<<<<<<<<<<
@@ -6541,7 +6541,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
     __pyx_r = ((PyObject*)Py_None); __Pyx_INCREF(Py_None);
     goto __pyx_L0;
 
-    /* "multi_ai/hardware.pyx":276
+    /* "multi_ai/hardware.pyx":280
  *     None when min_ram_gb is unannotated (mirrors rate_model's contract).
  *     """
  *     if not min_ram_gb:             # <<<<<<<<<<<<<<
@@ -6550,7 +6550,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
 */
   }
 
-  /* "multi_ai/hardware.pyx":278
+  /* "multi_ai/hardware.pyx":282
  *     if not min_ram_gb:
  *         return None
  *     specs = specs if specs is not None else detect_specs()             # <<<<<<<<<<<<<<
@@ -6563,7 +6563,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
     __pyx_t_3 = __pyx_v_specs;
   } else {
     __pyx_t_5 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_detect_specs); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 278, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_detect_specs); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 282, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_t_7 = 1;
     #if CYTHON_UNPACK_METHODS
@@ -6582,17 +6582,17 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
       __pyx_t_4 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_6, __pyx_callargs+__pyx_t_7, (1-__pyx_t_7) | (__pyx_t_7*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 278, __pyx_L1_error)
+      if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 282, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
     }
-    if (!(likely(PyDict_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_4))) __PYX_ERR(0, 278, __pyx_L1_error)
+    if (!(likely(PyDict_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None) || __Pyx_RaiseUnexpectedTypeError("dict", __pyx_t_4))) __PYX_ERR(0, 282, __pyx_L1_error)
     __pyx_t_3 = __pyx_t_4;
     __pyx_t_4 = 0;
   }
   __Pyx_DECREF_SET(__pyx_v_specs, ((PyObject*)__pyx_t_3));
   __pyx_t_3 = 0;
 
-  /* "multi_ai/hardware.pyx":279
+  /* "multi_ai/hardware.pyx":283
  *         return None
  *     specs = specs if specs is not None else detect_specs()
  *     ram = specs.get("ram_gb")             # <<<<<<<<<<<<<<
@@ -6601,21 +6601,21 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
 */
   if (unlikely(__pyx_v_specs == Py_None)) {
     PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "get");
-    __PYX_ERR(0, 279, __pyx_L1_error)
+    __PYX_ERR(0, 283, __pyx_L1_error)
   }
-  __pyx_t_3 = __Pyx_PyDict_GetItemDefault(__pyx_v_specs, __pyx_mstate_global->__pyx_n_u_ram_gb, Py_None); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 279, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_GetItemDefault(__pyx_v_specs, __pyx_mstate_global->__pyx_n_u_ram_gb, Py_None); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 283, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_v_ram = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "multi_ai/hardware.pyx":280
+  /* "multi_ai/hardware.pyx":284
  *     specs = specs if specs is not None else detect_specs()
  *     ram = specs.get("ram_gb")
  *     recommended = recommended_ram_gb or min_ram_gb             # <<<<<<<<<<<<<<
  *     disk_note = (
- *         f" Needs ~{disk_gb:.0f}GB of local disk for the weights (BYO  not downloaded by this app)."
+ *         f" Needs ~{disk_gb:.0f}GB of local disk for the weights (downloaded and cached "
 */
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_recommended_ram_gb); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 280, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_recommended_ram_gb); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 284, __pyx_L1_error)
   if (!__pyx_t_2) {
   } else {
     __Pyx_INCREF(__pyx_v_recommended_ram_gb);
@@ -6628,30 +6628,30 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
   __pyx_v_recommended = ((PyObject*)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "multi_ai/hardware.pyx":283
- *     disk_note = (
- *         f" Needs ~{disk_gb:.0f}GB of local disk for the weights (BYO  not downloaded by this app)."
+  /* "multi_ai/hardware.pyx":288
+ *         f" Needs ~{disk_gb:.0f}GB of local disk for the weights (downloaded and cached "
+ *         "the same way as this app's other server-managed models)."
  *         if disk_gb             # <<<<<<<<<<<<<<
  *         else ""
  *     )
 */
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_disk_gb); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 283, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_disk_gb); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 288, __pyx_L1_error)
   if (__pyx_t_2) {
 
-    /* "multi_ai/hardware.pyx":282
+    /* "multi_ai/hardware.pyx":286
  *     recommended = recommended_ram_gb or min_ram_gb
  *     disk_note = (
- *         f" Needs ~{disk_gb:.0f}GB of local disk for the weights (BYO  not downloaded by this app)."             # <<<<<<<<<<<<<<
+ *         f" Needs ~{disk_gb:.0f}GB of local disk for the weights (downloaded and cached "             # <<<<<<<<<<<<<<
+ *         "the same way as this app's other server-managed models)."
  *         if disk_gb
- *         else ""
 */
-    __pyx_t_4 = __Pyx_PyObject_Format(__pyx_v_disk_gb, __pyx_mstate_global->__pyx_kp_u_0f); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_Format(__pyx_v_disk_gb, __pyx_mstate_global->__pyx_kp_u_0f); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 286, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_8[0] = __pyx_mstate_global->__pyx_kp_u_Needs;
     __pyx_t_8[1] = __pyx_t_4;
     __pyx_t_8[2] = __pyx_mstate_global->__pyx_kp_u_GB_of_local_disk_for_the_weights;
-    __pyx_t_6 = __Pyx_PyUnicode_Join(__pyx_t_8, 3, 8 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_4) + 68, 65535 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_4));
-    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyUnicode_Join(__pyx_t_8, 3, 8 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_4) + 112, 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_4));
+    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 286, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __pyx_t_3 = __pyx_t_6;
@@ -6663,18 +6663,18 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
   __pyx_v_disk_note = ((PyObject*)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "multi_ai/hardware.pyx":286
+  /* "multi_ai/hardware.pyx":291
  *         else ""
  *     )
  *     if not ram:             # <<<<<<<<<<<<<<
  *         return {
  *             "rating": RATING_UNKNOWN,
 */
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_ram); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 286, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_ram); if (unlikely((__pyx_t_2 < 0))) __PYX_ERR(0, 291, __pyx_L1_error)
   __pyx_t_1 = (!__pyx_t_2);
   if (__pyx_t_1) {
 
-    /* "multi_ai/hardware.pyx":287
+    /* "multi_ai/hardware.pyx":292
  *     )
  *     if not ram:
  *         return {             # <<<<<<<<<<<<<<
@@ -6683,49 +6683,49 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
 */
     __Pyx_XDECREF(__pyx_r);
 
-    /* "multi_ai/hardware.pyx":288
+    /* "multi_ai/hardware.pyx":293
  *     if not ram:
  *         return {
  *             "rating": RATING_UNKNOWN,             # <<<<<<<<<<<<<<
  *             "needs_gb": min_ram_gb,
  *             "reason": (
 */
-    __pyx_t_3 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 288, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 293, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_RATING_UNKNOWN); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 288, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_RATING_UNKNOWN); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 293, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_6) < (0)) __PYX_ERR(0, 288, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_rating, __pyx_t_6) < (0)) __PYX_ERR(0, 293, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "multi_ai/hardware.pyx":289
+    /* "multi_ai/hardware.pyx":294
  *         return {
  *             "rating": RATING_UNKNOWN,
  *             "needs_gb": min_ram_gb,             # <<<<<<<<<<<<<<
  *             "reason": (
  *                 f"Needs {min_ram_gb:.0f}GB+ RAM via Colibri ({recommended:.0f}GB+ comfortable); "
 */
-    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_v_min_ram_gb) < (0)) __PYX_ERR(0, 288, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_v_min_ram_gb) < (0)) __PYX_ERR(0, 293, __pyx_L1_error)
 
-    /* "multi_ai/hardware.pyx":291
+    /* "multi_ai/hardware.pyx":296
  *             "needs_gb": min_ram_gb,
  *             "reason": (
  *                 f"Needs {min_ram_gb:.0f}GB+ RAM via Colibri ({recommended:.0f}GB+ comfortable); "             # <<<<<<<<<<<<<<
  *                 f"couldn't read this machine's memory.{disk_note}"
  *             ),
 */
-    __pyx_t_6 = __Pyx_PyObject_Format(__pyx_v_min_ram_gb, __pyx_mstate_global->__pyx_kp_u_0f); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 291, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_Format(__pyx_v_min_ram_gb, __pyx_mstate_global->__pyx_kp_u_0f); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 296, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_4 = __Pyx_PyObject_Format(__pyx_v_recommended, __pyx_mstate_global->__pyx_kp_u_0f); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 291, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_Format(__pyx_v_recommended, __pyx_mstate_global->__pyx_kp_u_0f); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 296, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
 
-    /* "multi_ai/hardware.pyx":292
+    /* "multi_ai/hardware.pyx":297
  *             "reason": (
  *                 f"Needs {min_ram_gb:.0f}GB+ RAM via Colibri ({recommended:.0f}GB+ comfortable); "
  *                 f"couldn't read this machine's memory.{disk_note}"             # <<<<<<<<<<<<<<
  *             ),
  *         }
 */
-    __pyx_t_5 = __Pyx_PyUnicode_Unicode(__pyx_v_disk_note); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 292, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyUnicode_Unicode(__pyx_v_disk_note); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 297, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __pyx_t_9[0] = __pyx_mstate_global->__pyx_kp_u_Needs_2;
     __pyx_t_9[1] = __pyx_t_6;
@@ -6734,7 +6734,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
     __pyx_t_9[4] = __pyx_mstate_global->__pyx_kp_u_GB_comfortable_couldn_t_read_thi;
     __pyx_t_9[5] = __pyx_t_5;
 
-    /* "multi_ai/hardware.pyx":291
+    /* "multi_ai/hardware.pyx":296
  *             "needs_gb": min_ram_gb,
  *             "reason": (
  *                 f"Needs {min_ram_gb:.0f}GB+ RAM via Colibri ({recommended:.0f}GB+ comfortable); "             # <<<<<<<<<<<<<<
@@ -6742,18 +6742,18 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
  *             ),
 */
     __pyx_t_10 = __Pyx_PyUnicode_Join(__pyx_t_9, 6, 6 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6) + 21 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_4) + 54 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_5), 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_6) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_4) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_5));
-    if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 291, __pyx_L1_error)
+    if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 296, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_10) < (0)) __PYX_ERR(0, 288, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_10) < (0)) __PYX_ERR(0, 293, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
     __pyx_r = ((PyObject*)__pyx_t_3);
     __pyx_t_3 = 0;
     goto __pyx_L0;
 
-    /* "multi_ai/hardware.pyx":286
+    /* "multi_ai/hardware.pyx":291
  *         else ""
  *     )
  *     if not ram:             # <<<<<<<<<<<<<<
@@ -6762,31 +6762,31 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
 */
   }
 
-  /* "multi_ai/hardware.pyx":295
+  /* "multi_ai/hardware.pyx":300
  *             ),
  *         }
  *     if ram >= recommended:             # <<<<<<<<<<<<<<
  *         rating = RATING_YES
  *     elif ram >= min_ram_gb:
 */
-  __pyx_t_3 = PyObject_RichCompare(__pyx_v_ram, __pyx_v_recommended, Py_GE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 295, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 295, __pyx_L1_error)
+  __pyx_t_3 = PyObject_RichCompare(__pyx_v_ram, __pyx_v_recommended, Py_GE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 300, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 300, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (__pyx_t_1) {
 
-    /* "multi_ai/hardware.pyx":296
+    /* "multi_ai/hardware.pyx":301
  *         }
  *     if ram >= recommended:
  *         rating = RATING_YES             # <<<<<<<<<<<<<<
  *     elif ram >= min_ram_gb:
  *         rating = RATING_MAYBE
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_RATING_YES); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 296, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_RATING_YES); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 301, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_v_rating = __pyx_t_3;
     __pyx_t_3 = 0;
 
-    /* "multi_ai/hardware.pyx":295
+    /* "multi_ai/hardware.pyx":300
  *             ),
  *         }
  *     if ram >= recommended:             # <<<<<<<<<<<<<<
@@ -6796,31 +6796,31 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
     goto __pyx_L7;
   }
 
-  /* "multi_ai/hardware.pyx":297
+  /* "multi_ai/hardware.pyx":302
  *     if ram >= recommended:
  *         rating = RATING_YES
  *     elif ram >= min_ram_gb:             # <<<<<<<<<<<<<<
  *         rating = RATING_MAYBE
  *     else:
 */
-  __pyx_t_3 = PyObject_RichCompare(__pyx_v_ram, __pyx_v_min_ram_gb, Py_GE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 297, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 297, __pyx_L1_error)
+  __pyx_t_3 = PyObject_RichCompare(__pyx_v_ram, __pyx_v_min_ram_gb, Py_GE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 302, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 302, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (__pyx_t_1) {
 
-    /* "multi_ai/hardware.pyx":298
+    /* "multi_ai/hardware.pyx":303
  *         rating = RATING_YES
  *     elif ram >= min_ram_gb:
  *         rating = RATING_MAYBE             # <<<<<<<<<<<<<<
  *     else:
  *         rating = RATING_NO
 */
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_RATING_MAYBE); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 298, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_RATING_MAYBE); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 303, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_v_rating = __pyx_t_3;
     __pyx_t_3 = 0;
 
-    /* "multi_ai/hardware.pyx":297
+    /* "multi_ai/hardware.pyx":302
  *     if ram >= recommended:
  *         rating = RATING_YES
  *     elif ram >= min_ram_gb:             # <<<<<<<<<<<<<<
@@ -6830,7 +6830,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
     goto __pyx_L7;
   }
 
-  /* "multi_ai/hardware.pyx":300
+  /* "multi_ai/hardware.pyx":305
  *         rating = RATING_MAYBE
  *     else:
  *         rating = RATING_NO             # <<<<<<<<<<<<<<
@@ -6838,14 +6838,14 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
  *         "rating": rating,
 */
   /*else*/ {
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_RATING_NO); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 300, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_RATING_NO); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 305, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_v_rating = __pyx_t_3;
     __pyx_t_3 = 0;
   }
   __pyx_L7:;
 
-  /* "multi_ai/hardware.pyx":301
+  /* "multi_ai/hardware.pyx":306
  *     else:
  *         rating = RATING_NO
  *     return {             # <<<<<<<<<<<<<<
@@ -6854,54 +6854,54 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
 */
   __Pyx_XDECREF(__pyx_r);
 
-  /* "multi_ai/hardware.pyx":302
+  /* "multi_ai/hardware.pyx":307
  *         rating = RATING_NO
  *     return {
  *         "rating": rating,             # <<<<<<<<<<<<<<
  *         "needs_gb": min_ram_gb,
  *         "reason": (
 */
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 302, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 307, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_rating, __pyx_v_rating) < (0)) __PYX_ERR(0, 302, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_rating, __pyx_v_rating) < (0)) __PYX_ERR(0, 307, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":303
+  /* "multi_ai/hardware.pyx":308
  *     return {
  *         "rating": rating,
  *         "needs_gb": min_ram_gb,             # <<<<<<<<<<<<<<
  *         "reason": (
  *             f"Has {_gb(ram)} RAM; Colibri needs {min_ram_gb:.0f}GB min "
 */
-  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_v_min_ram_gb) < (0)) __PYX_ERR(0, 302, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_needs_gb, __pyx_v_min_ram_gb) < (0)) __PYX_ERR(0, 307, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":305
+  /* "multi_ai/hardware.pyx":310
  *         "needs_gb": min_ram_gb,
  *         "reason": (
  *             f"Has {_gb(ram)} RAM; Colibri needs {min_ram_gb:.0f}GB min "             # <<<<<<<<<<<<<<
  *             f"({recommended:.0f}GB+ comfortable).{disk_note}"
  *         ),
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 305, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_mstate_global->__pyx_n_u_gb); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 310, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_10, __pyx_v_ram); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 305, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_10, __pyx_v_ram); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 310, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  __pyx_t_10 = __Pyx_PyObject_FormatSimple(__pyx_t_5, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 305, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_FormatSimple(__pyx_t_5, __pyx_mstate_global->__pyx_empty_unicode); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 310, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_Format(__pyx_v_min_ram_gb, __pyx_mstate_global->__pyx_kp_u_0f); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 305, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Format(__pyx_v_min_ram_gb, __pyx_mstate_global->__pyx_kp_u_0f); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 310, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
 
-  /* "multi_ai/hardware.pyx":306
+  /* "multi_ai/hardware.pyx":311
  *         "reason": (
  *             f"Has {_gb(ram)} RAM; Colibri needs {min_ram_gb:.0f}GB min "
  *             f"({recommended:.0f}GB+ comfortable).{disk_note}"             # <<<<<<<<<<<<<<
  *         ),
  *     }
 */
-  __pyx_t_4 = __Pyx_PyObject_Format(__pyx_v_recommended, __pyx_mstate_global->__pyx_kp_u_0f); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 306, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Format(__pyx_v_recommended, __pyx_mstate_global->__pyx_kp_u_0f); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 311, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_6 = __Pyx_PyUnicode_Unicode(__pyx_v_disk_note); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 306, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyUnicode_Unicode(__pyx_v_disk_note); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 311, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __pyx_t_11[0] = __pyx_mstate_global->__pyx_kp_u_Has;
   __pyx_t_11[1] = __pyx_t_10;
@@ -6912,7 +6912,7 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
   __pyx_t_11[6] = __pyx_mstate_global->__pyx_kp_u_GB_comfortable;
   __pyx_t_11[7] = __pyx_t_6;
 
-  /* "multi_ai/hardware.pyx":305
+  /* "multi_ai/hardware.pyx":310
  *         "needs_gb": min_ram_gb,
  *         "reason": (
  *             f"Has {_gb(ram)} RAM; Colibri needs {min_ram_gb:.0f}GB min "             # <<<<<<<<<<<<<<
@@ -6920,19 +6920,19 @@ static PyObject *__pyx_pf_8multi_ai_8hardware_16rate_external_model(CYTHON_UNUSE
  *         ),
 */
   __pyx_t_12 = __Pyx_PyUnicode_Join(__pyx_t_11, 8, 4 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_10) + 20 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_5) + 8 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_4) + 17 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6), 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_10) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_5) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_4) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_6));
-  if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 305, __pyx_L1_error)
+  if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 310, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_12);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_12) < (0)) __PYX_ERR(0, 302, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_reason, __pyx_t_12) < (0)) __PYX_ERR(0, 307, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
   __pyx_r = ((PyObject*)__pyx_t_3);
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "multi_ai/hardware.pyx":261
+  /* "multi_ai/hardware.pyx":264
  * 
  * 
  * def rate_external_model(             # <<<<<<<<<<<<<<
@@ -7311,219 +7311,219 @@ __Pyx_RefNannySetupContext("PyInit_hardware", 0);
   (void)__Pyx_modinit_function_import_code(__pyx_mstate);
   /*--- Execution code ---*/
 
-  /* "multi_ai/hardware.pyx":31
+  /* "multi_ai/hardware.pyx":34
  * from __future__ import annotations
  * 
  * import ctypes             # <<<<<<<<<<<<<<
  * import os
  * import sys
 */
-  __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_ctypes, 0, 0, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 31, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_ctypes, 0, 0, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_ctypes, __pyx_t_2) < (0)) __PYX_ERR(0, 31, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_ctypes, __pyx_t_2) < (0)) __PYX_ERR(0, 34, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "multi_ai/hardware.pyx":32
+  /* "multi_ai/hardware.pyx":35
  * 
  * import ctypes
  * import os             # <<<<<<<<<<<<<<
  * import sys
  * 
 */
-  __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_os, 0, 0, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_os, 0, 0, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_os, __pyx_t_2) < (0)) __PYX_ERR(0, 32, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_os, __pyx_t_2) < (0)) __PYX_ERR(0, 35, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "multi_ai/hardware.pyx":33
+  /* "multi_ai/hardware.pyx":36
  * import ctypes
  * import os
  * import sys             # <<<<<<<<<<<<<<
  * 
  * # Ratings, worst to best. The app maps these to red/yellow/green.
 */
-  __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_sys, 0, 0, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 33, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_sys, 0, 0, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 36, __pyx_L1_error)
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_sys, __pyx_t_2) < (0)) __PYX_ERR(0, 33, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_sys, __pyx_t_2) < (0)) __PYX_ERR(0, 36, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "multi_ai/hardware.pyx":36
+  /* "multi_ai/hardware.pyx":39
  * 
  * # Ratings, worst to best. The app maps these to red/yellow/green.
  * RATING_NO = "not_recommended"             # <<<<<<<<<<<<<<
  * RATING_MAYBE = "possible"
  * RATING_YES = "optimal"
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_RATING_NO, __pyx_mstate_global->__pyx_n_u_not_recommended) < (0)) __PYX_ERR(0, 36, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_RATING_NO, __pyx_mstate_global->__pyx_n_u_not_recommended) < (0)) __PYX_ERR(0, 39, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":37
+  /* "multi_ai/hardware.pyx":40
  * # Ratings, worst to best. The app maps these to red/yellow/green.
  * RATING_NO = "not_recommended"
  * RATING_MAYBE = "possible"             # <<<<<<<<<<<<<<
  * RATING_YES = "optimal"
  * RATING_UNKNOWN = "unknown"
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_RATING_MAYBE, __pyx_mstate_global->__pyx_n_u_possible) < (0)) __PYX_ERR(0, 37, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_RATING_MAYBE, __pyx_mstate_global->__pyx_n_u_possible) < (0)) __PYX_ERR(0, 40, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":38
+  /* "multi_ai/hardware.pyx":41
  * RATING_NO = "not_recommended"
  * RATING_MAYBE = "possible"
  * RATING_YES = "optimal"             # <<<<<<<<<<<<<<
  * RATING_UNKNOWN = "unknown"
  * 
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_RATING_YES, __pyx_mstate_global->__pyx_n_u_optimal) < (0)) __PYX_ERR(0, 38, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_RATING_YES, __pyx_mstate_global->__pyx_n_u_optimal) < (0)) __PYX_ERR(0, 41, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":39
+  /* "multi_ai/hardware.pyx":42
  * RATING_MAYBE = "possible"
  * RATING_YES = "optimal"
  * RATING_UNKNOWN = "unknown"             # <<<<<<<<<<<<<<
  * 
  * # Headroom below which a model is "optimal" rather than merely "possible":
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_RATING_UNKNOWN, __pyx_mstate_global->__pyx_n_u_unknown) < (0)) __PYX_ERR(0, 39, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_RATING_UNKNOWN, __pyx_mstate_global->__pyx_n_u_unknown) < (0)) __PYX_ERR(0, 42, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":44
+  /* "multi_ai/hardware.pyx":47
  * # a model filling >70% of the budget leaves nothing for a long context window,
  * # and on the GPU nothing for the desktop compositor either.
  * _COMFORT = 0.7             # <<<<<<<<<<<<<<
  * 
  * # transformers loads _REPO_ID models in 4-bit (see server.pyx _load_model), so
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_COMFORT, __pyx_mstate_global->__pyx_float_0_7) < (0)) __PYX_ERR(0, 44, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_COMFORT, __pyx_mstate_global->__pyx_float_0_7) < (0)) __PYX_ERR(0, 47, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":48
+  /* "multi_ai/hardware.pyx":51
  * # transformers loads _REPO_ID models in 4-bit (see server.pyx _load_model), so
  * # the weights shrink ~4x off the fp16 checkpoint size that size_gb reports.
  * _FP16_TO_4BIT = 4.0             # <<<<<<<<<<<<<<
  * # 4-bit quantization isn't exactly 4x  scales/zero-points and the layers left
  * # in higher precision add back a few percent.
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FP16_TO_4BIT, __pyx_mstate_global->__pyx_float_4_0) < (0)) __PYX_ERR(0, 48, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_FP16_TO_4BIT, __pyx_mstate_global->__pyx_float_4_0) < (0)) __PYX_ERR(0, 51, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":51
+  /* "multi_ai/hardware.pyx":54
  * # 4-bit quantization isn't exactly 4x  scales/zero-points and the layers left
  * # in higher precision add back a few percent.
  * _QUANT_OVERHEAD = 1.15             # <<<<<<<<<<<<<<
  * # CUDA context, activations and KV cache, on top of the weights themselves.
  * _GPU_WORKSPACE_GB = 1.2
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_QUANT_OVERHEAD, __pyx_mstate_global->__pyx_float_1_15) < (0)) __PYX_ERR(0, 51, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_QUANT_OVERHEAD, __pyx_mstate_global->__pyx_float_1_15) < (0)) __PYX_ERR(0, 54, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":53
+  /* "multi_ai/hardware.pyx":56
  * _QUANT_OVERHEAD = 1.15
  * # CUDA context, activations and KV cache, on top of the weights themselves.
  * _GPU_WORKSPACE_GB = 1.2             # <<<<<<<<<<<<<<
  * 
  * # A GGUF file is already quantized, so it loads roughly at its download size.
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_GPU_WORKSPACE_GB, __pyx_mstate_global->__pyx_float_1_2) < (0)) __PYX_ERR(0, 53, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_GPU_WORKSPACE_GB, __pyx_mstate_global->__pyx_float_1_2) < (0)) __PYX_ERR(0, 56, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":56
+  /* "multi_ai/hardware.pyx":59
  * 
  * # A GGUF file is already quantized, so it loads roughly at its download size.
  * _GGUF_OVERHEAD = 1.1             # <<<<<<<<<<<<<<
  * # llama.cpp KV cache and compute buffers.
  * _GGUF_WORKSPACE_GB = 0.8
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_GGUF_OVERHEAD, __pyx_mstate_global->__pyx_float_1_1) < (0)) __PYX_ERR(0, 56, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_GGUF_OVERHEAD, __pyx_mstate_global->__pyx_float_1_1) < (0)) __PYX_ERR(0, 59, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":58
+  /* "multi_ai/hardware.pyx":61
  * _GGUF_OVERHEAD = 1.1
  * # llama.cpp KV cache and compute buffers.
  * _GGUF_WORKSPACE_GB = 0.8             # <<<<<<<<<<<<<<
  * 
  * # The OS, the app and everything else the user has open need RAM too, so only
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_GGUF_WORKSPACE_GB, __pyx_mstate_global->__pyx_float_0_8) < (0)) __PYX_ERR(0, 58, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_GGUF_WORKSPACE_GB, __pyx_mstate_global->__pyx_float_0_8) < (0)) __PYX_ERR(0, 61, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":62
+  /* "multi_ai/hardware.pyx":65
  * # The OS, the app and everything else the user has open need RAM too, so only
  * # part of total RAM is ever really available for CPU inference.
  * _RAM_USABLE = 0.7             # <<<<<<<<<<<<<<
  * 
  * # Above this, a model that spills out of VRAM onto the CPU stops being merely
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_RAM_USABLE, __pyx_mstate_global->__pyx_float_0_7) < (0)) __PYX_ERR(0, 62, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_RAM_USABLE, __pyx_mstate_global->__pyx_float_0_7) < (0)) __PYX_ERR(0, 65, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":70
+  /* "multi_ai/hardware.pyx":73
  * # falcon2_11b (6.85GB) full-offloaded at a usable 4.3 tok/s. "It runs" and
  * # "you'd wait three minutes for a sentence" deserve different colours.
  * _CPU_FALLBACK_LIMIT_GB = 10.0             # <<<<<<<<<<<<<<
  * 
  * _cached_specs: dict | None = None
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_CPU_FALLBACK_LIMIT_GB, __pyx_mstate_global->__pyx_float_10_0) < (0)) __PYX_ERR(0, 70, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_CPU_FALLBACK_LIMIT_GB, __pyx_mstate_global->__pyx_float_10_0) < (0)) __PYX_ERR(0, 73, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":72
+  /* "multi_ai/hardware.pyx":75
  * _CPU_FALLBACK_LIMIT_GB = 10.0
  * 
  * _cached_specs: dict | None = None             # <<<<<<<<<<<<<<
  * 
  * 
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_cached_specs, Py_None) < (0)) __PYX_ERR(0, 72, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_cached_specs, Py_None) < (0)) __PYX_ERR(0, 75, __pyx_L1_error)
 
-  /* "multi_ai/hardware.pyx":75
+  /* "multi_ai/hardware.pyx":78
  * 
  * 
  * def _total_ram_gb() -> float | None:             # <<<<<<<<<<<<<<
  *     """Total physical RAM, or None if this platform won't say."""
  *     if sys.platform == "win32":
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 75, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 78, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_kp_u_float_None) < (0)) __PYX_ERR(0, 75, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_1_total_ram_gb, 0, __pyx_mstate_global->__pyx_n_u_total_ram_gb, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 75, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_kp_u_float_None) < (0)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_1_total_ram_gb, 0, __pyx_mstate_global->__pyx_n_u_total_ram_gb, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 78, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_3);
   #endif
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_total_ram_gb, __pyx_t_3) < (0)) __PYX_ERR(0, 75, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_total_ram_gb, __pyx_t_3) < (0)) __PYX_ERR(0, 78, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "multi_ai/hardware.pyx":104
+  /* "multi_ai/hardware.pyx":107
  * 
  * 
  * def _gpu_specs() -> tuple:             # <<<<<<<<<<<<<<
  *     """(gpu_name, vram_gb) for the primary GPU, (None, None) without one.
  * 
 */
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 104, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 107, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_tuple) < (0)) __PYX_ERR(0, 104, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_3_gpu_specs, 0, __pyx_mstate_global->__pyx_n_u_gpu_specs, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 104, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_tuple) < (0)) __PYX_ERR(0, 107, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_3_gpu_specs, 0, __pyx_mstate_global->__pyx_n_u_gpu_specs, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_gpu_specs, __pyx_t_2) < (0)) __PYX_ERR(0, 104, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_gpu_specs, __pyx_t_2) < (0)) __PYX_ERR(0, 107, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "multi_ai/hardware.pyx":123
+  /* "multi_ai/hardware.pyx":126
  * 
  * 
  * def detect_specs(refresh: bool = False) -> dict:             # <<<<<<<<<<<<<<
  *     """Describe the machine this server is running on.
  * 
 */
-  __pyx_t_2 = __Pyx_PyBool_FromLong(((int)0)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 123, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyBool_FromLong(((int)0)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_Pack(1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 123, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_Pack(1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 123, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_refresh, __pyx_mstate_global->__pyx_n_u_bool) < (0)) __PYX_ERR(0, 123, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_dict) < (0)) __PYX_ERR(0, 123, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_5detect_specs, 0, __pyx_mstate_global->__pyx_n_u_detect_specs, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[2])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 123, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_refresh, __pyx_mstate_global->__pyx_n_u_bool) < (0)) __PYX_ERR(0, 126, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_dict) < (0)) __PYX_ERR(0, 126, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_5detect_specs, 0, __pyx_mstate_global->__pyx_n_u_detect_specs, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[2])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
@@ -7532,110 +7532,110 @@ __Pyx_RefNannySetupContext("PyInit_hardware", 0);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_detect_specs, __pyx_t_4) < (0)) __PYX_ERR(0, 123, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_detect_specs, __pyx_t_4) < (0)) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "multi_ai/hardware.pyx":144
+  /* "multi_ai/hardware.pyx":147
  * 
  * 
  * def _rate(need_gb: float, budget_gb: float | None) -> str:             # <<<<<<<<<<<<<<
  *     if not budget_gb:
  *         return RATING_UNKNOWN
 */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 144, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 147, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_need_gb, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 144, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_budget_gb, __pyx_mstate_global->__pyx_kp_u_float_None) < (0)) __PYX_ERR(0, 144, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_str) < (0)) __PYX_ERR(0, 144, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_7_rate, 0, __pyx_mstate_global->__pyx_n_u_rate, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[3])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 144, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_need_gb, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 147, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_budget_gb, __pyx_mstate_global->__pyx_kp_u_float_None) < (0)) __PYX_ERR(0, 147, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_str) < (0)) __PYX_ERR(0, 147, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_7_rate, 0, __pyx_mstate_global->__pyx_n_u_rate, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[3])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 147, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_4);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_rate, __pyx_t_2) < (0)) __PYX_ERR(0, 144, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_rate, __pyx_t_2) < (0)) __PYX_ERR(0, 147, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "multi_ai/hardware.pyx":154
+  /* "multi_ai/hardware.pyx":157
  * 
  * 
  * def _gb(value: float) -> str:             # <<<<<<<<<<<<<<
  *     return f"{value:.1f} GB"
  * 
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 154, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 157, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_value, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 154, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_str) < (0)) __PYX_ERR(0, 154, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_9_gb, 0, __pyx_mstate_global->__pyx_n_u_gb, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[4])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 154, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_value, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 157, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_str) < (0)) __PYX_ERR(0, 157, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_9_gb, 0, __pyx_mstate_global->__pyx_n_u_gb, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[4])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 157, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
   #endif
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_gb, __pyx_t_4) < (0)) __PYX_ERR(0, 154, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_gb, __pyx_t_4) < (0)) __PYX_ERR(0, 157, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "multi_ai/hardware.pyx":158
+  /* "multi_ai/hardware.pyx":161
  * 
  * 
  * def _rate_server_model(size_gb: float, specs: dict) -> dict:             # <<<<<<<<<<<<<<
  *     """A transformers/_REPO_ID model: 4-bit on the GPU, so VRAM decides."""
  *     need = size_gb / _FP16_TO_4BIT * _QUANT_OVERHEAD + _GPU_WORKSPACE_GB
 */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 158, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 161, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 158, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_specs, __pyx_mstate_global->__pyx_n_u_dict) < (0)) __PYX_ERR(0, 158, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_dict) < (0)) __PYX_ERR(0, 158, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_11_rate_server_model, 0, __pyx_mstate_global->__pyx_n_u_rate_server_model, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[5])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 158, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 161, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_specs, __pyx_mstate_global->__pyx_n_u_dict) < (0)) __PYX_ERR(0, 161, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_dict) < (0)) __PYX_ERR(0, 161, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_11_rate_server_model, 0, __pyx_mstate_global->__pyx_n_u_rate_server_model, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[5])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 161, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_4);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_rate_server_model, __pyx_t_2) < (0)) __PYX_ERR(0, 158, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_rate_server_model, __pyx_t_2) < (0)) __PYX_ERR(0, 161, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "multi_ai/hardware.pyx":181
+  /* "multi_ai/hardware.pyx":184
  * 
  * 
  * def _rate_on_device_model(size_gb: float, specs: dict) -> dict:             # <<<<<<<<<<<<<<
  *     """A GGUF model: llama.cpp puts what it can on the GPU, the rest on the CPU.
  * 
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 181, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 184, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 181, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_specs, __pyx_mstate_global->__pyx_n_u_dict) < (0)) __PYX_ERR(0, 181, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_dict) < (0)) __PYX_ERR(0, 181, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_13_rate_on_device_model, 0, __pyx_mstate_global->__pyx_n_u_rate_on_device_model, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[6])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 181, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 184, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_specs, __pyx_mstate_global->__pyx_n_u_dict) < (0)) __PYX_ERR(0, 184, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_dict) < (0)) __PYX_ERR(0, 184, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_13_rate_on_device_model, 0, __pyx_mstate_global->__pyx_n_u_rate_on_device_model, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[6])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 184, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
   #endif
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_rate_on_device_model, __pyx_t_4) < (0)) __PYX_ERR(0, 181, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_rate_on_device_model, __pyx_t_4) < (0)) __PYX_ERR(0, 184, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "multi_ai/hardware.pyx":247
+  /* "multi_ai/hardware.pyx":250
  * 
  * 
  * def rate_model(size_gb: float | None, runs_on_device: bool, specs: dict | None = None) -> dict | None:             # <<<<<<<<<<<<<<
  *     """Rate one model against this machine. None when size_gb is unannotated.
  * 
 */
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 247, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 250, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_kp_u_float_None) < (0)) __PYX_ERR(0, 247, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_runs_on_device, __pyx_mstate_global->__pyx_n_u_bool) < (0)) __PYX_ERR(0, 247, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_specs, __pyx_mstate_global->__pyx_kp_u_dict_None) < (0)) __PYX_ERR(0, 247, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_kp_u_dict_None) < (0)) __PYX_ERR(0, 247, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_15rate_model, 0, __pyx_mstate_global->__pyx_n_u_rate_model, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[7])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 247, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_kp_u_float_None) < (0)) __PYX_ERR(0, 250, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_runs_on_device, __pyx_mstate_global->__pyx_n_u_bool) < (0)) __PYX_ERR(0, 250, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_specs, __pyx_mstate_global->__pyx_kp_u_dict_None) < (0)) __PYX_ERR(0, 250, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_kp_u_dict_None) < (0)) __PYX_ERR(0, 250, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_15rate_model, 0, __pyx_mstate_global->__pyx_n_u_rate_model, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[7])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 250, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
@@ -7643,24 +7643,24 @@ __Pyx_RefNannySetupContext("PyInit_hardware", 0);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_2, __pyx_mstate_global->__pyx_tuple[1]);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_4);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_rate_model, __pyx_t_2) < (0)) __PYX_ERR(0, 247, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_rate_model, __pyx_t_2) < (0)) __PYX_ERR(0, 250, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "multi_ai/hardware.pyx":261
+  /* "multi_ai/hardware.pyx":264
  * 
  * 
  * def rate_external_model(             # <<<<<<<<<<<<<<
  *     min_ram_gb: float | None,
  *     recommended_ram_gb: float | None,
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 261, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 264, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_min_ram_gb, __pyx_mstate_global->__pyx_kp_u_float_None) < (0)) __PYX_ERR(0, 261, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_recommended_ram_gb, __pyx_mstate_global->__pyx_kp_u_float_None) < (0)) __PYX_ERR(0, 261, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_disk_gb, __pyx_mstate_global->__pyx_kp_u_float_None) < (0)) __PYX_ERR(0, 261, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_specs, __pyx_mstate_global->__pyx_kp_u_dict_None) < (0)) __PYX_ERR(0, 261, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_kp_u_dict_None) < (0)) __PYX_ERR(0, 261, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_17rate_external_model, 0, __pyx_mstate_global->__pyx_n_u_rate_external_model, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[8])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 261, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_min_ram_gb, __pyx_mstate_global->__pyx_kp_u_float_None) < (0)) __PYX_ERR(0, 264, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_recommended_ram_gb, __pyx_mstate_global->__pyx_kp_u_float_None) < (0)) __PYX_ERR(0, 264, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_disk_gb, __pyx_mstate_global->__pyx_kp_u_float_None) < (0)) __PYX_ERR(0, 264, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_specs, __pyx_mstate_global->__pyx_kp_u_dict_None) < (0)) __PYX_ERR(0, 264, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_kp_u_dict_None) < (0)) __PYX_ERR(0, 264, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_8hardware_17rate_external_model, 0, __pyx_mstate_global->__pyx_n_u_rate_external_model, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_hardware, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[8])); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 264, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_4);
@@ -7668,7 +7668,7 @@ __Pyx_RefNannySetupContext("PyInit_hardware", 0);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_4, __pyx_mstate_global->__pyx_tuple[1]);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_4, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_rate_external_model, __pyx_t_4) < (0)) __PYX_ERR(0, 261, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_rate_external_model, __pyx_t_4) < (0)) __PYX_ERR(0, 264, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
   /* "multi_ai/hardware.pyx":1
@@ -7719,7 +7719,7 @@ __Pyx_RefNannySetupContext("PyInit_hardware", 0);
 
 static int __Pyx_InitCachedBuiltins(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
-  __pyx_builtin_round = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_round); if (!__pyx_builtin_round) __PYX_ERR(0, 137, __pyx_L1_error)
+  __pyx_builtin_round = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_round); if (!__pyx_builtin_round) __PYX_ERR(0, 140, __pyx_L1_error)
 
   /* Cached unbound methods */
   __pyx_mstate->__pyx_umethod_PyDict_Type_get.type = (PyObject*)&PyDict_Type;
@@ -7741,25 +7741,25 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "multi_ai/hardware.pyx":113
+  /* "multi_ai/hardware.pyx":116
  *         import torch
  *     except Exception:
  *         return None, None             # <<<<<<<<<<<<<<
  *     try:
  *         if not torch.cuda.is_available():
 */
-  __pyx_mstate_global->__pyx_tuple[0] = PyTuple_Pack(2, Py_None, Py_None); if (unlikely(!__pyx_mstate_global->__pyx_tuple[0])) __PYX_ERR(0, 113, __pyx_L1_error)
+  __pyx_mstate_global->__pyx_tuple[0] = PyTuple_Pack(2, Py_None, Py_None); if (unlikely(!__pyx_mstate_global->__pyx_tuple[0])) __PYX_ERR(0, 116, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_mstate_global->__pyx_tuple[0]);
   __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[0]);
 
-  /* "multi_ai/hardware.pyx":247
+  /* "multi_ai/hardware.pyx":250
  * 
  * 
  * def rate_model(size_gb: float | None, runs_on_device: bool, specs: dict | None = None) -> dict | None:             # <<<<<<<<<<<<<<
  *     """Rate one model against this machine. None when size_gb is unannotated.
  * 
 */
-  __pyx_mstate_global->__pyx_tuple[1] = PyTuple_Pack(1, Py_None); if (unlikely(!__pyx_mstate_global->__pyx_tuple[1])) __PYX_ERR(0, 247, __pyx_L1_error)
+  __pyx_mstate_global->__pyx_tuple[1] = PyTuple_Pack(1, Py_None); if (unlikely(!__pyx_mstate_global->__pyx_tuple[1])) __PYX_ERR(0, 250, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_mstate_global->__pyx_tuple[1]);
   __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[1]);
   #if CYTHON_IMMORTAL_CONSTANTS
@@ -7796,33 +7796,33 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 9; } index[] = {{1},{3},{3},{6},{3},{21},{17},{54},{8},{70},{4},{30},{8},{6},{12},{4},{179},{5},{20},{26},{26},{63},{102},{40},{96},{0},{1},{8},{9},{38},{11},{36},{18},{12},{14},{17},{44},{31},{9},{74},{8},{22},{13},{14},{18},{17},{20},{15},{20},{15},{11},{12},{9},{14},{10},{12},{13},{9},{12},{18},{9},{4},{9},{5},{8},{8},{13},{18},{6},{4},{12},{4},{7},{9},{7},{8},{12},{8},{5},{8},{3},{3},{21},{8},{10},{12},{13},{5},{8},{8},{13},{10},{10},{15},{17},{4},{8},{4},{7},{8},{15},{7},{2},{8},{3},{8},{11},{5},{12},{3},{6},{5},{19},{10},{21},{18},{6},{6},{11},{18},{7},{6},{5},{14},{12},{10},{7},{6},{5},{6},{3},{3},{7},{8},{5},{12},{13},{38},{5},{23},{16},{12},{15},{16},{12},{15},{7},{6},{5},{6},{4},{7},{5},{6},{101},{212},{60},{74},{373},{85},{192},{196},{17}};
-    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (2149 bytes) */
-const char* const cstring = "(\265/\375`\t\r\335B\000\312f\254\025G\340\320\270\0010\314c\010\010\003a\214\315\020\306\2160\020\006\302@\025\020\006\302\220\220\256~oJ6e\222\202tS\222L'',\364\207\370\221\325O\353[z\317\274\t\202\352}I\326W8R9#\241\023\222b\202l-+\001;\001L\001\034w+\324\264\016\275\352w\330S\374\365R\274\253\226\\2\250\332\325\025\177\334W\220\367\316%\243\332\371{\376U\020c\234\2525\010r\245\373]\255}\307\263\r\333\\\177\234\367\377\263\256\261\237i\365\247\370\237\177\366\252M\326 \356\225\306\265\257`Njs(a\257\257\013\236\345~\002\333\331n\236\377\335\367\344c_\267\277`\345\277\356\032\362Z\365V\265\3441X\373_\347\360\345\261\367Ws\257\320s\270E\267oe\321\300RA&%Sw\307\237\313\375\373Z\323\370\337\216qW7\217\375\032\252\376\213?g\341\315Y\027F\365\035\306\254\232S\003K\270_Z\327o\314B\276\366\263\260\332*\344\257C\230\352\357\210\222\004\020\274\265W\355pw\271\3364\336\325\317w\225\2413\243\306\334\234P\252\3771X\306\264\212+\216\317]\325\227\343\272z\274\356\374\325Z\347\037>\301;\307\270\373U\237c\277v\027\367\372Ov\247C\016%\tX\277\356\357\334\3738\207Rs\177e\315Q\365\346Y\205\331h*\205\223\352\244\252\365\207\374\265y\246\222w\241T\na\307\277\333\357\307\366~\326\252\254h\274;\306\361\037\376\331Z\237-\376\356\266!\010\3638\377\216A\336A\213\271<\303\335\016=k\255\3574\316\236\355.\177\241u\261\017\333\370\205\306\361\216\357\333\205\034\207\303\335\027\346n\377vg\2539\317a\320\333\016s\226\245Ee\345\357\034Z\316\303\275\366z\301\354\307\260.|i\316_:\337\331\365\237s%\236\271]\363\326\342\036~.\354\277u3\"ub\325\262)\325&cQ\255V\352\206e\"\206U\202\345\212a\235n6\030\253b\255j6\232\324\313ik\271l\rks\315X\017\323\374\034\314\262\"rj2\326\346\244|\370\357o\301\350\373\342Z\225Bm2\255\02241&Dl\251\0214)\233\030\353\342R\235XlL\215m1\311\270\330\223\312\326\254`V/\266\004j;\275\274l.\326\326\320\304\270\300\304\240\254\017Q1.\374p\254\342n\023\341BU\276\177~U`A\201QS0\356\336\345\332\253}\347\n\313\257\312\373\365^\344n\347\013\273\333v\335\005Q\362\035\366\225\206\275Z""\303\265\2731X\310/N\347\264\313\345\035\343\360j\363N\343&\250\311\010:\002BI\347\3504)@\t\214\036\251i\247\344\014\235\027\020\240w\\\361\t\215-\361\243#\035\215#Qz\305\025\216\037\331\231\241%\035\365\340\354\314\354xx\200\226\220!\351\207G\032\"\023x\244w<\340\221v\370x\020\3100\222Bf\2534\021AE4L\343\027M\304\001\032ih\347\305\234Pf m\306\225\350\241\221~\035\321\006\310\300\017\307F\232\202|\244$\t\322QH\032\3221\211\004F\024\351\324%G)\"e\243\311(\"Jg\316\0173BIB\206H\014\343\210(\335F\003\242t\203T!~h\244\244r\000\331B\004\321\360\221\211\005D\351\310\254)\r\224)\322\304\010CG\200F\312\261\001\362\3701\231\024JP\222q\004B\265\356TVv\246\315f~\026n\032\3378\273\306\327bXg\027\014\2732\277g\233M\353\020k0\374\245\017\276C\311~\376c\\\347\337\343o\255\2679\347k\276{\217c\027\331_\017w\277\333\273\207\037\367\230\307}s\177q\357x\326\261\337\334j\254\357\316\301V\337PvA\234\275\347 \310\301\257s\357_\rz\256\357\227?\310;\334m\374}\234\303\335~\356m\t\347\3767\266\274c\035\246\021\2133\242\212\013\261\200\216\317\250\354h\321\240(=$4\240\2623\307\2441UL\n\nP\022\2112\002\3601\231\032L\241\036\031\317\001\236\226\035\322\316\006\023tE\232\010\231\262R\200\026A\034\220N\0273\205d\272\224\020L\246Mi\"+\017\224\244Qj*mH\006\243\264\301\004\321\313F\004\240\t;\335\311q\312L\023S\223\261\221\304\355\231\351y\3203\352YA@E:L'\351\364\3465c\220\227\\!C:d'\3524\2351\245\251\014P\312\310\006\243\221\023i.\037\001\262\223\346\304`\202\252\224+\316\\A\350=c&H\211\201T\225\240\256qc\014\021\265\214#%\203Pd\331\230\205\024\000\241\367\001\211G:j\215\2412\0029\"S\242\037\2229\240\254\215!\351\314\010\312\347\262@YX\324\246@S\240@Q\244\320\215g\204'\304\023B\002z\305\223\030\212\2145\"\310\310\334\312\275\225\336\306\200\237\231s;G\034\224\241\262En\344\002\003&\037\022\317\210\207;Ao\271R\222J\224\320hAH\t\200\000>3\3436j\214\030ny*\355\2502j\020=6@\007~H;$\347\207\362\001\010\225\225\231\234!\031\020@\257ySn%\204\002\250\014\305\t\364\004\nU\355xgK\0024\001\010%]\362DN\030\275""\230s\317\226\201p\250!)c\n\315\310\214H\222\244\220\3061\010\302\201\034\265\360\r\"\363\244C\310f\204$%\365\250l\034r\202\032\311}}\031*\206!\315\300H\211\3452=\270'\2377\217\247\241\222\275\350\"\241\364X\344{\035%im\215c\330\214?/a3\216\tJ\212\210oz\031|\263\223*\366I\300\214\310\235g\035\201\0079\266\365)\264B3\320i\313f5\345\r\313\n\016C\\\225\302J|\361\001\200\251\030\177M\331rr=\216\224\2279,u\2206Mf\t\004\226!Q\nP\355\277\301\n'\260\032\314A-:\214D9a\020t\017\311\032\270\354\271\244\235\304\020:\245\217V\301\372\301\200\3005q}(\363f#\263Y\232W\337[\306\3128L!_\223\207\3331;P\351\211\232\225\201\343h0?D2~\370\201\334AEV\373G5\247\301\211\2645za-\242\367[\342\007-\371>j&}\233\0132,\344\351n`\234\007=!P\020\023\311q4\036\001\243\320\010\2654\250\256\210-Z'\305z\n\234\034+\037\370\235\200\247D\341d*v\037\373{p\244R\305\243%\243\220\207\377{\\\263\324\242\367\352\344M\230\016\017\032,\013]<\2260\225\357C_6\235B\003\274Or\n$X\265\231\223/\355\376\344\3441\320w\320\022o/\322X\310}\243\321\207T\277\2402\323\312\260\372\226\035\207=0u4\311\3712/t\017\354\215\017h+\255\276\016\353\032\216Z\302\203\003\230\177(\000\000y\305\273W\201\211\0009\376-g*v\013jT\035\351\002!v\327\020&W\022\r]\022\321\001\032\334\377\307\026\247\317\373\304\270\005\214\005\247 \246\274Z\335C\316['\304Ce\374\250\036\004s\241\":\221\356\013\365\365\306\303(\337c\374\304j\344R7\215BR\331\337s\325\273\310e[\312\3638\212+m\333\301I:\024\327\220\013\205y6\340/yS\2643Z,\215~\240\346&\037\310Z\3244=J%\224-\256\335}X\ny\365\304\207D\\\352\374=\375\311\303l\200\351\240#\224\351\305\364K\333\366\361\005eE\243 ?\217\356C'Y\201\213\207\256x\301}\316OI\356\333[3\003\256!\367<\326\272\342\322\226os\313{\206\354q\327-vOY\354\317\261\334\204\2459\232\2701\225\201R\336/]$>\\\330a\351\222Q\315|\230\233/\376|J\347dK\275\023\227A\017\243\234\213\266\023\321\354\222\314\202'\206\377N\001ru\305\361Y\367\237\255q\253\363g\000Aa;\262\tI\356\027\360\323y\215\240\374\321\215\306\337Qs\254\272\234Q\t\272\251{\342.\222l""\331\267\270\241@L*\025\237\035\251]\266T\224Nd\311\251\303\350\363\240*\025C\205\032";
-    PyObject *data = __Pyx_DecompressString(cstring, 2149, 3);
+    const struct { const unsigned int length: 9; } index[] = {{1},{3},{3},{6},{3},{21},{17},{54},{8},{112},{4},{30},{8},{6},{12},{4},{179},{5},{20},{26},{26},{63},{102},{40},{96},{0},{1},{8},{9},{38},{11},{36},{18},{12},{14},{17},{44},{31},{9},{74},{8},{22},{13},{14},{18},{17},{20},{15},{20},{15},{11},{12},{9},{14},{10},{12},{13},{9},{12},{18},{9},{4},{9},{5},{8},{8},{13},{18},{6},{4},{12},{4},{7},{9},{7},{8},{12},{8},{5},{8},{3},{3},{21},{8},{10},{12},{13},{5},{8},{8},{13},{10},{10},{15},{17},{4},{8},{4},{7},{8},{15},{7},{2},{8},{3},{8},{11},{5},{12},{3},{6},{5},{19},{10},{21},{18},{6},{6},{11},{18},{7},{6},{5},{14},{12},{10},{7},{6},{5},{6},{3},{3},{7},{8},{5},{12},{13},{38},{5},{23},{16},{12},{15},{16},{12},{15},{7},{6},{5},{6},{4},{7},{5},{6},{101},{212},{60},{74},{373},{85},{192},{196},{17}};
+    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (2171 bytes) */
+const char* const cstring = "(\265/\375`3\r\215C\000*g\270\025G\340\320\270\0010\314\343\211<\037a\214\315\020\306\2160\020\006\302@\025\020\006\302\220\220\256\2367%\2332IA\272)I\246\223S\036v3r\200\352\247\365-\275g\336\004A\313\034\321\377\315\230Q,\027\341\251I1A\266\026+\001>\001M\001)\376\362]S\274\253\226\\3(\3361\355j\356+\310{\347\232Q\355\374=\2101N\325\032\004\271\322\375\256\326~\3036\327\037\347\375\377\254k\354\347Y\375)\376\347\237\275*cg\306M\326 \356u\306\265\257\240Njo(a\257\357\013\316\311\375\004\266\263\335<\377\373\371\336\367\344o\177\301\312\361\256!\247UoUK\036\203\264\377u\016_\036{\1775\367\n=\207[\340\336\222\241Ee&5Sw\307\237\313\375\373J\323\370\337\216qW7\217}\032\252\376\213?g\341\315Y\027F\365\035\306\254\252C\003K\270\337Y\327o\254B\276\366\253\260\332T\362\327a\214\210\222\004\257q\307\277\332a\330\335\367S\3518\247c_;\007\301\353o\245\335\357z\256v\373\326\016w\227\353=\343\035J\365?\006\313xVq\305\361\271\253\372r\\W\217\327\235\277J\353\374\303'x\347\030w\277\352s\354\327\356\342^\377\311\356t\270\241$\001\353\327\375\235{\037\347Pj\356\257\2549\252\336\234Sc\266\232J\341\244:\251j\375!\177m\236\251\344Y(\225\002\366~\326\256\260h\274;\306\361\037\376\331Z\237-\376\356\266!\010\3638\377\216A\336A\213\271\234\203\273\035z\326Z\337i\234=\333]\0163\353b\037\2661\314\214\343\035\337\267\0139\016\207\273/\314\335\376\355\316Vs\236\303\240\267\266\305e\205\345\357\034Z\316\303\235\366z\301\354\307\260.|i\316_:\337\234\353?\347J<s\233\346\255\305=\374\\\330\177\313\204\210\324\211U\313\246T\333\214E\265Z)\023\254\0222,\022,\227\014\353db\213\261*\326\312f\253I\301\234\266\226\313\332\2606\027\215\365p\315\327\301,\033B\2076c\255N\312\207\377\376V\214\276/\256U)\3246\323\"Q#S\"\304\226\022Q\223\272\221\261/.\325\251\305\312\330X\027\323\314\213=\251\254\315*f\005cI\240\266\023\014\314\366b\255M\215\314K\214\014\312\372\020\025\343\302\017\307*\356\266\020.T\345\373\347\227J\013\n\214\232\202q\367.\327^\355;WX~U\336\257\367\"w;_\330\335\266\353\356\207\222\357\260""\2573\354U\032\256\335\215\301B~q:\237].\357\030\207W\233w\032s\334U\241i\035z\325\357\260\007#\350\010\010%\235\243\323\244\000%0z\244&\236\2223tZ@\200\336\221\245\026\032[\342GG:\032G\242\364\212,\034?\262\023\203K:\362\301\341\241\341\351\360\000-!C\322\017\2174D&\360H\357x\300#\355\250y\020\250\221H\014#)d\266J\023\021TD\3034~\321D\034\240\221\206x`\314\t%\006\362f\\\211\036\032\351\337\021m\200\016\374pl\244)\310GJ\222 \035\205\244\241\035\223H`D\221N]r\224\"R6\232\214\"\242\224\346\3740#\224$d\210\2740\216\210\322m4 J7H\025\342\207FJ*\007\220-D\020\215\232L, JG\246Mi\240L\221%F\030;\0024R\216\r\220\307\217\311\244P\202\222\214#\020\252u\267\302\262\363,'\307\347\204{\3067\316\266\361\264\030\326\371\005\303\356\314\357\371f\323:\304\032\014\177\311\203\347P\262\237\377\030\327\371\367\370[\353m\316y\232\357\336\343\330E\366\327\303\335\357\366\356\341\307=\346q\337\334_\3347\267V\337\255\203\255\276\241\354\2028{\317A\220\203_\347\336\277\032\364\\\337/\177\220w\270\333\370\3738\207\273\375\334\333\022\316\375oly\307:\354\370w\373\3758\246\021\2134\342\212\013\261\300NmTv\264jP\024\237\021\031P\331\251c\326\230+&\005\005(\211D\031\001\324Lf\006S\310G\326s\240\307\205\207\304\243\301\004]\221%B\246\254\024\240E\020\007\244\363\305L!\231/%\004\223yS\232\310\312\003%i\224\232\312\033\222\301(m0A\364\262\021\001h\002Owr\2342\323\304\324dl\034q}h|\036\370\214|V\020P\221\016\323I:\275y\315\030\344%Y\310\220\016\331\211:M\247Li*\003\2242\262\301h\344\304\231\253&@v\326\234\027L\320\225r\305\231+\010\275g\314\004)/\220\252\022\3245n\214!\"\227q\244d\020\212-\0339iH\001\020z\037\220x\244\243\326\030*#\220#2%\372!\231\003J\332\030\222\322\214\240j\227\005\312\302\2426\005\232\002\005\212\"\205n=#=\241\036\020\022\320+\236\304Pd\264\021AF\346V\356\255\3646\006\374\320\234\3339\342\240\014\225-r#\027\0300\325H=\243\036\356\004\275%KI*QB\243\005!%\000\002\324h\306m\324\030/\334\362T\332qe\314 z\220xHN\017\345\003\020*+3IC2 \200^\323D\271\225\020\n\2402\024'\320\023(T\305""\343\235.\t\320\004 \224t\311\0239a\364\242\316=]LP\223\201y\250\021\255b\n\311\010\215\210$Ia\032\0031\010\302\201\034\245\356\r\022\363&D\250ff\222\222zT6\016r\202\032\301}\375\030\025C\224fb$\307R\230\336\323\263\365-\321\323P\251X\260\220Hd\254\333{\035%j\201\006d\350\314\277\227P3\216\246'\225(\256z\031\260\214\211\002\273O\300\360\356\316\251n\001\206l\320\232\036[\241\035\350\310e\2335\323\r\270\006\247!U\225ZJ\334\371\030\000\251x|q\330\304\\eG\336\313\344J)\244X#\2620\004z\221@\004d\331\277\323\303\227Y\260\3410cSFGL\000\"]\216\324\003\322\361\254\327\036\232\267.+\243w\261D`f\360d\270>\334\362\272Q\353\234\346-\367\30612\375\347\320\327\344y:\316\033*&\325\212L\305\030A\234\r\302\206H\301o1\360)>\\\201\375Z\363-8\355\267\214\357\201\245\345\235C\204\000\204\337\355\315~\262\212\302\005k\307\2030\033=\n(\236\211\372\320\034\333\200\245i\244Z\032\252\036\304\250[3\201?N&G\365X\272\200\242\246\00012}\270\017\376\3752\272V\317\321\212\321.\000\377\330\227Y\277=_\235\255J\010\200?\r6\20322\3535\316\353Cg7\215B\0078Nb\313A\260k\013\"o\260\373\311\311eP\234\203J\372\244 \235\206d\231F\345Y\031 \002/\314<\332\023\323_K[\310\366!\353\250\t\207\222Y\240C`\364\370@\033\323\362\366\260\241\301\325%\274;\020{\302\002\010\n\327\332=m\306\326d\364\236l*\237\005V\243~T\016L\303\r\202\317_\243\350\332d\251\023j \277\025[\306>\037\036c\000X\027]\00215\224\025\0169e\235\020\017\317\370\321R\220\300ojZ\307\247\373N\3759\361L\312\021\031?\262JrQ\272\355!\231lL\273\356\375E\260\027\245\231\035\nK+v8#\025U\026$C\341\361\r\374\313\320T\344\214\212\236\320\217\325\244\312\037z\355\2204\\\nDh\265\3508\302\243\025\010^\036#\344\347b\332\177\376_\220\302=1\335\235\243\\R,l\351\334\356\276aaQ\034\344\360\321u\3108\253r\021\322=/]\314\341Q\222\264 W\314h\324\010(\037_\303\276\343\002i\213y\314\2203\216'\212\203\346\274}q\254\007\303b\027%\205\314\221\207\252\264,&\0328\370\2101\177\346\010\303\274\004\344\242\0245\311\177\023\256$\245,\036\023%\224MQ)\212\210\023?\357\354\350\346\357OY""\001\242\332\345j\026\025\311\026\300\353\2708(\243\306G\021\n\205\003\271^\262~LP2:\0275\350\346\247\246\272to\226\020\360\303}\275M\330m\021\325\335\0141\023e\373&o\267\364k\252\263\370\215\324\0037\024v\305RZ\3727\213V\007\243\030\203\352Y\324\024j";
+    PyObject *data = __Pyx_DecompressString(cstring, 2171, 3);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (2260 bytes) */
-const char* const cstring = "BZh91AY&SY\241Wi#\000\001h\377\377\377\377\375\377\357\377\377\337\377\377\377\277\377\377\377\365\300@D@@@@@@@@@P\000@\000`\007\3747%p\216\233\263\2152\253lV\262N\003wa\246\251\2414\247\351#\365'\241\036&S\314\231\024\364FjmC4\232i\243L\3244\036\2204\323\032\201\211\246\232cMF\3222\036SF \320\200L\200\021\243B\032(\017S\365M\244\320\320\006A\265\032\000\000\000\000\000\001\214\204\032h\032\023&\246)=\024\320\321\352h\032\031\250\000\0004\000\000z\200z\200\000\000\032\000\036\240\320\000\224\321\010\024\332\023FA\221O\0242z\236\240\014\232<\240\320\365\000\000\000\000\000\000\000\003hA\006\000\t\200\002\030\230&\000\000\214\000\2310L\230\000\021\221\211\210\300C\000\000 \300\0010\000C\023\004\300\000\021\200\023&\t\223\000\002211\030\010`\000\r+\025\313R\335U5\321f\365\217\344?\257\354\377\033\221\316BN\272\021N\214\372\nrMC\245\323L\222\023$2L$\t%\006Ft3\31431\3775X5\302@\321\"\261\213\020\223\014\223\r0\251\313\007\323\002\225\221]\033\034\202\200\202\352\232c\rd\233;A\236\013\363\005\"\313\215\005zR\251\014cR\030V\255\270`v\250\352\023\013/\272\326\n\330\212\007\266\030\3071)\2346\230\200\332\332\265\234\321\224\367R\327\005\230\255\224\000\205\031B/\013\001A)\316v1\\3\223EF\032\214-\003Y\231W~\371_\310\352C\343\355h\304\276Y\027W|\2738\363\251\223\020\203'\362%_\002n^\363#;&s\235\213\251\303\262*\362+\367\353\316:\027\010;\237\307h\204\022\232T\252\243\323\351\243e\003\276\025\213\016wq\255\214\223\310|7\016\243\227\374\352\3113\272\331\335=\342X\324\246\034\346-\377\030\241Q\252\344\234\227\204\002\355y#\204\306\263a\306\023\016mic\232\304zS\022\231\202\267&\017cS8`\240\364\246(\0274esQ\216j \302\006\240;\261\312Z7\201\223\362\325\336D!u\304xV&\362&\024\026HU\215\305\224(\t>\226bxCr\024A\025\324\360fH\034\271\021\n]\330\241uE\206\225\tK*\344\231\254h\320v\334)\271\343\343Bx]\306\316\333w\225d]\257z\241{\036z\352]`\tB$\251\364`\373\221\226B\230\245\035\366Y\017\263\251\245\354\360\351\264\021\240\325f\352:\300^\244UB\020\347_6\034\207=\352\006>>\224\346\227cb""\314\261\201\262\026\021\366\254\240J$\0070]\0022F\016\000\3750\272)\001\025\320}\267\326\022s P\224\3346\022\tHL\274\301\t\323\212nx\344\376\2035\230\364G\025\366\325\373\004\326+\314\225\214\205~'hwt0\034\215\354m4k\313\000a\000:G@\007Q\332\356\014\323M\233\244\005\220\332\240m\017\263\"rj\240g\224\326\321\317\334\312\024\001/\207\275Su0V\3004\253\243\304\3775\301\206[{\265\332\361\276\340\254u\354f\200\321\023\326Z\204\313L!\266s\215\270q\357\006\374\227YrfM]\346\316\233\216r\327;j\314\371*\263@A\233h\231mu\340\006\275@E6\205\270\024\035\331\021qh\320&\013\031\235F\001@\017\032!b\251\006\300,T\233\333\033^\212\217.\304\343\256B\"z\367tS\025\031\362\225\247/\255\333\246\276\305\373W\010\\\314(\227\030\215\340\271\021M\010dc_\377\n\027\027\335\352\324,\200J8\315\357t4\031\303-\206W\031r\271\025\274\004oA\231\242fK\2444\t\313\201Uy*\224\252S1U\0160AjQP\312\202\2038\036-\033\335K]n\365\202EU@\327\314\266N*_`\273\214\356\233\200R:\300\246\364e)\001y\205ejjxYT\n\320\362\010=\202\242~\024\322\261\314\364\217\271\312\250\223`\347\344\026I\232\244\372\350+\256'\243\233\304\237\233\304\245\335s(\247:1\311\2402b}an\254\206\357\230\022M\"\256\030\211\013\035L\353sE\331w\363E\212\327e\271\205\302\375\213`\270\327\300\324\007{\271\216\"L\\$\222-\337\253[\237<\013\006\001\331.R,\202A\265\214\275\022|-\0338\n\036\324\262\342\2228\231\252\000j\224l\365c6\204&\365cJ\016\033\025\303\200\305\201C\\\224\242\242\302!\363)t\336\224\224\322Tg\210\206\257y\210#\245\226/N\353\003\270\230\235\241\3362\330\347\322g.n\240\321\205\332\354Gj\t\360V\360\336\006mLT)\225j\347\231Vr[\223*\030K\005\250\221~\226\346\007a\334\024\332I\247\241\205\257=\373\232\210\271\2468\274\374\327D 7\230\006`Ya\"\336\214\337!\255\367\203\033\314\000\214M^\213\235\225\317\016\3336\375\372\247`\205{\263\261\260\357[\307fpv\032\n\261\210\333\332\265\027\303d\342U\355\321\353\3253D\027(vx7A\336\266\257\005v\005'\0137Q\363\014\024+\341(\t\314\241&\022\310Uet\271\206\353\r\254\325oI\260\334\372\331x54\254A\267\t$\354""\356\304\016Ace\267s1U\265\231(\311M\200R\232\026\367\265\304H\016k\216\213G|\336\251\262\311\302\010\024\306\204*\301\223-\205\256\206\013\200(V\350\252AB\341\227U\211U\010\310 \241\021\213o\025V\3214\225tL\344\032\242 B\262u\\\214[\366L+\225l\354\225\326\326\372\362\271PL\373!\246\"\005\014\004F\374e\002C\221J+\335(iP\300\220:\033-\002\303\031\010V@O70\034u\002\275\245h\235{\010\342\345\252\221}E\266um\200\313\354\006\247\203%\021E\350./\020\236HT\036yL\r\000\234 \232v\337+\214%\266\001\3412$\254\315\255\364\014_\225\221\276u\261\272h\3357z\276\017&\036\214\223|\245D\231\022\222\306i!cE\357\237\001\246ca\232\363\250 4pp0\264y\340-\316\374\373\233x\352|1Fk`\260R)\024\330\3733\t[\207\025!%e\006'P\304I\216\0325\250AR\2410\203\232\347a\237|fXj\357\244\236\312\"\032\035\315t]\271z$k\3118D\014\n{h\272\202\272\004-\230\262^\240V[~9\023\276\373R(D\245\213F\311\267t\350\366\245\212B5\211\271\177i\245\\\3452\254&\364\247*\232\331^\321\000w\3558\234\212$\030\344J\013l\210|\2179\3204\031\002\267\002\237\024\250@\245\231\344%\244\312\253\016\305\322\363\211\316U\256\271\300\222\245\224\213(\272\301\376\330U\214\364M\215b\t \203ML8\"&\216\\E\212{\244\004\352\000\310e\265\024/\021\220\310p\205\306\023-\327E\311\257\305`],aC\007\013\314E\373<i\025\244\240\3522\030U\251\316\3311\247\206\3465\032\2503\235~{9Y\215[C\016\377;o\360c\340I\220NDK\001\315d\212\020\222\211\363\236\nJ\332\262G\216\266'\231\201\252\211 \364\306\220\252\244$Q\330\026\200<\375ZDv\210\326\002\231\214R\312\330\022\002\373\332\347\332?AJYc`n@A6\210td\214d\335\356\rE\340&h\373\240\377\024\230\366\3204\372\210\217}&\220H\017\035\016\014\215=\023\300\002\2676x\270z+\213\341\226\264\335\032\302w\356\0026\305\207\300\2658\027\251\366\010\026\316b\301\331\234<.\214\265f\277\337\226-\230\350\353\265%\210\036\035q/\216\031\223\234\233\331\3504\026\030\263\023\013\024\205\235u\357\357\223\313\206\217\000\354\304\312\2225\304\2321\307n\330\265Dc\362pU\021\260+\327\242n\272\021E\243\342\277\272\274\337\241\213\017\322\375,""\214G\326\312\364]\301\205\262/8\272\332\2311iq\214\201\311\235+\233&|\212.f\3543W\032\341\353\231\362\335a\272\332\031\3165\233\217\265'\343.\343\221|\331\251\363\254\347uz\275NwK\t\264Z\212\236\266P65\252\345\261\034\014\033\351\201\275\030a\217\224\252j\2610\343\266\022.\261t\200\245'51T^\256\313:\316\007v\021@S\007c\216\271g\276\372\313\371\240\372E\370\020\235;\332\321\202X\257rj\216yL\320\360\0351\276\3713\377\027rE8P\220\241Wi#";
-    PyObject *data = __Pyx_DecompressString(cstring, 2260, 2);
+    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (2300 bytes) */
+const char* const cstring = "BZh91AY&SY\266\"g\013\000\001l\177\377\377\377\375\377\357\377\377\337\377\377\377\277\377\377\377\365\300@D@@@@@@@@@P\000@\000`\010\0347\026\\\373\035<\226iIT+M\035\3407\275\360\321M\n\237\245?R\036\223\322z\215\265O\322\237\247\244\311\2512=OL\240\331M\017Q\246\324\032\036\232\201\352\033\024hmM\036\211\352=!\351\033P\375)\3521\006\204\002h\320h\215\t\212zj&\232f\223&\322\001\243@\310\006\200\032\000\000\0004\006#\020\320\r\021\246B\023)6\240\r\000h\000\014\232\031\000\320h4\003\324\000\000\000\320\032h\304i\240\004\246\210 MQ\344\003E=M\265G\212=M4\006A\246\206F\200\r\000\000\000\000\000\006\201\202\0100\000L\000\020\304\3010\000\004`\004\311\202d\300\000\214\214LF\002\030\000\000i\022A\265\006\3244\311\352m\0024\014\200\006FM4\323@\000\0312\001\240b\r\0004d\310\323A\230Z\257Z\227%%\322f\365\317\344?\257\354\377\033\242\347D\223\256\204S\245>\202\234\223P\351\365\023$\204\311\014\223\t\002IA\231\235\014\363\rV?\346\256Mp\2204H\260b\324$\303$\303L*\345\243\346\002\226\021e\0132\314*\010/\261\2500\327I\266Z\r\2301\325\nE\270\033E\230J\250c*\220\302\271m\303\003\225\247h\240]\205\363`\265\210\240z\303\030\346%u\006\327\020\033kV\263\2424\325&4(\305V\302\000\034K'\253>\220\200\220\347:u\214 \305\005A\253A\236\324\302\271\225\254\234\222\311\306\354\344|\241\005R\372\343b\247\0250\027\247,\305\016\031\231\242V\270\323b\30723\254\316s\247\037\234\364\304\260K\324\366\376\3242-\211\266&U\334\244\352\253{\354\243/-\313L\217;+\241\234:\233)!\nbC\277;\307Y\354\354j\310\336\316v\313\001N\213T\303:PK\373b\205f\212\262\365\310\233\215\001my#\205\312\351\275\022x(\243NS\317\271R\373\2670\326m\213fW\0165\321\231\305\326\206\366\373oqy*DL\205\r\307;W\224S\262\226\034\210\356/\035\277\322\377\nE\336\035\306-\251o\017>\223g\326$\025B\306\344<\264Z\352\205\373\013\311\362\250\025g\244\313\016\227\022\376F\306\301oR*\343=\254\366x\233\275\207pz\"\336T\001\\vN\353<z\274\230\352\266\200\333YJ\241U\0003#\022P\371,~\242]p\205\247\310yu\303\313\373lZ\322\3660\t\200\305\226j%`\255H\310""\340\010\220f2\"\304\201\334\263\221\324\2611\205V\271}\301\316\331\007\026}\262\210\026\001\200J\376\320\004\3110\220\026\316\302\242@\201\207y\0179\207\014t\216\030\243R\250\270ZH\317^!\t\324\211M\343\223\322\030\333\237\246:\267\316\317\310&\301n)h\310Xg9\207r\306#\267\333\2753F\274\261\006\020\003\254~\240:]\266\301\232\2123u\000\272\032\3445\217\247\"rl\220\317M\023\227\221\263(P\004\276\237x\246\352`\265\200iWO\252\3775\301\206\\\013.p\342\264+>\315\346h(\\\267\013\220\231e\010l\373#q\016n\200\340\222\353\357L\311\254\304\317\231\3077\327s\246\032&\350h\0108\232\311\223\266\334@\335\324\004SX\236%\007p\310\272\273\233\202\200\261\231\322\304(\001\342\304,YHl\002\305\211\274\3134Vy7\223\367\262\"\201M\233\2728qQ\237)Zr\372\274t\335\275\216\232\330j\3674\325\274\243me/\210\221\214-\227\344\310\354O\235\367 \324\0032\261t\230b!p\016\200\2508\362\326\252\\\001n>\020\202\231\222k\315\301\334\247\224n:2\224P\314F\203W\270Y\006\2541PPg!\342c\203\326\233\247\301\270RVX\r|\331\322\034U\276\341\177\356w\321\310\023\260vAG\320\252\252\200q\205ejjxYX\nbp \241\321(V%\317M,\034\337D\367\331\212TM(\256|]\324D\306\352\314\010\305\364\255\345\376\t\272\377\004\323\177|\247\010)\014\333\300-\335;`Z\026\231\243\315\t&\221^LD\205\226\254\373\233w\353pS^V\253\235\226\216\023\261\216\315\360`g\275\250\016\367\361\334D\230\274I$]\301]~\\\360\310\343\254\202d\267\321j\202\300\327h\221\222\322\262mu,:\310`#\003\347\233\230\200\033\022\226\354\254iB\021s\367m\211\324\246\365$T(\330\324\316JQaR!\365\324\272\217JJi*3\304CY\272\304\021\323\326\213\360\306$\352\035\304\305/\016[-\236e&u\323u\006\337\r\302\374\247,\003J\236\212.~\\,hs\262\003\311\241j\273\270n\\B\030K\204\321\"\375M\304\035\307y\024\3415\026\324\333\254\317\251\243m\233\230\216\177;cN\361\305b\004\2036fyX\363\342\261\242\315A\033\263\006Mv]\255:\353V\302\274D\334\375\347\030\201\030\273;\031\335\354x\355\216\307\263\322\035h1\257U\006$\242\2370\337\255\250\374\006h\202\337\035\256-\334<\026\325\342\256\021R\341v\324}\003""\025\013|r\200\250\312\024\260\226B\313\255\255\005q\200\325\225\333VU\3051\311\275}005\302I;;\261\003\220Z\332\267nk\025\322\312\232\023E-\"(J\313)Vg\025\027\234\246;\346\365\315\227TH T\032\020\263\026%\3717\325s\200\021,\321\3451\200\230\031\270^\304\332Rv@\351\0303#=i)Ovw+(\231\3105D@\205\026\316\264\230\267\212\320\300\036\267\222\021\234hzg\\M\240\311\363\206\250\210\010f\021\034h\323\002C\244\251\212\370%\rJ\031\211\003\241\307\230\027\030\310\n\322\002\252< q\326\013\006\224\305K\343\221\305\313Uc\013\013a\331\260\006ap5<\031(\212/Ax\361\t\344\205#\263=Q\006\200H \214\235\205W\230J.\003\301dIY\233k\3444?!\030\342\2162\266\215;F\336\036\367AIFI\276b\244\231\022\222\312`\205\224F.md3#\214\224\263\300\342z\225\014-\036x\211\347~}\234\r\032\237\r\010\315\326\013\205b\261]\317\256\200\222ppz\022H\224\302d(\021;\010Am p\2128\240\036\306\344\322\243i\343n\365\224J\020\254\245\013T\205\016\360\335]/\331\202%,\031*\010\201\201Ol\257\221_\002\027PY0P\007\n%j\303%*\014\303B\226\2734\350\032\342\306\240\242\305\203\030\206 \226\375/b\330\035X\332\266-\305B\344\321\000sZq9\024H2\310\224\027[\020\372O9\320:\244\301bcK]\262l\245\202\202\2533\310U\244\312\313\216\345\330\363\211\324W.\352\200\245T\345\"\312'p\377.+FyQ\242\321\004\244 \323c\016\010\211\271\335\304\\\247\272\220*P\006C,\321B@\304\304\3070\010\212\306H\210\252&R\262\000Ev\200\322\253\230\214\006%\243\234f\036fj\034\t\213l80tb\010,D\202\322\255@(/TWp\274X\242\002\306\370\314\375\010t\030\304`TAy\004\265\3120#3\"\271\0002\223v\371\212\266\263\274k\013dM\0374Y\025\220Fbv\300\204\003\344[\240c\254c\\\n'\222e}I\255\005v\376\007\252?A\010QC\332\027\2370g\t\204\215\001\236_n\300\266\253\346r\307\334\207\370\312S\267A\321\315\004\356\314\263\006`:v0S\326\262x\000E\355]\330\0201e\212\210\227g\322&~\3371\362\033O\001\014\300n\321\351\230\030OI@\231X\261$TEg\273\216\014' \222\236\323\201\364\216\210sz!\267\\\266\374\3445\024\024\245\024\372F\024J]\376\325\360\364\211\320\023(\264[\027\003s\244\016\276\021\014\341\325""\337\301\2462f\336\2758\3629Q\204'\337\314\310\217\271\313\245\023\312\365\ny\317)\243\344\343\077\077\342#\356\3645\264#P\336\024\306\375y<V\340jtZ\333\013\351\347\360\235\307\201\304\254\315\255J\361X\254\327\243\031\206\261\263f\341Fj\372\027s\272\375~\267;\251\215\033\223EUk$7\232\325wLG\003\006\372\340oF\030a\371\353Y\242)\206\036\000\345dVs\305\024Nhb*\321\3573\346\307\212\365p(\000\342\030qM\254q\260\307\220\017\201\216D'N\3674d\227\017\027&\250\342\347\r\021\005nVja>b\356H\247\n\022\026\304L\341`";
+    PyObject *data = __Pyx_DecompressString(cstring, 2300, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (2148 bytes) */
-const char* const cstring = "x\332\215VMS\033G\032F\t\030l\260\215\300\345\330N\234\264\312&\306_J\004\030\2736\273\331\225d\201\211\371\026\340\262\235M\2475\323\222&\214\246\245\351\036\204R[Y\216s\234\303\036\3468G\035\347\310\221#\3079\316\221\312/\340'\354\333=\002\013W*\225*4\3751\357\367\363\274\357\220\315~[\315\346\252\371\ns\004B\213\205\305\302c\264\231_A{\006AEf\032\025\333@\323\362Rc\215*\263\005\251\230\364a\366\343\213\357\340\344\230\272\365@ \233\022\035\211\272\301Q\203hu\303\242\017`G\033\314\356\200\026j\030\2264\207X\025\231L#&\322\r\276\213\300\016\250P\324\246F\255.8\232.\274]C\277\037\374\017YL \235\265-\223\021\235\352\250\322I,\223f\363a\366\025\341h\3051\205\3614\277\364MCn01\276\251\023[o\023\233f\233\235}\264J\251\316\321o\311\222<\211Jt\225Yt\225\t\n\346\210@\305\216\2503\013\201a\235B\306\324&\202\232\035\304\205mh\202\312\320\210\205\326K\353O\347^\314!b\351\220\343/T\2038\271S\321L\3029\3452\241\212c@\020\026\022\235&\345Y\264TE\035\346 \013\334\"\301P\023\344\372\025 _\013q*T\342\017\210\005\251\022a0\013\203\272a\325\036@elpb\354Q\251\275@LN\263\022\031\365\370\356\034\033Ke\225\274(\3557A\003q\223\265!\304\246i\3100v$\232\262\226}x\241\252!\372\336\030B^\360'\220\201@mC\324\221i\010\001b6c\r\005\216\311\254\032\030\260\366\250\315U\224\375\206M\2234HVk6A\3274\321.\245M\324`\\\310\232\200i\250\254Lqq}[\331\327m\326D\2345(2I\007\314\311\354\344\373\342\372v\026ms\031\336\023\205{\225\360^\220O@^Z\262\035\213\243\252c\0026`\355)\3214j*\260\364>\271>\317J\276\347^\231_\202jS\255n\031\300<0\322f\366.d\r\014\260\231S\253\303\r\221w:\242\220g\007Ui\033\000\202\254u\236\375'\321ulI\306\220\0321,p\361\327(\257\003\203\320\177\024\337T\255\252\004\350\304\030\252\030\265\036\353/h%2\200\005\002\036\001{lT\005\352\237[\250\332\224\312\334\324\233'\220\252M\023r\312\014\177\223o\024(\323sO+\206\200\246\264\030*n\277\314\253\332\353\024R\207R\241:\205\3568\223\275h\004b\001Q\031\307\231\023\025P\177\300\347u\376\200\272*s\303\321\352\027\001\207\212#\207\003\225\023K\270""\270\266\262\260\266\271\205\341\036/\344\227\227\013\371\342k\274\274\264\262\264\205\027\013xa=7\217\267\326\360\\A\236\027\267\027\360\332Ni\363U)\37729\275Y\333|]^\317\027KR\030\202\274p\261h\262\n1WT\311\313\320F\016/\355\343\217\216x\275\263\017\277\227\000\010^\245\373b\223V\361\306v~u\353\203#H\ro\227\363\205\345\322f~kiu\021\257\344\337\026\316\366\253k\275\315\366\352\353\325\2657\253\275\323\333R\271\\\304\353\371\305\022./\275+\311\375\253\267euQ.\013\333\321\204cS\214{\375-w\274ci\006\313j\014H\007\343\202r\262G\014S\362\276\302\230Yq\364\032\025\270V\251tlZ\325\260cXbv&Y\347\347\260\006T\241:\346\320\350\\3A\033\03301l\242\321\n\321v55z4G'\t\332\211\234\344\240\034\263`T-\222\306\030\353L\203G{\231Z5Q\327\333I\265\226a\316\342\252AM\235c\305<\214\253\216\005\202\240\013a\311\310t\272gh\0247\241\215\251-`\304\324\232\016\266H\203b\271Q\016\r\216\317s\302p8O\325\020\264\301w\251mQsv\006\343\006t\022\230\306\r*\210\032\213\260\205\033\2334\300\035\354\231\356\200\001)`3L-\030\307T\212\364F}\366l\324+\347\270\367\204q(\177`@MF\2712\201a\222\262F\203Z\360\021aMa4\210\311x\323$\002\030\335h\262f\223qn\310`!-\332$\266\332\260&8k9\304L,CT\275\300\344\304\221?\014,\202\\\210)#\245\246\272R;%\201a\224\367j\325w\311\251\r\263\345\\\001\272\003\206\007gV_\200}\333^)\200\0106\345u\233\002\227,(\245\245\313\226\353s\000fE\257\000\260\323i\225@\215\270\361+`R\221\013\253*\\\270\352\005\370\254\361\016\207?\230lU\214\005\345\200\262`\266V\027@QHF1\001'\207^\312\375\207\354\337\325\227\233\177\237\375\250\305\204\3234)L\347\274\304\036\216*\205\035\303\026P\303\263\353uR\243\013\306\007\261\365z\207\237\355?\210nIw}\242\3119\021U\3733Qk\327\202\377\016\034\365\325\330\203s\362\340{\020\351^\022m\333\260fg\340\241\233f4\220\366nGw\036ws\247c\003C\227\342\301\341\203\337\2747~)\270\021lu\323\361\310u\267u2x\315\375\305\277\022d\342\301\253\356\277}X\206\342\221\033^>\036\231\364\236\371)\377v\360u\367j\270\021\217LxS^\313\037\t.\005f\230\221\"E\017\224G\335\334A*\036O""\307\267n\307W\257\305\362\034\017]:\275104r `/]\304\203c\356\222\267\343?\017\036u\227\017S\361\340\025w\312\025^\016\234\014ND\023SA\271\233Rn'\274\214\367\034B\030\035\003['\020\254\262p9\036\273\351\221x\354\226\237\212\307\256\306\343\260\372w\242{\3778\3348\334=N\307\363\317\303\326\351\245\304\337\254K\342\221\264\227\216/_u\313^J\355O\324E\317|/50)}\315z$\372\354\3330\025\3369\314\305c\020\2517\032}\236\013\323a&\032\230\214&\247\242\251\371\220\304gq\250L\206\017\366]\356=\362\013>\271p\223\351\235 \377h\340Vtk>\254\036.F\305w\321\273\367\262\364\177R\214\341\203\026\274\210\256\337\017\362\301\333.\270\033\215F\357\372\033\276\021\264\242\201{\301\367\341\355\303\314\351\315\201\2411\367\2057\343\341\240\020H\031\367\2317\350\345\275\215\276b\236$\246\344\253O\001\272O\240\220\262\\w`\035\377\0020O\003\222)y\236\0162\301l@\242\007\262\204\332Q\372(s\322\323\312\375\241F:\276\361\205\237\367\313A*\370\n\2125\031\346\303\215\323+\347I}\300g\010\302\256\006yy\266 \033\200\265\233\226\320\\s\267\274\t0\016\001:nAb\364g:\321\303\177\035\245\216&\217\362Q\351}\364\376\307\350G\034\341\237\243\237\311\211R/B\t\377H\275G\214I\010t#\036\357\241\353u\202+\335\314\351\210\344\376\031\374%?\355\177\035\244\224\021 \203W\006\255t<v\033\256\357\2011\022\r\300m\322.\327\307%\025\001\265=Y\350!Y\3339\327\001\013w\001\203\261Io\036\024G\306\275!o;\272#i\244:\312\361\026\375g\301\265n\035\250s\256\035\r \2702B\3251\022\307\237\202\231h\352Y\270\031\266.\2009\374WJz\002\235\272\r\tJ\367\240\321v5 8\260\374K\277\025|\032\344\202\2650\027\026\303\026\220\353\362\270\002U\332\003P\375Y\237\370\377\355\222.\0173a\016\252ry\342L'\272\277t\234>\276w\274qL$A\177\360\352\276\331\235\352\266\302K\241~\370\010\240\030\370Lv\373\360\001w\037\311\306\217G\276L\302\202\3538}\327\337\trq:\023\334\014Z\037/S\301N7w\276\334\017\026\272\231\363\345Iw!\314\000A \216\257$\"\327\\\023\240\031\016Z\300:U\353=\030VK\321\324\337\0163\207\363G7\217Z\307)Y\366\\R\324\237\202\027\335\334\211\204e""\334\373\304\233\3663\321\347\217\2733\335\315\356~\330\212^\374p<\035m\226e\t/\0070\003\240\363\016\256\273\277\312\212\215\2723\356\206K\275\334\377\001>t:\277";
-    PyObject *data = __Pyx_DecompressString(cstring, 2148, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (2168 bytes) */
+const char* const cstring = "x\332\215VKS\033W\026F\t\030l\260\215\300\345\330N\234\\\225M\214_J\004\030\273&3\231\021\262\300\304\230\227\000\227\355Ln\256\272\257P\207V\267\324\267\033Pj*\303R\313^\314\242\227\275\324RK\226,Y\366\262\227T~\201\177\302|\367\266\300\302\225J\245\n\365}\364y~\3379\247\311f\277\255ds\225|\331\366\\B\026\346\026\346\036\222\365\374+\262k0R\260M\243\354\030dR^jv\255b;.+\233\374~\366\343\213\357p\362L\335\272\347\022\2073\235\270UC\220\032\323\252\206\305\357a\307k\266\323\204\026\251\031\2264G\354\n1m\215\231D7\304\016\201\035\250p\262\307\215\355\252+\310\244n\357Y\246\315t\256\023f\351D\203%\256+\021\301j\220cM\302D\342\205\325\353\360`\343\235C\004wv\271\363\270\306,\266\r\371\232\255sS\334\317\276\200\354+\317t\215\307\371\305ojrC\231\361M\2259\372\036sx\266\336\334'\313\234\353\202\374\226,\311\223)H\226m\213/\333.\2073\346\222B\323\255\332\026\201[X6\312\334a.7\233D\270\216\241\271\\&\301,\262Z\\}<\363lFE\356\360_\270\206\214\204W\326L&\004\0272\365\262g \010\213\270\315:\027Y\262X!M\333#\026\2279\332\244\016\271^\005\244f!5W\345\177\217Y\226\3552\327\260-\nu\303\332\276\007\014\03581v\271\324\236g\246\340Y\311\241z|w\306\242\245\262J^\024\367\353\320 \302\264\367\020b\3354d\030[\222\367\337\017\376\327\313,\251\030n\317\033\303\225\027\342\0212p\311\236\341V\211i\270.\304\034\333\256)\032M\333\332\206\001\013<\010\025e\257a\323d5\226\325\352u\350\232&\331\341\274\016\222\204+1\201i +S\\X\335T\366u\307\256\023a\203o\2235aNf'\337\027V7\263dS\310\360\036\021\200A*Lt\203|\004yi\311\361,A*\236\tn`\3551\3234n*\262\364\036\271\036\317J\276\353^\231_\004\332\\\253Z\006j\024F\366lg\007Y\243\002\034\333\333\256\342\206\311;\235p\344\331$\025\276\007\202\220\265.\262\377d\272N-Y1l\233\031\026\\\374\265\346\320QA\344?\252\336\024V\025\206r\262mR6\266\273\375qN+\221\001\027\004u\204\352qH\005\rsf\241\342p.sSo\036!U\207'\305)3\374M\276Q\244L\316<.\033.\332\327\262Ia\363y^a\257s\244\016\250\010Z\n\225\324\225=o\004\261@T\306q\352D\005\324\033\360\031\316\037XW0\327<\255z""\236p N<\201RN,\321\302\312\253\371\225\365\r\212{:\237_Z\232\313\027^\322\245\305W\213\033ta\216\316\257\346f\351\306\n\235\231\223\347\205\315y\272\262U\\\177Q\314?ON\257W\326_\226V\363\205\242\024F\220\347.\026L\273\314\314W\n\362\022\332\310\023\305}\372\321\221\2566\367\361{\016B\3502\337w\327y\205\256m\346\2277>8Bjt\263\224\237[*\256\3477\026\227\027\350\253\374\233\271\323\375\362Jw\263\271\374ry\345\365r\367\364\246X*\025\350j~\241HK\213o\213r\377\342MI]\224J\256\343i\256\347pJ\273\375-w\242ii\206\235\325l\024\035\306\005\027l\227\031\246\254\373\262m\233eO\337\346.\335.\227\233\016\257h\3243,wz*Yggh23\251@\243\013\315\2046501\034\246\3612\323v45z4Og\t\333\211\234\254A9\220aT-\262\214)\325m\r\217\275%nm\273U}/Ak\t\323\231V\014n\352\202\252\312\243\264\342Y\020\204.\302\222\221\351|\327\3208\255\243\215\271\343b\304l\327=ja~S\271Q\016\rA\317r\2428\234\245j\270\274&v\270cqsz\212\322\032:\t\246i\215\273L\215Elq\343\260\032\334ao\353\036\014H\001\307\246\334\3028\346R\244;\352\263\247\243^9\247\335'\306\241\374\301\200\232\214r\265]\212Ij\327j\334\302\247\307\256\273F\215\231\266\250\233\314EE\327\352v\275n\013a\310`\221\026\2573Gm\354:\2345<f&\226\021U709q\344\217\242\212\220\0133\251\372$\251+\265S\022\024\243\274\213U\317e\362-;S@w`x\010\333\352\t\260g\333\205\002\205\340pQu8j\311\002\224\226.[\256\307\001\314\272]\000\260\323y\205\001#a\374\nN\312r\261+\212\027\241z\001\2375\321\024\370\303d\253P\352r\001\226]\333\321\252.J\024\311\250J\240\311\241\233r\357!\373w\365\215\027\337g?j1\327\253\233\034\3239/\271\307Q\245\260e8.0<\275^\305'|\336\370 \266Zm\212\323\375\007\321\r\351\256G49'\242j\177*j\355X\370\237\302S_\215]\234\223\207\330E\244\273I\264{\2065=\205\207n\232Q_\332\277\031\335z\330\316\275\037\351\033\270\020\367\017\036\374\346\277\016\212\341\265p\243\235\216\207\256\266\032'\375WZ\277\004\227\302L\334\177\271\365\357\000\313@<t\315\317\307C\343\376\223 \025\334\014\277n_\356\254\305Cc\376\204\337\010\206\302\013\241\331\311H\221\202\017\345\341V""\356 \025\217\246\343\0337\343\313Wby\216\007.\274\277\33670t\340b/]\304\375#\255E\177+x\032>h/\035\246\342\376K\255\211\226\353\347\340\244\177,\032\233\010K\355\224r;\346g\374\247A\346dx\004\266N\020\254\262p1\036\271\356\263x\344F\220\212G.\307\243X\203[\321\235\177\034\256\035\356\034\247\343\331\247\235\306\373\013\211\277\351\026\213\207\322~:\276x\271U\362Sj\177\242.\272\346\273\251\301\244\3645\355\263\350\263o;\251\316\255\303\\<\202H\375\341\350\363\\'\335\311D}\343\321\370D41\333a\361i\034*\223\301\203\375\226\360\037\004s\001;w\223\351\236\220\177\324w#\2721\333\251\034.D\205\267\321\333w\022\372?\001c\360\240\201\027\321\325\273a>|\323\206\273\341h\370v\260\026\030a#\352\273\023~\337\271y\230\221x\216\264\236\371S>\r\347B)\323z\342\367\373y\177\255\007\314\223\304\224|\365)\250\373\004\\J\270na\035\375\002\234\247\301dJ\236'\303L8\035\262\350\236\204P;J\037eN\272Z\271?\324H\307\327\276\010\362A)L\205_\001\254\361N\276\263\366\376\322YR\037\370\031@\330\2250/\317\026\262\001\255\355\264\244\346Jk\303\037\203q\004\350\265\346$G\177\246\023\335\377\327Q\352h\374(\037\025\337E\357~\214~\244\021\3759\372\231\235(\365\002 \374#\365na\214#\320\265x\264\313\256\337\014/\2653\357\207d\355\237\322_\014\322\301\327aJ\031A1\370%h\245\343\221\233\270\276\003c,\352\303m\322.WGc\224\"X\333\225@\017HlgZ\036,\334\006\007#\343\376,\024\207F\375\001\1773\272%\313Hu\224\347/\004O\302+\355*J\347L;\352#\2702:\252c$\217?\205S\321\304\223\316z\247q\216\314\301\277\002\351\t:u\023\tJ\367\320\330ki(pT\371\227A#\3744\314\205+\235\\\247\320i\240\270.\216*R\245=\220\032L\007,\370o\233\265E'\323\311\001\225\213c\247:\321\335\305\343\364\361\235\343\265c&\013\364\007\277\032\230\355\211v\243s\241\243\037>\000\025}\237\311n\037<\020\255\007\262\361\343\241/\223\260p\035\247o\007[a.Ng\302\353a\343\343e\"\334j\347\316\226\273\341|;s\266<j\317w2(\020\304\361\225d\344J\313\0045\203a\003U\247\260\336\305\260Z\214&\376v\2309\234=\272~\3248NI\330s\t\250?\205\317\332\271\023I\313\250\377\211?""\031d\242\317\037\266\247\332\353\355\375N#z\366\303\361d\264^\222\020^\0141\003\320y\007W[\277J\304\206[S\255\265\026\367s\377\007`\345I\305";
+    PyObject *data = __Pyx_DecompressString(cstring, 2168, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (3593 bytes) */
-const char* const bytes = "..0f.1fAbout  GBGB+ RAM via Colibri (GB+ comfortable).GB+ comfortable); couldn't read this machine's memory.GB min (GB of local disk for the weights (BYO \342\200\224 not downloaded by this app).Has Multi-AI/multi_ai/hardware.pyx Needs ~Needs Needs about NoneNote that Cython is deliberately stricter than PEP-484 and rejects subclasses of builtin types. If you need to pass subclasses then set the 'annotation_typing' directive to False. RAM. RAM; Colibri needs  RAM. Expect slow replies. VRAM \342\200\224 comfortable fit. VRAM \342\200\224 it fits, but with little room for long conversations. VRAM \342\200\224 llama.cpp will keep most of it on the GPU but drop some layers to the CPU. Usable, not fast. VRAM, so it runs fully GPU-accelerated. VRAM, so most of it runs on the CPU. It technically works, at roughly a word every few seconds.?add_note against ; couldn't read this machine's memory.dict | None \342\200\224 far too big for this machine's  \342\200\224 fits in your float | None free of your , more than the ~ of VRAM (4-bit); no CUDA GPU detected here. of VRAM, more than this GPU's  of your  \342\200\224 too big for VRAM, so llama.cpp runs much of it on the CPU using your _COMFORT_CPU_FALLBACK_LIMIT_GB_FP16_TO_4BIT_GGUF_OVERHEAD_GGUF_WORKSPACE_GB_GPU_WORKSPACE_GBGlobalMemoryStatusEx_MemoryStatusEx__Pyx_PyDict_NextRef_QUANT_OVERHEAD_RAM_USABLERATING_MAYBERATING_NORATING_UNKNOWNRATING_YESSC_PAGE_SIZESC_PHYS_PAGESStructure__annotate__asyncio.coroutinesavailableboolbudget_gbbyrefc_uint32c_uint64_cached_specscline_in_tracebackctypescudadetect_specsdictdisk_gbdisk_note__doc__dwLengthdwMemoryLoad_fields_float__func___gbgetget_device_propertiesgpu_name_gpu_specsis_available_is_coroutineitemskernel32__main____metaclass__min_ram_gb__module____mro_entries__multi_ai.hardwarename__name__needneed_gbneeds_gbnot_recommendedoptimalosplatformpoppossible__prepare__props__qualname__ramram_gb_raterate_external_modelrate_model_rate_on_device_model_rate_server_modelratingreasonrecommende""drecommended_ram_gbrefreshreturnroundruns_on_device__set_name__setdefaultsize_gbsizeofspecsstatusstrsyssysconf__test__torchtotal_memory_total_ram_gb_total_ram_gb.<locals>._MemoryStatusExtupleullAvailExtendedVirtualullAvailPageFileullAvailPhysullAvailVirtualullTotalPageFileullTotalPhysullTotalVirtualunknownusablevaluevaluesvramvram_gbwin32windll\320\000\021\220\031\320\032+\2501\360\014\000\005\006\330\004\007\200~\220W\230E\240\024\240T\250\021\330\010\017\210q\340\004\016\210j\230\n\240!\330\004\r\210]\230!\330\004\005\330\010\024\220A\330\010\023\2205\230\001\230\031\240&\250\r\260Q\330\010\022\220%\220q\230\010\240\006\240l\260!\330\010\024\220C\220q\340\004\013\2101\200\001\330\020\021\330\030\031\330\r\016\330\004\013\2101\330\005\006\360\024\000\005\010\200t\2101\330\010\017\210q\330\004\014\210I\220V\2307\240*\250L\270\001\330\004\n\210%\210t\2201\220A\330\004\022\320\022%\240S\250\001\330\004\005\330\010\022\220!\2207\230!\330\013\014\330\r\016\340\004\007\200t\2101\330\010\t\330\014\026\220a\330\014\030\230\001\330\014\r\330\020\030\230\001\230\032\320#=\270Q\270k\310\021\33067\260q\360\006\000\005\010\200t\2103\210a\330\010\021\220\021\330\t\r\210S\220\001\330\010\021\220\021\340\010\021\220\021\330\004\005\330\010\022\220!\330\010\024\220A\330\010\t\330\014\022\220!\2203\220a\320\0270\260\001\260\032\2701\330\014\017\210q\220\013\320\0331\260\021\260!\320\000\023\320\023%\320%6\260a\330\004\007\200t\2101\330\010\017\210q\330\004\007\200x\210s\220*\230B\230a\330\010\017\210q\330\004\007\200x\210s\220!\330\010\017\210q\330\004\013\2101\320\000\030\320\0306\260f\270G\320CZ\320Z[\360\014\000\005\010\200t\2101\330\010\017\210q\330\004\014\210I\220V\2307\240*\250L\270\001\330\004\007\200q\330\010\017\320\017$\240A\240Y\250a\330\004\013\320\013\035\230Q\230i\240q\320\000#\240>\260\031\270!\360\026\000\005\014\2108\2202\220_\240B\240a\330\004\013\2105\220\004\220A\220Q\330\004\n\210%\210t\2201\220A\340\004\007\200q\330\010\013\2105\220\003\2205\230\002\230!\330""\014\r\330\020\032\230!\330\020\034\230E\240\021\240&\250\001\330\020\032\230(\240!\2403\240a\320'=\270Q\270c\300\021\300!\340\010\013\2105\220\003\2201\330\014\r\330\020\032\230!\330\020\034\230E\240\021\240&\250\001\330\020\021\330\024\034\230A\230S\240\001\240\037\260\001\260\023\260A\260Q\360\n\000\005\010\200t\2101\330\010\t\330\014\026\220a\330\014\030\230\005\230Q\230f\240A\330\014\026\220n\240A\240S\250\001\250\021\360\006\000\005\016\210T\220\022\2201\330\004\007\200u\210B\210a\330\010\t\330\014\026\220a\330\014\030\230\005\230Q\230f\240A\330\014\026\220n\240A\240S\250\001\320)@\300\001\300\023\300A\320E[\320[\\\320\\_\320_`\320`a\340\004\007\200u\210C\210q\330\010\t\330\014\026\220a\330\014\030\230\005\230Q\230f\240A\330\014\r\330\020\030\230\001\230\023\230A\230Q\330\020\022\220!\2203\220a\220y\240\n\250!\360\010\000\005\006\330\010\022\220!\330\010\024\220E\230\021\230&\240\001\330\010\t\330\014\024\220A\220S\230\001\230\021\330\014\031\230\021\230#\230Q\230a\320\000\024\220A\360\014\000\005\006\330\017\020\330\013\014\330\010\017\210v\220Q\330\004\005\330\010\013\2104\210u\220E\230\035\240a\330\014\023\2206\230\021\330\010\020\220\005\220U\320\0320\260\001\260\021\330\010\017\210u\220G\2305\240\016\250h\260a\330\013\014\330\010\017\210v\220Q\320\000 \240\016\250i\260q\340\004\013\2108\2202\220^\2402\320%5\260R\260q\330\004\013\2105\220\004\220A\220Q\330\004\007\200t\2101\330\010\t\330\014\026\220a\330\014\030\230\005\230Q\230f\240A\330\014\026\220n\240A\240S\250\001\250\021\340\004\r\210U\220!\2206\230\021\330\004\007\200w\210c\220\021\330\010\021\220\036\230q\240\003\2401\240O\2601\260C\260q\270\001\330\t\020\220\003\2201\330\010\t\330\014\032\230!\2303\230a\230\177\250a\250s\260!\2601\360\010\000\t\022\220\036\230q\240\003\2401\320$I\310\021\310#\310Q\310a\330\004\014\210J\220h\230l\250%\250q\260\006\260d\270*\300A\320\000\027\220q\340\004\007\200s\210*\220C\220q\330\010\036\230f\240A\330\014\027\220q\330\021\035\230V\2401\330\021!\240\026\240q\330""\021!\240\026\240q\330\021!\240\026\240q\330\021%\240V\2501\330\021%\240V\2501\330\021$\240F\250!\330\021$\240F\250!\330\021,\250F\260!\360\006\000\t\022\220\037\240\001\330\010\016\210l\230&\240\007\240q\250\001\330\010\013\2104\210v\220W\230I\320%:\270!\2706\300\026\300q\310\001\330\014\023\2201\330\010\017\210v\220^\2408\2501\340\004\005\330\010\020\220\002\220(\230!\320\033+\2502\250R\250x\260q\3208J\310(\320RS\330\014\030\230\t\240\021\340\010\017\210q\200\017\210z\230\021\330\004\013\2102\210Q\210e\2201";
+    #else /* compression: none (3635 bytes) */
+const char* const bytes = "..0f.1fAbout  GBGB+ RAM via Colibri (GB+ comfortable).GB+ comfortable); couldn't read this machine's memory.GB min (GB of local disk for the weights (downloaded and cached the same way as this app's other server-managed models).Has Multi-AI/multi_ai/hardware.pyx Needs ~Needs Needs about NoneNote that Cython is deliberately stricter than PEP-484 and rejects subclasses of builtin types. If you need to pass subclasses then set the 'annotation_typing' directive to False. RAM. RAM; Colibri needs  RAM. Expect slow replies. VRAM \342\200\224 comfortable fit. VRAM \342\200\224 it fits, but with little room for long conversations. VRAM \342\200\224 llama.cpp will keep most of it on the GPU but drop some layers to the CPU. Usable, not fast. VRAM, so it runs fully GPU-accelerated. VRAM, so most of it runs on the CPU. It technically works, at roughly a word every few seconds.?add_note against ; couldn't read this machine's memory.dict | None \342\200\224 far too big for this machine's  \342\200\224 fits in your float | None free of your , more than the ~ of VRAM (4-bit); no CUDA GPU detected here. of VRAM, more than this GPU's  of your  \342\200\224 too big for VRAM, so llama.cpp runs much of it on the CPU using your _COMFORT_CPU_FALLBACK_LIMIT_GB_FP16_TO_4BIT_GGUF_OVERHEAD_GGUF_WORKSPACE_GB_GPU_WORKSPACE_GBGlobalMemoryStatusEx_MemoryStatusEx__Pyx_PyDict_NextRef_QUANT_OVERHEAD_RAM_USABLERATING_MAYBERATING_NORATING_UNKNOWNRATING_YESSC_PAGE_SIZESC_PHYS_PAGESStructure__annotate__asyncio.coroutinesavailableboolbudget_gbbyrefc_uint32c_uint64_cached_specscline_in_tracebackctypescudadetect_specsdictdisk_gbdisk_note__doc__dwLengthdwMemoryLoad_fields_float__func___gbgetget_device_propertiesgpu_name_gpu_specsis_available_is_coroutineitemskernel32__main____metaclass__min_ram_gb__module____mro_entries__multi_ai.hardwarename__name__needneed_gbneeds_gbnot_recommendedoptimalosplatformpoppossible__prepare__props__qualname__ramram_gb_raterate_external_modelrate_model_rate_on_device_model_rate_s""erver_modelratingreasonrecommendedrecommended_ram_gbrefreshreturnroundruns_on_device__set_name__setdefaultsize_gbsizeofspecsstatusstrsyssysconf__test__torchtotal_memory_total_ram_gb_total_ram_gb.<locals>._MemoryStatusExtupleullAvailExtendedVirtualullAvailPageFileullAvailPhysullAvailVirtualullTotalPageFileullTotalPhysullTotalVirtualunknownusablevaluevaluesvramvram_gbwin32windll\320\000\021\220\031\320\032+\2501\360\014\000\005\006\330\004\007\200~\220W\230E\240\024\240T\250\021\330\010\017\210q\340\004\016\210j\230\n\240!\330\004\r\210]\230!\330\004\005\330\010\024\220A\330\010\023\2205\230\001\230\031\240&\250\r\260Q\330\010\022\220%\220q\230\010\240\006\240l\260!\330\010\024\220C\220q\340\004\013\2101\200\001\330\020\021\330\030\031\330\r\016\330\004\013\2101\330\005\006\360\026\000\005\010\200t\2101\330\010\017\210q\330\004\014\210I\220V\2307\240*\250L\270\001\330\004\n\210%\210t\2201\220A\330\004\022\320\022%\240S\250\001\330\004\005\330\010\022\220!\2207\230!\340\013\014\330\r\016\340\004\007\200t\2101\330\010\t\330\014\026\220a\330\014\030\230\001\330\014\r\330\020\030\230\001\230\032\320#=\270Q\270k\310\021\33067\260q\360\006\000\005\010\200t\2103\210a\330\010\021\220\021\330\t\r\210S\220\001\330\010\021\220\021\340\010\021\220\021\330\004\005\330\010\022\220!\330\010\024\220A\330\010\t\330\014\022\220!\2203\220a\320\0270\260\001\260\032\2701\330\014\017\210q\220\013\320\0331\260\021\260!\320\000\023\320\023%\320%6\260a\330\004\007\200t\2101\330\010\017\210q\330\004\007\200x\210s\220*\230B\230a\330\010\017\210q\330\004\007\200x\210s\220!\330\010\017\210q\330\004\013\2101\320\000\030\320\0306\260f\270G\320CZ\320Z[\360\014\000\005\010\200t\2101\330\010\017\210q\330\004\014\210I\220V\2307\240*\250L\270\001\330\004\007\200q\330\010\017\320\017$\240A\240Y\250a\330\004\013\320\013\035\230Q\230i\240q\320\000#\240>\260\031\270!\360\026\000\005\014\2108\2202\220_\240B\240a\330\004\013\2105\220\004\220A\220Q\330\004\n\210%\210t\2201\220A\340\004\007\200q\330\010\013""\2105\220\003\2205\230\002\230!\330\014\r\330\020\032\230!\330\020\034\230E\240\021\240&\250\001\330\020\032\230(\240!\2403\240a\320'=\270Q\270c\300\021\300!\340\010\013\2105\220\003\2201\330\014\r\330\020\032\230!\330\020\034\230E\240\021\240&\250\001\330\020\021\330\024\034\230A\230S\240\001\240\037\260\001\260\023\260A\260Q\360\n\000\005\010\200t\2101\330\010\t\330\014\026\220a\330\014\030\230\005\230Q\230f\240A\330\014\026\220n\240A\240S\250\001\250\021\360\006\000\005\016\210T\220\022\2201\330\004\007\200u\210B\210a\330\010\t\330\014\026\220a\330\014\030\230\005\230Q\230f\240A\330\014\026\220n\240A\240S\250\001\320)@\300\001\300\023\300A\320E[\320[\\\320\\_\320_`\320`a\340\004\007\200u\210C\210q\330\010\t\330\014\026\220a\330\014\030\230\005\230Q\230f\240A\330\014\r\330\020\030\230\001\230\023\230A\230Q\330\020\022\220!\2203\220a\220y\240\n\250!\360\010\000\005\006\330\010\022\220!\330\010\024\220E\230\021\230&\240\001\330\010\t\330\014\024\220A\220S\230\001\230\021\330\014\031\230\021\230#\230Q\230a\320\000\024\220A\360\014\000\005\006\330\017\020\330\013\014\330\010\017\210v\220Q\330\004\005\330\010\013\2104\210u\220E\230\035\240a\330\014\023\2206\230\021\330\010\020\220\005\220U\320\0320\260\001\260\021\330\010\017\210u\220G\2305\240\016\250h\260a\330\013\014\330\010\017\210v\220Q\320\000 \240\016\250i\260q\340\004\013\2108\2202\220^\2402\320%5\260R\260q\330\004\013\2105\220\004\220A\220Q\330\004\007\200t\2101\330\010\t\330\014\026\220a\330\014\030\230\005\230Q\230f\240A\330\014\026\220n\240A\240S\250\001\250\021\340\004\r\210U\220!\2206\230\021\330\004\007\200w\210c\220\021\330\010\021\220\036\230q\240\003\2401\240O\2601\260C\260q\270\001\330\t\020\220\003\2201\330\010\t\330\014\032\230!\2303\230a\230\177\250a\250s\260!\2601\360\010\000\t\022\220\036\230q\240\003\2401\320$I\310\021\310#\310Q\310a\330\004\014\210J\220h\230l\250%\250q\260\006\260d\270*\300A\320\000\027\220q\340\004\007\200s\210*\220C\220q\330\010\036\230f\240A\330\014\027\220q\330\021\035""\230V\2401\330\021!\240\026\240q\330\021!\240\026\240q\330\021!\240\026\240q\330\021%\240V\2501\330\021%\240V\2501\330\021$\240F\250!\330\021$\240F\250!\330\021,\250F\260!\360\006\000\t\022\220\037\240\001\330\010\016\210l\230&\240\007\240q\250\001\330\010\013\2104\210v\220W\230I\320%:\270!\2706\300\026\300q\310\001\330\014\023\2201\330\010\017\210v\220^\2408\2501\340\004\005\330\010\020\220\002\220(\230!\320\033+\2502\250R\250x\260q\3208J\310(\320RS\330\014\030\230\t\240\021\340\010\017\210q\200\017\210z\230\021\330\004\013\2102\210Q\210e\2201";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
@@ -7947,47 +7947,47 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
   PyObject* tuple_dedup_map = PyDict_New();
   if (unlikely(!tuple_dedup_map)) return -1;
   {
-    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 75};
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 78};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_MemoryStatusEx, __pyx_mstate->__pyx_n_u_status};
     __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_Multi_AI_multi_ai_hardware_pyx, __pyx_mstate->__pyx_n_u_total_ram_gb, __pyx_mstate->__pyx_kp_b_iso88591_q_s_Cq_fA_q_V1_q_q_q_V1_V1_F_F, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 104};
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 107};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_torch, __pyx_mstate->__pyx_n_u_props};
     __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_Multi_AI_multi_ai_hardware_pyx, __pyx_mstate->__pyx_n_u_gpu_specs, __pyx_mstate->__pyx_kp_b_iso88591_A_vQ_4uE_a_6_U_0_uG5_ha_vQ, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 123};
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 126};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_refresh, __pyx_mstate->__pyx_n_u_gpu_name, __pyx_mstate->__pyx_n_u_vram_gb, __pyx_mstate->__pyx_n_u_ram_gb};
     __pyx_mstate_global->__pyx_codeobj_tab[2] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_Multi_AI_multi_ai_hardware_pyx, __pyx_mstate->__pyx_n_u_detect_specs, __pyx_mstate->__pyx_kp_b_iso88591_1_WE_T_q_j_A_5_Q_q_l_Cq_1, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[2])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 144};
+    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 147};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_need_gb, __pyx_mstate->__pyx_n_u_budget_gb};
     __pyx_mstate_global->__pyx_codeobj_tab[3] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_Multi_AI_multi_ai_hardware_pyx, __pyx_mstate->__pyx_n_u_rate, __pyx_mstate->__pyx_kp_b_iso88591_6a_t1_q_xs_Ba_q_xs_q_1, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[3])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 154};
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 157};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_value};
     __pyx_mstate_global->__pyx_codeobj_tab[4] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_Multi_AI_multi_ai_hardware_pyx, __pyx_mstate->__pyx_n_u_gb, __pyx_mstate->__pyx_kp_b_iso88591_z_2Qe1, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[4])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 6, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 158};
+    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 6, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 161};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_size_gb, __pyx_mstate->__pyx_n_u_specs, __pyx_mstate->__pyx_n_u_need, __pyx_mstate->__pyx_n_u_vram, __pyx_mstate->__pyx_n_u_rating, __pyx_mstate->__pyx_n_u_reason};
     __pyx_mstate_global->__pyx_codeobj_tab[5] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_Multi_AI_multi_ai_hardware_pyx, __pyx_mstate->__pyx_n_u_rate_server_model, __pyx_mstate->__pyx_kp_b_iso88591_iq_82_2_5Rq_5_AQ_t1_a_QfA_nAS_U, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[5])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 6, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 181};
+    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 6, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 184};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_size_gb, __pyx_mstate->__pyx_n_u_specs, __pyx_mstate->__pyx_n_u_need, __pyx_mstate->__pyx_n_u_vram, __pyx_mstate->__pyx_n_u_ram, __pyx_mstate->__pyx_n_u_usable};
     __pyx_mstate_global->__pyx_codeobj_tab[6] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_Multi_AI_multi_ai_hardware_pyx, __pyx_mstate->__pyx_n_u_rate_on_device_model, __pyx_mstate->__pyx_kp_b_iso88591_82_Ba_5_AQ_t1A_q_5_5_E_3a_Qc_5, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[6])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {3, 0, 0, 3, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 247};
+    const __Pyx_PyCode_New_function_description descr = {3, 0, 0, 3, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 250};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_size_gb, __pyx_mstate->__pyx_n_u_runs_on_device, __pyx_mstate->__pyx_n_u_specs};
     __pyx_mstate_global->__pyx_codeobj_tab[7] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_Multi_AI_multi_ai_hardware_pyx, __pyx_mstate->__pyx_n_u_rate_model, __pyx_mstate->__pyx_kp_b_iso88591_6fGCZZ_t1_q_IV7_L_q_AYa_Qiq, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[7])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 8, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 261};
+    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 8, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 264};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_min_ram_gb, __pyx_mstate->__pyx_n_u_recommended_ram_gb, __pyx_mstate->__pyx_n_u_disk_gb, __pyx_mstate->__pyx_n_u_specs, __pyx_mstate->__pyx_n_u_ram, __pyx_mstate->__pyx_n_u_recommended, __pyx_mstate->__pyx_n_u_disk_note, __pyx_mstate->__pyx_n_u_rating};
     __pyx_mstate_global->__pyx_codeobj_tab[8] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_Multi_AI_multi_ai_hardware_pyx, __pyx_mstate->__pyx_n_u_rate_external_model, __pyx_mstate->__pyx_kp_b_iso88591_1_t1_q_IV7_L_t1A_S_7_t1_a_Qk_67, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[8])) goto bad;
   }

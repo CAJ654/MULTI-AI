@@ -9,10 +9,13 @@ Each models/<id>.pyx declares how it runs:
                     (4-bit quantized on GPU so 7B+ models fit in laptop VRAM)
   _GGUF_SOURCE    — llama.cpp GGUF source; the Flutter app runs these
                     on-device via llamadart, the server never loads them
-  _EXTERNAL_ENDPOINT — a BYO server the user runs themselves (currently only
-                    "colibri"); this server proxies chat requests to it over
-                    HTTP on _EXTERNAL_ENDPOINT_PORT rather than loading or
-                    downloading anything itself
+  _EXTERNAL_ENDPOINT — a separate engine (currently only "colibri") this
+                    server proxies chat requests to over HTTP on
+                    _EXTERNAL_ENDPOINT_PORT, rather than loading the weights
+                    itself via transformers. When the model also declares
+                    _COLIBRI_REPO_ID, this server downloads those weights and
+                    spawns/supervises the engine process too — see
+                    _ensure_colibri_running.
   _GGUF_MMPROJ_SOURCE — companion multimodal-projector GGUF for a vision
                     GGUF. llama.cpp encodes images through this separate
                     file (libmtmd), so a GGUF entry without one is text-only
@@ -36,12 +39,17 @@ from __future__ import annotations
 
 import base64
 import binascii
+import collections
 import importlib
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 import tempfile
+import threading
+import time
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -125,6 +133,7 @@ def _list_models() -> list[dict]:
         gguf = getattr(module, "_GGUF_SOURCE", None)
         mmproj = getattr(module, "_GGUF_MMPROJ_SOURCE", None)
         external_endpoint = getattr(module, "_EXTERNAL_ENDPOINT", None)
+        colibri_repo_id = getattr(module, "_COLIBRI_REPO_ID", None)
         available = bool(repo_id or gguf or external_endpoint)
         entry = {
             "id": stem,
@@ -141,11 +150,17 @@ def _list_models() -> list[dict]:
         if mmproj:
             entry["mmproj"] = mmproj
         if external_endpoint:
-            # Distinguishes a BYO proxy target from a _REPO_ID model: neither
-            # has a `gguf` field, but only the latter has server-managed
-            # weights this app can download/cache/delete. Without this the
-            # app can't tell the two apart and wrongly offers a download.
+            # Distinguishes a BYO proxy target from a plain server model.
+            # Chat still proxies to this port either way — see
+            # _COLIBRI_REPO_ID/has_server_weights below for whether this app
+            # also manages the weights it proxies to.
             entry["external_endpoint"] = external_endpoint
+        # True for a _REPO_ID model (transformers-managed) or a Colibri model
+        # with a _COLIBRI_REPO_ID (this app downloads the weights, then spawns
+        # `coli serve` itself) — either way the cache/download/delete routes
+        # work for this id. False for a plain GGUF (on-device, app-managed)
+        # or a stub with neither.
+        entry["has_server_weights"] = bool(repo_id or colibri_repo_id)
         # Informational only (shown in the app's Models tab) — absent for any
         # model file that hasn't been annotated yet, never required.
         if info.get("params"):
@@ -720,16 +735,23 @@ def _hf_generate(
 
 
 def _resolve_server_model(model_id: str):
-    """Return (repo_id, None) or (None, (message, status)) for a model_id
-    that should have server-managed weights (i.e. declares _REPO_ID)."""
+    """Return (repo_id, kind, None) or (None, None, (message, status)) for a
+    model_id that has server-managed weights: kind is "transformers" for a
+    _REPO_ID model (loaded via transformers) or "colibri" for a
+    _COLIBRI_REPO_ID model (fetched to disk only, then handed to a spawned
+    `coli serve`) — the two need different download actions, see
+    _handle_model_route."""
     try:
         module = _load_model_module(model_id)
     except Exception:
-        return None, ("unknown model", 404)
+        return None, None, ("unknown model", 404)
     repo_id = getattr(module, "_REPO_ID", None)
-    if not repo_id:
-        return None, ("model has no server-side weights to manage", 400)
-    return repo_id, None
+    if repo_id:
+        return repo_id, "transformers", None
+    colibri_repo_id = getattr(module, "_COLIBRI_REPO_ID", None)
+    if colibri_repo_id:
+        return colibri_repo_id, "colibri", None
+    return None, None, ("model has no server-side weights to manage", 400)
 
 
 # A from_pretrained() call that fails partway (gated repo denied, network
@@ -770,6 +792,24 @@ def _download_hf_weights(repo_id: str) -> dict:
     return _model_cache_status(repo_id)
 
 
+def _download_colibri_weights(repo_id: str) -> dict:
+    """Fetch a Colibri model's weights to the local HF cache without loading
+    them — unlike _download_hf_weights, this must never route through
+    transformers' from_pretrained: these repos are 4GB-1.6TB and Colibri (not
+    this process) is what ever loads them into memory, via the spawned
+    `coli serve` in _ensure_colibri_running."""
+    try:
+        from huggingface_hub import snapshot_download
+    except ImportError as exc:
+        raise RuntimeError(
+            "huggingface_hub isn't installed — run `pip install huggingface_hub` "
+            "(it's small; Colibri models don't need the full torch/transformers "
+            "chat-time stack)."
+        ) from exc
+    snapshot_download(repo_id)
+    return _model_cache_status(repo_id)
+
+
 def _delete_hf_weights(repo_id: str) -> dict:
     _hf_model_cache.pop(repo_id, None)
     cache_info, repo = _hf_cache_repo(repo_id)
@@ -779,12 +819,144 @@ def _delete_hf_weights(repo_id: str) -> dict:
     return _model_cache_status(repo_id)
 
 
+_colibri_lock = threading.Lock()
+_colibri_process: subprocess.Popen | None = None
+_colibri_model_id: str | None = None
+_colibri_log: collections.deque = collections.deque(maxlen=200)
+
+# Large models can take a while just to start streaming experts from disk —
+# generous on purpose. Polled, not slept-through: a healthy process returns
+# from _ensure_colibri_running as soon as /health answers, not after a fixed
+# delay.
+_COLIBRI_START_TIMEOUT_S = 240.0
+_COLIBRI_POLL_INTERVAL_S = 1.0
+_COLIBRI_STOP_TIMEOUT_S = 5.0
+
+
+def _colibri_health_ok(port: int) -> bool:
+    try:
+        with urllib.request.urlopen(f"http://localhost:{port}/health", timeout=1) as resp:
+            return resp.status == 200
+    except Exception:
+        return False
+
+
+def _drain_colibri_output(stream) -> None:
+    # Undrained output blocks the child mid-write once its pipe buffer fills
+    # — same reasoning as _ResilientStream above, mirrored for the process
+    # this server spawns rather than the one it's spawned by.
+    try:
+        for line in iter(stream.readline, ""):
+            if not line:
+                break
+            _colibri_log.append(line.rstrip("\n"))
+    except Exception:
+        pass
+
+
+def _stop_colibri_process() -> None:
+    global _colibri_process, _colibri_model_id
+    proc = _colibri_process
+    _colibri_process = None
+    _colibri_model_id = None
+    if proc is None or proc.poll() is not None:
+        return
+    proc.terminate()
+    try:
+        proc.wait(timeout=_COLIBRI_STOP_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait(timeout=_COLIBRI_STOP_TIMEOUT_S)
+
+
+def _resolve_colibri_weights_path(repo_id: str) -> str:
+    from huggingface_hub import snapshot_download
+    from huggingface_hub.utils import LocalEntryNotFoundError
+
+    # local_files_only: chatting must never silently kick off a
+    # multi-hundred-GB download — that's the explicit Download button on the
+    # model's page (_download_colibri_weights), not a side effect of /api/chat.
+    try:
+        return snapshot_download(repo_id, local_files_only=True)
+    except LocalEntryNotFoundError as exc:
+        raise RuntimeError(
+            f"weights for {repo_id!r} aren't downloaded yet — use this model's "
+            "Download button first (these are large; chatting never triggers "
+            "the download itself)."
+        ) from exc
+
+
+def _ensure_colibri_running(model_id: str, port: int) -> None:
+    """Start `coli serve` for model_id if it isn't already serving it,
+    blocking until /health answers or a clear error can be raised. Only one
+    Colibri process runs at a time — all five families share port 8010 (see
+    the README) — so switching to a different Colibri model here stops
+    whatever was running first."""
+    global _colibri_process, _colibri_model_id
+
+    with _colibri_lock:
+        if (
+            _colibri_process is not None
+            and _colibri_process.poll() is None
+            and _colibri_model_id == model_id
+            and _colibri_health_ok(port)
+        ):
+            return
+
+        if _colibri_process is not None and _colibri_process.poll() is None:
+            _stop_colibri_process()
+
+        module = _load_model_module(model_id)
+        repo_id = getattr(module, "_COLIBRI_REPO_ID", None)
+        if not repo_id:
+            raise RuntimeError(f"[{model_id}] has no _COLIBRI_REPO_ID configured.")
+        weights_path = _resolve_colibri_weights_path(repo_id)
+
+        coli_bin = shutil.which("coli")
+        if not coli_bin:
+            raise RuntimeError(
+                "the `coli` engine isn't installed (or isn't on PATH) — install it once "
+                "from https://github.com/JustVugg/colibri/releases, then try again."
+            )
+
+        _colibri_log.clear()
+        proc = subprocess.Popen(
+            [coli_bin, "serve", "--model", weights_path, "--port", str(port)],
+            env={**os.environ, "COLI_MODEL": weights_path},
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        threading.Thread(target=_drain_colibri_output, args=(proc.stdout,), daemon=True).start()
+
+        deadline = time.monotonic() + _COLIBRI_START_TIMEOUT_S
+        while time.monotonic() < deadline:
+            if proc.poll() is not None:
+                log_tail = "\n".join(_colibri_log)
+                raise RuntimeError(
+                    f"`coli serve` exited during startup (code {proc.returncode}).\n{log_tail}"
+                )
+            if _colibri_health_ok(port):
+                _colibri_process = proc
+                _colibri_model_id = model_id
+                return
+            time.sleep(_COLIBRI_POLL_INTERVAL_S)
+
+        proc.kill()
+        log_tail = "\n".join(_colibri_log)
+        raise RuntimeError(
+            f"`coli serve` didn't become healthy within {_COLIBRI_START_TIMEOUT_S:.0f}s.\n{log_tail}"
+        )
+
+
 def _colibri_generate(port: int, model_id: str, message: str, history: list | None = None) -> str:
-    """Proxy a chat request to a user-run Colibri instance's OpenAI-compatible
-    /v1/chat/completions endpoint. Colibri is BYO — this app never starts,
-    downloads for, or supervises it — so an unreachable port is an expected,
-    not exceptional, outcome and must produce a clear message rather than a
-    hang or a stack trace."""
+    """Proxy a chat request to this server's own supervised Colibri instance
+    (see _ensure_colibri_running, called before this from _chat_reply). A
+    connection failure here is now unexpected — _ensure_colibri_running
+    already confirmed /health — but is still handled without a stack trace,
+    since the process could in principle die between that check and this
+    request."""
     messages = _coerce_history(history) + [{"role": "user", "content": message}]
     body = json.dumps({"model": "colibri", "messages": messages}).encode("utf-8")
     req = urllib.request.Request(
@@ -798,10 +970,7 @@ def _colibri_generate(port: int, model_id: str, message: str, history: list | No
             payload = json.load(resp)
         return payload["choices"][0]["message"]["content"]
     except (urllib.error.URLError, ConnectionError, TimeoutError, OSError) as exc:
-        return (
-            f"[{model_id}] no Colibri server responding on port {port} — start it with "
-            f"`coli serve --model <path> --port {port}` first. ({exc})"
-        )
+        return f"[{model_id}] the Colibri engine on port {port} stopped responding. ({exc})"
     except (KeyError, IndexError, json.JSONDecodeError) as exc:
         return f"[{model_id}] Colibri returned an unexpected response: {exc}"
 
@@ -849,6 +1018,11 @@ def _chat_reply(
             "update the app if you're seeing this message."
         )
     if external_endpoint and external_port:
+        if getattr(module, "_COLIBRI_REPO_ID", None):
+            try:
+                _ensure_colibri_running(model_id, external_port)
+            except Exception as exc:
+                return f"[{model_id}] couldn't start Colibri: {exc}"
         return _colibri_generate(external_port, model_id, message, history=history)
     if unsupported_reason:
         return f"[{model_id}] isn't wired up: {unsupported_reason}."
@@ -910,7 +1084,9 @@ class _Handler(BaseHTTPRequestHandler):
                 reply = f"[{model}] unexpected error: {exc}"
             self._send_json(200, {"reply": reply})
         elif download_match:
-            self._handle_model_route(download_match.group(1), _download_hf_weights)
+            self._handle_model_route(
+                download_match.group(1), _download_hf_weights, _download_colibri_weights
+            )
         else:
             self._send_json(404, {"error": "not found"})
 
@@ -921,12 +1097,17 @@ class _Handler(BaseHTTPRequestHandler):
         else:
             self._send_json(404, {"error": "not found"})
 
-    def _handle_model_route(self, model_id: str, action) -> None:
-        repo_id, error = _resolve_server_model(model_id)
+    def _handle_model_route(self, model_id: str, on_transformers, on_colibri=None) -> None:
+        """Resolve model_id to server-managed weights and run the action for
+        its kind. on_colibri defaults to on_transformers for actions (cache
+        status, delete) that are already format-agnostic — see the three
+        call sites below."""
+        repo_id, kind, error = _resolve_server_model(model_id)
         if error:
             message, status = error
             self._send_json(status, {"error": message})
             return
+        action = on_transformers if kind == "transformers" else (on_colibri or on_transformers)
         try:
             self._send_json(200, action(repo_id))
         except Exception as exc:

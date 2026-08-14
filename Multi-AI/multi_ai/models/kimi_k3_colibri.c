@@ -2183,7 +2183,7 @@ int __pyx_module_is_main_multi_ai__models__kimi_k3_colibri = 0;
 /* #### Code section: global_var ### */
 static PyObject *__pyx_builtin_print;
 /* #### Code section: string_decls ### */
-static const char __pyx_k_Kimi_K3_Moonshot_AI_s_2_8T_MoE_m[] = "Kimi K3: Moonshot AI's 2.8T MoE model, run via a user-run Colibri server.\n\nSame shape as glm_5_2_colibri.pyx \342\200\224 see that file for why this needs a third\ndispatch path instead of _REPO_ID/_GGUF_SOURCE. The largest of Colibri's\nsupported families by a wide margin: ~1.6TB of weights on disk, so this is\nsquarely an enthusiast/workstation entry, not something most users will run.\n";
+static const char __pyx_k_Kimi_K3_Moonshot_AI_s_2_8T_MoE_m[] = "Kimi K3: Moonshot AI's 2.8T MoE model, run via a Colibri server this app\nstarts and supervises itself.\n\nSame shape as glm_5_2_colibri.pyx \342\200\224 see that file for why this needs a third\ndispatch path instead of _REPO_ID/_GGUF_SOURCE. Unlike GLM-5.2/Inkling, Kimi\nK3 needs no int4 conversion \342\200\224 its QAT-trained MXFP4 experts stream straight\nfrom the official checkpoint, so _COLIBRI_REPO_ID points directly at\nmoonshotai/Kimi-K3. The largest of Colibri's supported families by a wide\nmargin: ~1.6TB of weights on disk, so this is squarely an\nenthusiast/workstation entry, not something most users will run.\n";
 /* #### Code section: decls ### */
 static PyObject *__pyx_pf_8multi_ai_6models_15kimi_k3_colibri_get_info(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
 /* #### Code section: late_includes ### */
@@ -2209,7 +2209,7 @@ typedef struct {
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_items;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_values;
   PyObject *__pyx_codeobj_tab[1];
-  PyObject *__pyx_string_tab[43];
+  PyObject *__pyx_string_tab[45];
   PyObject *__pyx_number_tab[4];
 /* #### Code section: module_state_contents ### */
 /* CommonTypesMetaclass.module_state_decls */
@@ -2259,41 +2259,43 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_kp_u_Moonshot_s_flagship_2_8T_Mixture __pyx_string_tab[5]
 #define __pyx_kp_u_Multi_AI_multi_ai_models_kimi_k3 __pyx_string_tab[6]
 #define __pyx_kp_u_Runs_via_Colibri_on_this_edge_se __pyx_string_tab[7]
-#define __pyx_n_u_EXTERNAL_ENDPOINT __pyx_string_tab[8]
-#define __pyx_n_u_EXTERNAL_ENDPOINT_PORT __pyx_string_tab[9]
-#define __pyx_n_u_EXTERNAL_MIN_RAM_GB __pyx_string_tab[10]
-#define __pyx_n_u_EXTERNAL_RECOMMENDED_RAM_GB __pyx_string_tab[11]
-#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[12]
-#define __pyx_n_u_Text __pyx_string_tab[13]
-#define __pyx_n_u_annotate __pyx_string_tab[14]
-#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[15]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[16]
-#define __pyx_n_u_colibri __pyx_string_tab[17]
-#define __pyx_n_u_context_tokens __pyx_string_tab[18]
-#define __pyx_n_u_func __pyx_string_tab[19]
-#define __pyx_n_u_get_info __pyx_string_tab[20]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[21]
-#define __pyx_n_u_items __pyx_string_tab[22]
-#define __pyx_n_u_license __pyx_string_tab[23]
-#define __pyx_n_u_main __pyx_string_tab[24]
-#define __pyx_n_u_modality __pyx_string_tab[25]
-#define __pyx_n_u_module __pyx_string_tab[26]
-#define __pyx_n_u_multi_ai_models_kimi_k3_colibri __pyx_string_tab[27]
-#define __pyx_n_u_name __pyx_string_tab[28]
-#define __pyx_n_u_name_2 __pyx_string_tab[29]
-#define __pyx_n_u_params __pyx_string_tab[30]
-#define __pyx_n_u_print __pyx_string_tab[31]
-#define __pyx_n_u_qualname __pyx_string_tab[32]
-#define __pyx_n_u_repo_id __pyx_string_tab[33]
-#define __pyx_n_u_set_name __pyx_string_tab[34]
-#define __pyx_n_u_setdefault __pyx_string_tab[35]
-#define __pyx_n_u_size_gb __pyx_string_tab[36]
-#define __pyx_n_u_speed_profile __pyx_string_tab[37]
-#define __pyx_n_u_strengths __pyx_string_tab[38]
-#define __pyx_n_u_test __pyx_string_tab[39]
-#define __pyx_n_u_values __pyx_string_tab[40]
-#define __pyx_n_u_version __pyx_string_tab[41]
-#define __pyx_kp_b_iso88591_1_1_1_A_1_Q __pyx_string_tab[42]
+#define __pyx_kp_u_moonshotai_Kimi_K3 __pyx_string_tab[8]
+#define __pyx_n_u_COLIBRI_REPO_ID __pyx_string_tab[9]
+#define __pyx_n_u_EXTERNAL_ENDPOINT __pyx_string_tab[10]
+#define __pyx_n_u_EXTERNAL_ENDPOINT_PORT __pyx_string_tab[11]
+#define __pyx_n_u_EXTERNAL_MIN_RAM_GB __pyx_string_tab[12]
+#define __pyx_n_u_EXTERNAL_RECOMMENDED_RAM_GB __pyx_string_tab[13]
+#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[14]
+#define __pyx_n_u_Text __pyx_string_tab[15]
+#define __pyx_n_u_annotate __pyx_string_tab[16]
+#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[17]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[18]
+#define __pyx_n_u_colibri __pyx_string_tab[19]
+#define __pyx_n_u_context_tokens __pyx_string_tab[20]
+#define __pyx_n_u_func __pyx_string_tab[21]
+#define __pyx_n_u_get_info __pyx_string_tab[22]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[23]
+#define __pyx_n_u_items __pyx_string_tab[24]
+#define __pyx_n_u_license __pyx_string_tab[25]
+#define __pyx_n_u_main __pyx_string_tab[26]
+#define __pyx_n_u_modality __pyx_string_tab[27]
+#define __pyx_n_u_module __pyx_string_tab[28]
+#define __pyx_n_u_multi_ai_models_kimi_k3_colibri __pyx_string_tab[29]
+#define __pyx_n_u_name __pyx_string_tab[30]
+#define __pyx_n_u_name_2 __pyx_string_tab[31]
+#define __pyx_n_u_params __pyx_string_tab[32]
+#define __pyx_n_u_print __pyx_string_tab[33]
+#define __pyx_n_u_qualname __pyx_string_tab[34]
+#define __pyx_n_u_repo_id __pyx_string_tab[35]
+#define __pyx_n_u_set_name __pyx_string_tab[36]
+#define __pyx_n_u_setdefault __pyx_string_tab[37]
+#define __pyx_n_u_size_gb __pyx_string_tab[38]
+#define __pyx_n_u_speed_profile __pyx_string_tab[39]
+#define __pyx_n_u_strengths __pyx_string_tab[40]
+#define __pyx_n_u_test __pyx_string_tab[41]
+#define __pyx_n_u_values __pyx_string_tab[42]
+#define __pyx_n_u_version __pyx_string_tab[43]
+#define __pyx_kp_b_iso88591_1_1_1_A_1_Q __pyx_string_tab[44]
 #define __pyx_float_32_0 __pyx_number_tab[0]
 #define __pyx_int_1600 __pyx_number_tab[1]
 #define __pyx_int_8010 __pyx_number_tab[2]
@@ -2313,7 +2315,7 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   __Pyx_State_RemoveModule(NULL);
   #endif
   for (int i=0; i<1; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<43; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<45; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
   for (int i=0; i<4; ++i) { Py_CLEAR(clear_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_clear_contents ### */
 /* CommonTypesMetaclass.module_state_clear */
@@ -2338,7 +2340,7 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_bytes);
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_unicode);
   for (int i=0; i<1; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<43; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<45; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
   for (int i=0; i<4; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_traverse_contents ### */
 /* CommonTypesMetaclass.module_state_traverse */
@@ -2353,7 +2355,7 @@ return 0;
 #endif
 /* #### Code section: module_code ### */
 
-/* "multi_ai/models/kimi_k3_colibri.pyx":16
+/* "multi_ai/models/kimi_k3_colibri.pyx":21
  * 
  * 
  * def get_info():             # <<<<<<<<<<<<<<
@@ -2386,7 +2388,7 @@ static PyObject *__pyx_pf_8multi_ai_6models_15kimi_k3_colibri_get_info(CYTHON_UN
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("get_info", 0);
 
-  /* "multi_ai/models/kimi_k3_colibri.pyx":17
+  /* "multi_ai/models/kimi_k3_colibri.pyx":22
  * 
  * def get_info():
  *     return {             # <<<<<<<<<<<<<<
@@ -2395,38 +2397,38 @@ static PyObject *__pyx_pf_8multi_ai_6models_15kimi_k3_colibri_get_info(CYTHON_UN
 */
   __Pyx_XDECREF(__pyx_r);
 
-  /* "multi_ai/models/kimi_k3_colibri.pyx":18
+  /* "multi_ai/models/kimi_k3_colibri.pyx":23
  * def get_info():
  *     return {
  *         "name": "Kimi K3 (via Colibri)",             # <<<<<<<<<<<<<<
  *         "version": "0.1.0",
  *         "repo_id": None,
 */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 18, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_name, __pyx_mstate_global->__pyx_kp_u_Kimi_K3_via_Colibri) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_version, __pyx_mstate_global->__pyx_kp_u_0_1_0) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_name, __pyx_mstate_global->__pyx_kp_u_Kimi_K3_via_Colibri) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_version, __pyx_mstate_global->__pyx_kp_u_0_1_0) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
 
-  /* "multi_ai/models/kimi_k3_colibri.pyx":20
+  /* "multi_ai/models/kimi_k3_colibri.pyx":25
  *         "name": "Kimi K3 (via Colibri)",
  *         "version": "0.1.0",
  *         "repo_id": None,             # <<<<<<<<<<<<<<
  *         "params": "2.8T (~104B active)",
  *         "size_gb": 1600,
 */
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_repo_id, Py_None) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_params, __pyx_mstate_global->__pyx_kp_u_2_8T_104B_active) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_int_1600) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_modality, __pyx_mstate_global->__pyx_n_u_Text) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_context_tokens, __pyx_mstate_global->__pyx_int_1048576) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_Kimi_K3_License_Moonshot_s_own_c) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_strengths, __pyx_mstate_global->__pyx_kp_u_Moonshot_s_flagship_2_8T_Mixture) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_speed_profile, __pyx_mstate_global->__pyx_kp_u_Runs_via_Colibri_on_this_edge_se) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_repo_id, Py_None) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_params, __pyx_mstate_global->__pyx_kp_u_2_8T_104B_active) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_int_1600) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_modality, __pyx_mstate_global->__pyx_n_u_Text) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_context_tokens, __pyx_mstate_global->__pyx_int_1048576) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_Kimi_K3_License_Moonshot_s_own_c) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_strengths, __pyx_mstate_global->__pyx_kp_u_Moonshot_s_flagship_2_8T_Mixture) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_speed_profile, __pyx_mstate_global->__pyx_kp_u_Runs_via_Colibri_on_this_edge_se) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "multi_ai/models/kimi_k3_colibri.pyx":16
+  /* "multi_ai/models/kimi_k3_colibri.pyx":21
  * 
  * 
  * def get_info():             # <<<<<<<<<<<<<<
@@ -2799,77 +2801,86 @@ __Pyx_RefNannySetupContext("PyInit_kimi_k3_colibri", 0);
   (void)__Pyx_modinit_function_import_code(__pyx_mstate);
   /*--- Execution code ---*/
 
-  /* "multi_ai/models/kimi_k3_colibri.pyx":10
+  /* "multi_ai/models/kimi_k3_colibri.pyx":14
  * from __future__ import annotations
  * 
  * _EXTERNAL_ENDPOINT = "colibri"             # <<<<<<<<<<<<<<
  * _EXTERNAL_ENDPOINT_PORT = 8010
  * _EXTERNAL_MIN_RAM_GB = 32.0
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_EXTERNAL_ENDPOINT, __pyx_mstate_global->__pyx_n_u_colibri) < (0)) __PYX_ERR(0, 10, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_EXTERNAL_ENDPOINT, __pyx_mstate_global->__pyx_n_u_colibri) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
 
-  /* "multi_ai/models/kimi_k3_colibri.pyx":11
+  /* "multi_ai/models/kimi_k3_colibri.pyx":15
  * 
  * _EXTERNAL_ENDPOINT = "colibri"
  * _EXTERNAL_ENDPOINT_PORT = 8010             # <<<<<<<<<<<<<<
  * _EXTERNAL_MIN_RAM_GB = 32.0
  * _EXTERNAL_RECOMMENDED_RAM_GB = 32.0
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_EXTERNAL_ENDPOINT_PORT, __pyx_mstate_global->__pyx_int_8010) < (0)) __PYX_ERR(0, 11, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_EXTERNAL_ENDPOINT_PORT, __pyx_mstate_global->__pyx_int_8010) < (0)) __PYX_ERR(0, 15, __pyx_L1_error)
 
-  /* "multi_ai/models/kimi_k3_colibri.pyx":12
+  /* "multi_ai/models/kimi_k3_colibri.pyx":16
  * _EXTERNAL_ENDPOINT = "colibri"
  * _EXTERNAL_ENDPOINT_PORT = 8010
  * _EXTERNAL_MIN_RAM_GB = 32.0             # <<<<<<<<<<<<<<
  * _EXTERNAL_RECOMMENDED_RAM_GB = 32.0
- * 
+ * _COLIBRI_REPO_ID = "moonshotai/Kimi-K3"
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_EXTERNAL_MIN_RAM_GB, __pyx_mstate_global->__pyx_float_32_0) < (0)) __PYX_ERR(0, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_EXTERNAL_MIN_RAM_GB, __pyx_mstate_global->__pyx_float_32_0) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
 
-  /* "multi_ai/models/kimi_k3_colibri.pyx":13
+  /* "multi_ai/models/kimi_k3_colibri.pyx":17
  * _EXTERNAL_ENDPOINT_PORT = 8010
  * _EXTERNAL_MIN_RAM_GB = 32.0
  * _EXTERNAL_RECOMMENDED_RAM_GB = 32.0             # <<<<<<<<<<<<<<
+ * _COLIBRI_REPO_ID = "moonshotai/Kimi-K3"
+ * 
+*/
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_EXTERNAL_RECOMMENDED_RAM_GB, __pyx_mstate_global->__pyx_float_32_0) < (0)) __PYX_ERR(0, 17, __pyx_L1_error)
+
+  /* "multi_ai/models/kimi_k3_colibri.pyx":18
+ * _EXTERNAL_MIN_RAM_GB = 32.0
+ * _EXTERNAL_RECOMMENDED_RAM_GB = 32.0
+ * _COLIBRI_REPO_ID = "moonshotai/Kimi-K3"             # <<<<<<<<<<<<<<
  * 
  * 
 */
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_EXTERNAL_RECOMMENDED_RAM_GB, __pyx_mstate_global->__pyx_float_32_0) < (0)) __PYX_ERR(0, 13, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_COLIBRI_REPO_ID, __pyx_mstate_global->__pyx_kp_u_moonshotai_Kimi_K3) < (0)) __PYX_ERR(0, 18, __pyx_L1_error)
 
-  /* "multi_ai/models/kimi_k3_colibri.pyx":16
+  /* "multi_ai/models/kimi_k3_colibri.pyx":21
  * 
  * 
  * def get_info():             # <<<<<<<<<<<<<<
  *     return {
  *         "name": "Kimi K3 (via Colibri)",
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_6models_15kimi_k3_colibri_1get_info, 0, __pyx_mstate_global->__pyx_n_u_get_info, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_models_kimi_k3_colibri, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8multi_ai_6models_15kimi_k3_colibri_1get_info, 0, __pyx_mstate_global->__pyx_n_u_get_info, NULL, __pyx_mstate_global->__pyx_n_u_multi_ai_models_kimi_k3_colibri, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 21, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_info, __pyx_t_2) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_get_info, __pyx_t_2) < (0)) __PYX_ERR(0, 21, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "multi_ai/models/kimi_k3_colibri.pyx":34
+  /* "multi_ai/models/kimi_k3_colibri.pyx":39
  * 
  * 
  * if __name__ == "__main__":             # <<<<<<<<<<<<<<
  *     print(get_info())
 */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_name_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_name_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 39, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_main, Py_EQ)); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(0, 34, __pyx_L1_error)
+  __pyx_t_3 = (__Pyx_PyUnicode_Equals(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_main, Py_EQ)); if (unlikely((__pyx_t_3 < 0))) __PYX_ERR(0, 39, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_3) {
 
-    /* "multi_ai/models/kimi_k3_colibri.pyx":35
+    /* "multi_ai/models/kimi_k3_colibri.pyx":40
  * 
  * if __name__ == "__main__":
  *     print(get_info())             # <<<<<<<<<<<<<<
 */
     __pyx_t_4 = NULL;
     __pyx_t_6 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_get_info); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 35, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_mstate_global->__pyx_n_u_get_info); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 40, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_t_8 = 1;
     {
@@ -2877,7 +2888,7 @@ __Pyx_RefNannySetupContext("PyInit_kimi_k3_colibri", 0);
       __pyx_t_5 = __Pyx_PyObject_FastCall((PyObject*)__pyx_t_7, __pyx_callargs+__pyx_t_8, (1-__pyx_t_8) | (__pyx_t_8*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 35, __pyx_L1_error)
+      if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 40, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
     }
     __pyx_t_8 = 1;
@@ -2886,12 +2897,12 @@ __Pyx_RefNannySetupContext("PyInit_kimi_k3_colibri", 0);
       __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_builtin_print, __pyx_callargs+__pyx_t_8, (2-__pyx_t_8) | (__pyx_t_8*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 35, __pyx_L1_error)
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 40, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "multi_ai/models/kimi_k3_colibri.pyx":34
+    /* "multi_ai/models/kimi_k3_colibri.pyx":39
  * 
  * 
  * if __name__ == "__main__":             # <<<<<<<<<<<<<<
@@ -2900,9 +2911,9 @@ __Pyx_RefNannySetupContext("PyInit_kimi_k3_colibri", 0);
   }
 
   /* "multi_ai/models/kimi_k3_colibri.pyx":1
- * """Kimi K3: Moonshot AI's 2.8T MoE model, run via a user-run Colibri server.             # <<<<<<<<<<<<<<
+ * """Kimi K3: Moonshot AI's 2.8T MoE model, run via a Colibri server this app             # <<<<<<<<<<<<<<
+ * starts and supervises itself.
  * 
- * Same shape as glm_5_2_colibri.pyx  see that file for why this needs a third
 */
   __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
@@ -2949,7 +2960,7 @@ __Pyx_RefNannySetupContext("PyInit_kimi_k3_colibri", 0);
 
 static int __Pyx_InitCachedBuiltins(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
-  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_print); if (!__pyx_builtin_print) __PYX_ERR(0, 35, __pyx_L1_error)
+  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_mstate->__pyx_n_u_print); if (!__pyx_builtin_print) __PYX_ERR(0, 40, __pyx_L1_error)
 
   /* Cached unbound methods */
   __pyx_mstate->__pyx_umethod_PyDict_Type_items.type = (PyObject*)&PyDict_Type;
@@ -2974,42 +2985,42 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 8; } index[] = {{1},{5},{19},{63},{21},{196},{44},{116},{18},{23},{20},{28},{20},{4},{12},{18},{18},{7},{14},{8},{8},{13},{5},{7},{8},{8},{10},{31},{4},{8},{6},{5},{12},{7},{12},{10},{7},{13},{9},{8},{6},{7},{57}};
-    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (598 bytes) */
-const char* const cstring = "(\265/\375`\224\002e\022\000\246\345t2`o:022\014\3030L\0246\270\0241\372d\247\244\336R\356\306\322\356\226VN\215n\202i\375=\373\327\310\014N\221\366>\210\334u~\236\240\371?i\000c\000g\000\025g\313\361\3752\362\256.k\203\361\372|[L\214+\230\245\177d\255\264\271\210\340\205\343\366\245\356\244\326\227[\213\211\":\206\032\203\033\271M\202\270\334j\032\014\210\323\311\207/%\260\314\340\373\346\362\225\300\364\207\207\227?\010;\020\311\376\330\365GVxdg\355\021\301\244~\267\251a1\2219\201H\020\006E1Ae\250\211\214\254q\225\277i\221I\221=\331\252\370\301L\177\333\247d\322(\247\025#\355\254G\030\307\364j\206\341h.\375\330\326\241\236\255j\013eG\363I\367\305\334\345\301\376}\037EX\222\233\325\333|%\260J\r\320\005\2259\311\315\024\024\226\274\334r\314\267.5m\323\373\372w\266\342b\311\027()\353u\265\020K\316\242\327\372l\251\272\267\211T\375\361\010\376?\350FnC\3546\276\276V~\2159\347\327\277\301\010\035\005\333=\223\257*\377>|oUA\"\376|\211=\372\2569J\246\020\345\330t: \033\233\217F\207\252\207\323\371\200\204\200<\034\220\020\016\317F?4\236\317\0064\262Q\352\372\3252\362c\253b\326<\261u\020\363\352\005\010*\r\006\000\004-\"'\006\225\206\202\025\315i\301\341\224\2209)\024\254\004\234\016\nV\006\004V\002P\036l\217Lr\336\260%\251\276\363\253\372\365\326\343\370\316X\213`\3244d)\233\264?\266\255\210\253gW\255Z\241\306\021\333\215D\3655\3176\256\246\312\331>\212Rel3}c[\301\327\233\251z\306\337\352\25500( \206(Eh\036\241\030)\251\"6\315\001b0\355QP\020c\327*\320\330\244\230\301\206y\227\002:\024\233\344\257\311N@a\323k\021n\004!\303\310\004\211\357\337#\357`\272(w\2142\216\350\323A\275\361B~\261mP\034\320J\201C\265\343nN\241\221\370Gl\020\350G\325\376\014\020\223Y(\314dwWR\200q19\342\217\262\001}B\265\006\342\026Q";
-    PyObject *data = __Pyx_DecompressString(cstring, 598, 3);
+    const struct { const unsigned int length: 8; } index[] = {{1},{5},{19},{63},{21},{196},{44},{116},{18},{16},{18},{23},{20},{28},{20},{4},{12},{18},{18},{7},{14},{8},{8},{13},{5},{7},{8},{8},{10},{31},{4},{8},{6},{5},{12},{7},{12},{10},{7},{13},{9},{8},{6},{7},{57}};
+    #if (CYTHON_COMPRESS_STRINGS) == 3 && __PYX_LIMITED_VERSION_HEX >= 0x030e0000 /* compression: zstd (625 bytes) */
+const char* const cstring = "(\265/\375`\266\002=\023\000\246\247{3`\215:0\260\026\004A\020\204\2556\270!\216~\273\223$\332R.b\322n\222V\246\204&\033Fz;*\267G\300U\214\235\352\212\342\347\034\031\255\362\0351o\000i\000o\000\361i\253\325\031\267\374Y)M\267t>`\327\026%\366\n7\251\257\255\230\351|\331\332iS!\305J\313\355O\336Q\315\261y\361#E\270\034\371\213\032\312n\202\300\034k\030\213\210\323\321\217P%\236f\361\347\346\024\206D\235\017\037\261\tc\354@hO\330\316;\264\202C=s\216\2106\371;\326\214\305\304e\004BE\030\025\305Du\251&2\002\335\332\324\307.\276i\301\326\332\322\3374\331&\331S\373\262\032F\325\t\267\320\t\245Un+J\353\231\227,\323\342\274\231\205\203\251\370\277\255S}_\3266\322\016&\244s\362s\025\030\375\371gI\306\020e\265 +\014\211\226fD\027\325eDYKHP\024s\334R!;\3254\326\351\330\377\354K\362\323\306DZ]\320-\016\276\337\327\256\203\033iw\302.\305\177\030]\311\361\250\035\313_\350\333\320\237\233\r\375\267(\243\253\242;\210\232\274\333\317\037!\344]\021\251C\177j\317\276s\315\t\005Z\315\246\323\371hlB\231\215]\017\247\023\372\200D\036\316\007\244\361l\266\003\343\tmD\037\233\325p\366\003\332\204\226\023\312p:>\032[\301Q\2618g\025\366\254\251l\330\227\025\010&\r\006\000\004)\036)\006\223\206\202\023Lj\301!\225pI)\024\234\004\244\016\nN\006\004N\002H`\364)\3334{{l\332\375\331\277;\261\277`\313\237\375\234\024\245\266\243k[\304\347\277\215Im}\317]\3137j-\037o \273\017]j3c\311\332ng\014\253j\267\337\206z\177l\305l\027:g\2733\353\367\235\276\221\004\003/( \204(Df>a RbEl\232\003\0220\237Qx\310Uk'\320\334T\257\025\265\024\320\021\254\226>-\004\216\322O\304\343\200f(\322!M\376;\310#`j(7\216\203\010\242\241F\353\276\3030\316\224y\241.\246\004\024\001Z.pR\273\356\346\022\032\244\177\374\203\200\034\225\363\347FL\245P\020!]W\325,\223@\374\235lH\237\000\255\201\260M\024";
+    PyObject *data = __Pyx_DecompressString(cstring, 625, 3);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (686 bytes) */
-const char* const cstring = "BZh91AY&SY\270\260\272\372\000\000F\177\343\347`~\020`\347\375@\276\257\364@\277\357\377\361@\000D@\000@\020\000@\000@\002-u\273\2506\341\244\324\323A\222\237\252a\r4\320\031\000\320\006\2151\036\247\250m56\223z(54F\206OU?\324\3256\247\251\243M4\032\003A\220\311\241\240d\030 \006\246\022h\203'\251\2444\332\231\003@\300i\014\206\200\017B\000\tB\t\223Bhj\237\240\241\352\033S&\200\0004440CL\023N\247*\263 \025\025H\"Z2qy\376c\370D\241\372\025E\371j\3564\217VO\026w\340D\010}\2649\024\371\201\310ADN\240\334\242\254\017\025\365\315\265R \376FF\024\236tF\265\264\3179e\014\331\242\323\006\361\237\276=\370\321P\333\002Kr\213\001\345\026\037I\200\316^\321\344\2630\233`\241#t_^>b`\241j\237\2362\005\016!\340\312\350:\017\032\034Y\350\026\246\264\237!\306\271\007\212\332\314\240\002N7N\027?\350\033\215GS\026\005\002\315\301\212\340KR\333\013\264\250`\353\347\244\373.\033\032X\212\004\274*\014\341M\245\200\3408\002\260!8\230\016#Q`e\206\177\205\2443B0\320\177_z\200Nm|\304\r\341\210\306\257jZ\002\260L\372\027\2065\020\210\256Rw\211\245iq\224\232\203\326\273T\"\354\361rU\n|.\\\035\226\215\237\020\352\256&/\310[\211\267L\224\023\304\216\251\352k\022R\220#%\231+0F\016\326\354\224\300\024n\256D\214E\262qSN\017\261\256r(\366L\n#I\225\207\031\214\242w\224\217~\356\347\270\320Q\361\252\203\263?#\314\232\30211\224v\324\221%\243\331\262\313h_\252Z\266V#\354\204\215o&H\037U\254\204\301\242Yk\245\026wQ!\3535\232G*\277lg\021U\026N\241eP\n\312\224]\227\330\235\261<\031\373^\204\301\032\352\325h=\2612\270\274\322-a#L\257=x\303Q\207\210]\003\241f\266\206h\266\231\274\2047D\263\005\254bi%\245\307\375V\227\261\233P\265\306H\310\243\034\010,Sp\264\352\306\372B\344\263 YV\234\250\306\354\331)\032\241\032\211\014orH\301\n\3121\020\236G\021\003i\277\367V$\025X\244\033\254\360\353\321\262\341\004\226\024\3655K\334\025\356\021C\343$Ly0\307v\261\246\235@\177k\2448kw\330:\201\214-\025\377\213\271\"\234(H\\X]}\000";
-    PyObject *data = __Pyx_DecompressString(cstring, 686, 2);
+    #elif (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (699 bytes) */
+const char* const cstring = "BZh91AY&SY\266Q\335n\000\000G\377\343\347`~\020`\347\375@\276\257\364@\277\357\377\361@\000D@\000@\020\000@\000@\002M]uj\033\203D\206\246jd\304\236\210d\365\031\032d\321\243&&&\230\320\021\352m&\305\006\242eO\365=F&\224h\375B\003\002h2\000\310\014##\000\232\rL!\004\3644H\000\0004h=A\240\001\241\352\000\001\241\004i\224\323j4\323M#A\240\000h\000\0002\000\013\311\312T\316\202\001-LdTO=\214{\363j8\203\021\246?\010\246\276\205\306V\376\332\340\305\003\240l;s\321O\000:H(\225\367\033\324A\321\025\373ge^\224Gi\224\005(\235\305B\325\351m\245\304\033\217\241T\316\271\254zsB\243\230U\001\310\"'\302\311+\3316\001\300\276U\236\233\333\007\346\327\211D\324\374\237\307r@\223\000`PC\037\221\371\207\207\300?\030\255\322\200\322|\210\252\r\330\362&\002\331PN\3122\203\021\na\212\236\200dX\023\343\374\314!\233\330\013(=\313O\003\226\301\034\"\254\301\026\305\261\256\022\2723I\207o\340\367\364\315\215.\002rn\210\n\302\233Kx\334n\n\300\211\215(\021I\022\307\000\360>\375\013\224]9S\351;\265kx\016\230\233\"D\315\nj\212.C\2343\024\263\324|\355a\005,7\341i8\260\033\244\220\347\nS@\200rX\344c\333>*\n\372E\221P\200\037\322\220\202\336\035\001f\221\244\006\255\362\301\210%<\323\030z\216G\320P\334\016\251ZJb\r\223VgmV\321P\0256\324_\004\235Dd\264*C\311\022U\030PP\270\"\021Q \252\315\307\344\212!\213(\330\025\274\267\254?\204\002!\003+1\240\201\321\356\345k\230'\246x1L\tpd\242\305\207\t@\\\226\220\203\210#D-)%j\227\372%\0137\033\211\2615\343k\232\014\310\345S\304$`\023\024\206\017\025\020, \264\256\336\336*I'\230\315\344\264\250:+\024\n\310\336\003\205n\240d\251\230\005;\000\357\2052\026#.\265+r\303\031\252\n\027\216`\201\305)\276q\366f\372\020\\\300\016f\312\242t\343MEK\344\027\344\241#0\305w\n\202\330\263\330\214nNYR\325\010\320\211%\021zR\301\033\031\000\242\363\346\"\020t'\375\255i\025k\300\034T6\372^\254\240\373\254\277\006\024\222,\016\257S&p\270\323k.\312\253N8\311\310\017\356r\tG9w\004L\020/:'\377\027rE8P\220\266Q\335n";
+    PyObject *data = __Pyx_DecompressString(cstring, 699, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (586 bytes) */
-const char* const cstring = "x\332mR=o\3330\020m\200\266H\267~.\231\256S\023\240\226\343\246(\272\025Nb\024F\"'5<t;\320\324I\"L\221\nI9v\207 ?\301C\207\3744\317\375\005\375\t=Kr\023\024\035D\035\037y\307\367\356\335\227\303\250\027\035~\210>O`\377\246w\370\361\030\204\014jN\007g\252Ppv\004\347J\222\361\004\373\261\265\306\3476\274\363`\257\r\310\312\007[\200n\216\337\203\261\001\342\341\244\333/\205\314\357\323\367\347J\300\211\325j\352\324\301\203\022\251\026\231\317U\t\365\323\261Z\204\312Q\307\246\235\301\242$\027<\0246!\r\2562\020rg\253,\337V\341\344D\371Y\307\007G\242\240\004\250\316\000mE\242L\026\301$'\320\302e\344C[%\344\312\203(K\220\302\000g\311\034~\335\376\004\0017\275\350\323\344\030\022\026\264I\007a\370\203k\353f>\210\240\254\351H-\274\207q?\206i\225d\024\242\270\322Au\372\303n\261\tP\250n\375\206\357\316X1\316\216P64\243r\271\030W\306\303\203\006\2005\r\027\342R\340\311\315\311\325LZ\211e\025 \241\222L\3427W\265\225B\327b\301\227DI\323\344\255\230\326\207\214\014\271\232+\224\"\344\021\016\276O\006\343Q\377\034\007\243\323\313\213\341h\362\037\344\362b\374\000\216\207#d\205\370\365\370\036\033\017N.\342\230\023\006\247\3333\274\\.\370;U2\340\210\026aL\351\204\177\210\3020/\021\210#\2774R\331HZ\326\023\224!/5\257\250\014\006'$M\205\234\265\375\221\326\204Mv\2603\036 \304\2642\022\221;\314\227S\213\312\343\337\"*P\341\333AC,\004WCn\272\320*,\353\250\322\033\274\365#j\374\210\376\361\303\360\254 6k)\234(|\311 \263\277\252\204n`G%?\234 zf\321@\034%\224\n.\355\325\017\302lZ\033\201\245\263\251\322\264\031A\223\205\234\351\007\336 \316\205\256\310\263\253\236\375\270\335Y?~\262\336}\276\332Y\357\276Z\365\332\345\345\352m\033\275^\365\327\273{w\333\355\233\325\267\337O\037=\333\273{\361\007\023\244O\226";
-    PyObject *data = __Pyx_DecompressString(cstring, 586, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (609 bytes) */
+const char* const cstring = "x\332mR=o\3330\020m\200\266H\267~.\231\256S\023\240\226\343\246(\272\025vl\024F\"\333\025<t;\320\324Y\"L\221\212H9v\207 ?\301C\207\3744\317\375\005\375\t=Kr\023\024\035D\035\217|\217\357\356\335\227\323\240\023\234~\010>O\341\370\246s\372\261\007Bz\265\244\223\013\225)\2708\203K%\3118\202\343\320Z\343R\353\3379\260\327\006d\351\274\315@\327\307\357\301X\017\341p\332\356\346B\246\367\360\343\245\022pn\265\232\025\352\344\001\305\\\213\304\245*\207\352\351P\255|YP\313\316[\203UN\205w\220\331\2304\024\245\001\237\026\266L\322=\013\203c\345\026-\347\013\022\031\305@\025\002\264\025\2612I\000\323\224@\213\"!\347\033\026\237*\007\"\317A\n\003\214\222)\374\272\375\t\002n:\301\247i\017b.h\007\007a\370\203k[,\234\027^Y\323\222Z8\007Q7\204Y\031'\344\203\260\324^\265\272\303v\266\013P\250v\365\206k/\270b\\\234\241\254e\006\371z\025\225\306\301\203\006\2005\265\026b*pT,\251\250\2244%\346\245\207\230r2\261\333]\325V\n]\025\013.'\212\353&\357\213i|H\310PQi\205\\\3704\310\232\036\263\260\235\007\255\2133<\037_\016{\321\020\243\301d\214\303>\016\276O\007\321\250{\211\203Q\1772\036\216\246\377\311L\306\321\203t8\034!\367\000\277\366\356s\321\340|\034\206\014\030\364\367g8Y\257\370\353+\351qD+\037\321|\312?DaX\271\360\304\221[\033\251l -W\354\225!'5\257\250\014\372BH\232\t\271h:(\255\361;\264\267\013\0361\304yi$\"{\300\227\347\026\225\303\277$\312S\346\232QD\314\004\263!\333\"\264\362\353**\365.\3378\026\324\216\005\3778fx\232\020\3535\027\205\310\\\316IV\177U\n]\247\013\312\371\341\030\321\261\212:\305QLs\301\324N\375 Lf\225U\230\027v\2564\355\206\324$>e\371\2367\210K\241Kr\354\273c\307n\017\266\217\237l\017\237o\016\266\207\2576\235fy\271y\333D\2577\335\355\341\321\335~\373f\363\355\367\323G\317\216\356^\374\001:\335[\037";
+    PyObject *data = __Pyx_DecompressString(cstring, 609, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (916 bytes) */
-const char* const bytes = "?0.1.02.8T (~104B active)Kimi K3 License (Moonshot's own custom license, not MIT/Apache)Kimi K3 (via Colibri)Moonshot's flagship 2.8T Mixture-of-Experts model run through Colibri's disk-streamed expert loading. The largest model this app can reach \342\200\224 a ~1.6TB download and a workstation-class RAM budget.Multi-AI/multi_ai/models/kimi_k3_colibri.pyxRuns via Colibri on this edge server \342\200\224 throughput depends on local disk speed, not this app's own generation path._EXTERNAL_ENDPOINT_EXTERNAL_ENDPOINT_PORT_EXTERNAL_MIN_RAM_GB_EXTERNAL_RECOMMENDED_RAM_GB__Pyx_PyDict_NextRefText__annotate__asyncio.coroutinescline_in_tracebackcolibricontext_tokens__func__get_info_is_coroutineitemslicense__main__modality__module__multi_ai.models.kimi_k3_colibriname__name__paramsprint__qualname__repo_id__set_name__setdefaultsize_gbspeed_profilestrengths__test__valuesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\360\006\000\t\032\230\021";
+    #else /* compression: none (950 bytes) */
+const char* const bytes = "?0.1.02.8T (~104B active)Kimi K3 License (Moonshot's own custom license, not MIT/Apache)Kimi K3 (via Colibri)Moonshot's flagship 2.8T Mixture-of-Experts model run through Colibri's disk-streamed expert loading. The largest model this app can reach \342\200\224 a ~1.6TB download and a workstation-class RAM budget.Multi-AI/multi_ai/models/kimi_k3_colibri.pyxRuns via Colibri on this edge server \342\200\224 throughput depends on local disk speed, not this app's own generation path.moonshotai/Kimi-K3_COLIBRI_REPO_ID_EXTERNAL_ENDPOINT_EXTERNAL_ENDPOINT_PORT_EXTERNAL_MIN_RAM_GB_EXTERNAL_RECOMMENDED_RAM_GB__Pyx_PyDict_NextRefText__annotate__asyncio.coroutinescline_in_tracebackcolibricontext_tokens__func__get_info_is_coroutineitemslicense__main__modality__module__multi_ai.models.kimi_k3_colibriname__name__paramsprint__qualname__repo_id__set_name__setdefaultsize_gbspeed_profilestrengths__test__valuesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\360\006\000\t\032\230\021";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
     PyObject **stringtab = __pyx_mstate->__pyx_string_tab;
     Py_ssize_t pos = 0;
-    for (int i = 0; i < 42; i++) {
+    for (int i = 0; i < 44; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyUnicode_DecodeUTF8(bytes + pos, bytes_length, NULL);
-      if (likely(string) && i >= 8) PyUnicode_InternInPlace(&string);
+      if (likely(string) && i >= 9) PyUnicode_InternInPlace(&string);
       if (unlikely(!string)) {
         Py_XDECREF(data);
         __PYX_ERR(0, 1, __pyx_L1_error)
@@ -3017,7 +3028,7 @@ const char* const bytes = "?0.1.02.8T (~104B active)Kimi K3 License (Moonshot's 
       stringtab[i] = string;
       pos += bytes_length;
     }
-    for (int i = 42; i < 43; i++) {
+    for (int i = 44; i < 45; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyBytes_FromStringAndSize(bytes + pos, bytes_length);
       stringtab[i] = string;
@@ -3028,14 +3039,14 @@ const char* const bytes = "?0.1.02.8T (~104B active)Kimi K3 License (Moonshot's 
       }
     }
     Py_XDECREF(data);
-    for (Py_ssize_t i = 0; i < 43; i++) {
+    for (Py_ssize_t i = 0; i < 45; i++) {
       if (unlikely(PyObject_Hash(stringtab[i]) == -1)) {
         __PYX_ERR(0, 1, __pyx_L1_error)
       }
     }
     #if CYTHON_IMMORTAL_CONSTANTS
     {
-      PyObject **table = stringtab + 42;
+      PyObject **table = stringtab + 44;
       for (Py_ssize_t i=0; i<1; ++i) {
         #if PY_VERSION_HEX >= 0x030F0000
         PyUnstable_SetImmortal(table[i]);
@@ -3125,7 +3136,7 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
   PyObject* tuple_dedup_map = PyDict_New();
   if (unlikely(!tuple_dedup_map)) return -1;
   {
-    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 16};
+    const __Pyx_PyCode_New_function_description descr = {0, 0, 0, 0, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 21};
     PyObject* const varnames[] = {0};
     __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_Multi_AI_multi_ai_models_kimi_k3, __pyx_mstate->__pyx_n_u_get_info, __pyx_mstate->__pyx_kp_b_iso88591_1_1_1_A_1_Q, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
   }

@@ -58,14 +58,15 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
   bool _serverBusy = false;
   String? _serverError;
 
-  // A BYO external-endpoint model (e.g. Colibri) has no server-managed
-  // weights — _resolve_server_model rejects it with "no server-side weights
-  // to manage", so this section must not be shown for one even though it's
-  // !runsInApp and available, same as a real _REPO_ID model.
+  // hasServerWeights covers both a plain _REPO_ID model and an
+  // _EXTERNAL_ENDPOINT model with server-managed weights (e.g. a Colibri
+  // model with _COLIBRI_REPO_ID) — both support the cache/download/delete
+  // routes. A model with neither (a stub, or a BYO external endpoint with no
+  // weights this app manages) must not show this section.
   bool get _isServerModel =>
       !widget.runsInApp &&
       widget.model.available &&
-      widget.model.externalEndpoint == null &&
+      widget.model.hasServerWeights &&
       widget.api != null;
 
   ModelSource? get _parsedSource {
@@ -601,10 +602,12 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
     );
   }
 
-  /// An _EXTERNAL_ENDPOINT model (e.g. Colibri) runs as a separate process on
-  /// this same edge server rather than something this app downloads, caches,
-  /// or deletes itself — this replaces the server-install section with an
-  /// explanation of that instead of leaving a silent gap.
+  /// An _EXTERNAL_ENDPOINT model (e.g. Colibri) runs through a separate
+  /// engine process on this same edge server rather than this app's own
+  /// transformers path. When it also has server-managed weights (see
+  /// [_isServerModel]/[_buildServerInstallSection], shown above this one),
+  /// the backend downloads them and starts that engine itself — this section
+  /// is just context, not a "go run this yourself" instruction anymore.
   Widget _buildExternalEndpointSection() {
     final endpoint = widget.model.externalEndpoint;
     if (endpoint == null) return const SizedBox.shrink();
@@ -632,12 +635,19 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Colibri runs as its own process on this edge server, started separately from '
-              'the rest of the app — this page just proxies chat requests to it once it\'s '
-              'running. Start it, then chat normally:',
+              'Colibri is a specialized engine for very large mixture-of-experts models. '
+              'Once the weights above are downloaded, sending a chat message starts the '
+              'engine automatically — no commands to run. First use can take a while as it '
+              'starts up.',
               style: TextStyle(fontSize: 12, height: 1.45, color: Colors.white70),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
+            const Text(
+              'One-time setup: this needs the Colibri engine itself installed and on your '
+              'PATH (a separate download from the model weights).',
+              style: TextStyle(fontSize: 12, height: 1.45, color: Colors.white54),
+            ),
+            const SizedBox(height: 6),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -646,7 +656,7 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Text(
-                'coli serve --model <path> --port 8010',
+                'github.com/JustVugg/colibri/releases',
                 style: TextStyle(fontSize: 12, fontFamily: 'monospace', color: Colors.white),
               ),
             ),

@@ -12,8 +12,11 @@ a model (see server.pyx's module docstring):
   _GGUF_SOURCE      the Flutter app runs them in-process via llama.cpp, which
                     offloads to the GPU when the weights fit and otherwise
                     falls back to CPU + system RAM (correct, but much slower).
-  _EXTERNAL_ENDPOINT  a BYO server (e.g. Colibri) the user runs themselves;
-                    neither VRAM nor a download-size estimate applies, so
+  _EXTERNAL_ENDPOINT  a separate engine this server proxies chat requests to
+                    (currently only Colibri, whose weight download and
+                    process lifecycle this server now manages itself — see
+                    server.pyx's _ensure_colibri_running); neither VRAM nor
+                    the usual download-size estimate applies, so
                     rate_external_model() rates off local RAM against the
                     engine's own stated minimums instead.
 
@@ -264,12 +267,13 @@ def rate_external_model(
     disk_gb: float | None,
     specs: dict | None = None,
 ) -> dict | None:
-    """Rate a BYO _EXTERNAL_ENDPOINT model (e.g. Colibri): this server proxies
-    to a process the user runs themselves, so neither VRAM nor the
-    downloaded/quantized-size math the other two raters use applies. Rate
-    off local RAM against the engine's own stated minimums instead, and
-    always surface the disk requirement in the reason — for these models
-    that one-time download, not runtime fit, is the real commitment.
+    """Rate an _EXTERNAL_ENDPOINT model (e.g. Colibri): this server proxies to
+    a separate engine process rather than loading weights itself, so neither
+    VRAM nor the downloaded/quantized-size math the other two raters use
+    applies. Rate off local RAM against the engine's own stated minimums
+    instead, and always surface the disk requirement in the reason — for
+    these models that one-time download, not runtime fit, is the real
+    commitment.
 
     None when min_ram_gb is unannotated (mirrors rate_model's contract).
     """
@@ -279,7 +283,8 @@ def rate_external_model(
     ram = specs.get("ram_gb")
     recommended = recommended_ram_gb or min_ram_gb
     disk_note = (
-        f" Needs ~{disk_gb:.0f}GB of local disk for the weights (BYO — not downloaded by this app)."
+        f" Needs ~{disk_gb:.0f}GB of local disk for the weights (downloaded and cached "
+        "the same way as this app's other server-managed models)."
         if disk_gb
         else ""
     )

@@ -1,8 +1,11 @@
-"""Inkling: Thinking Machines' 975B MoE model, run via a user-run Colibri server.
+"""Inkling: Thinking Machines' 975B MoE model, run via a Colibri server this
+app starts and supervises itself.
 
 Same shape as glm_5_2_colibri.pyx — see that file for why this needs a third
-dispatch path instead of _REPO_ID/_GGUF_SOURCE. Colibri's own docs (docs/inkling.md)
-note the process needs at least ~64GB RAM to avoid dying mid-generation; below
+dispatch path instead of _REPO_ID/_GGUF_SOURCE, and for why _COLIBRI_REPO_ID
+points at a pre-converted int4 mirror (sabrewing-engine/Inkling-colibri-int4)
+rather than the base checkpoint. Colibri's own docs (docs/inkling.md) note
+the process needs at least ~64GB RAM to avoid dying mid-generation; below
 that, an int4-dense-container mode fits a 25GB box but is disk-bound (tens of
 seconds per token) rather than genuinely usable, so this file rates against the
 64GB/120GB tiers rather than that fallback mode's 25GB floor.
@@ -13,6 +16,7 @@ _EXTERNAL_ENDPOINT = "colibri"
 _EXTERNAL_ENDPOINT_PORT = 8010
 _EXTERNAL_MIN_RAM_GB = 64.0
 _EXTERNAL_RECOMMENDED_RAM_GB = 120.0
+_COLIBRI_REPO_ID = "sabrewing-engine/Inkling-colibri-int4"
 
 
 def get_info():

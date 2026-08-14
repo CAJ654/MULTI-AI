@@ -1,11 +1,12 @@
 """Lightweight existence checks for every model's download source.
 
-Doesn't download any weights (some are double-digit GB and would make this
-test suite unusable) — just confirms each `_REPO_ID` resolves on the
-Hugging Face Hub and each `_GGUF_SOURCE` points at a real file in a real
-repo, via metadata-only Hub API calls. This is exactly the class of bug the
-2026-07-17 fix round kept hitting: a gated/renamed/typo'd repo id that only
-surfaces once a user actually tries to chat.
+Doesn't download any weights (some are double-digit GB, and the Colibri
+entries are 4GB-1.6TB — this test suite would be unusable) — just confirms
+each `_REPO_ID`/`_COLIBRI_REPO_ID` resolves on the Hugging Face Hub and each
+`_GGUF_SOURCE` points at a real file in a real repo, via metadata-only Hub
+API calls. This is exactly the class of bug the 2026-07-17 fix round kept
+hitting: a gated/renamed/typo'd repo id that only surfaces once a user
+actually tries to chat.
 
 Needs network access; skips (doesn't fail) a model when the Hub itself is
 unreachable, but still fails on a genuine "repo/file doesn't exist" or
@@ -48,19 +49,30 @@ def _check_source(path: Path) -> None:
     repo_id = getattr(module, "_REPO_ID", None)
     gguf = getattr(module, "_GGUF_SOURCE", None)
     external_endpoint = getattr(module, "_EXTERNAL_ENDPOINT", None)
+    colibri_repo_id = getattr(module, "_COLIBRI_REPO_ID", None)
     assert repo_id or gguf or external_endpoint, (
         f"{path.stem} declares neither _REPO_ID, _GGUF_SOURCE, nor _EXTERNAL_ENDPOINT"
     )
-
-    if external_endpoint:
-        # BYO: the weights live on the user's own machine, not the Hugging
-        # Face Hub, so there's no source to resolve here.
-        return
 
     # These mean the source itself is wrong — a real test failure. Anything
     # else (timeouts, DNS, 5xx) means we couldn't check, not that it's broken.
     broken_source = (RepositoryNotFoundError, GatedRepoError, EntryNotFoundError)
     api = HfApi()
+
+    if external_endpoint and not colibri_repo_id:
+        # A plain proxy target with no server-managed weights: nothing on the
+        # Hub to resolve.
+        return
+
+    if colibri_repo_id:
+        try:
+            api.model_info(colibri_repo_id, token=_TOKEN)
+        except broken_source as exc:
+            raise AssertionError(
+                f"{path.stem}: _COLIBRI_REPO_ID {colibri_repo_id!r} does not resolve: {exc}"
+            ) from exc
+        except Exception as exc:
+            pytest.skip(f"{path.stem}: could not reach the Hugging Face Hub: {exc}")
 
     if repo_id:
         try:

@@ -207,40 +207,67 @@ project's dense 10–14B models — see the TODO below.)
 
 None of the five fit either existing model path (`_REPO_ID` →
 transformers/torch, `_GGUF_SOURCE` → on-device llamadart): each needs a
-separately-downloaded weight set (167GB–1.6TB) and runs as its own
-long-running process on this edge server, started separately
-(`coli serve --model <path> --port 8010`) rather than by MULTI-AI itself.
-MULTI-AI proxies chat requests to it; it doesn't download the weights or
-supervise the process.
+separately-downloaded weight set (167GB–1.6TB, resolved to a real Hugging
+Face repo per family — see `_COLIBRI_REPO_ID` below) and runs as its own
+long-running process on this edge server (`coli serve --model <path> --port
+8010`). Unlike the original design, **MULTI-AI now downloads those weights
+and starts/stops that process itself** — the Models tab's usual
+download/cache/delete UI works for these five the same as any `_REPO_ID`
+model, and sending a chat message spawns `coli serve` automatically if it
+isn't already running for that model, blocking the reply until it answers
+`/health` or a clear error can be shown. Only one Colibri process runs at a
+time (shared port 8010), so switching to a different Colibri model stops
+whatever was running first. The one thing still manual: **the `coli` binary
+itself** — install it once from
+[Colibri's releases](https://github.com/JustVugg/colibri/releases) and put
+it on PATH, the same one-time shape as this project's Rust-toolchain step.
+Without it on PATH, a chat attempt returns a clear "install `coli`" message
+rather than hanging.
 
-| Model | Params (active) | Disk | RAM (min / comfortable) | Context | License |
-|---|---|---|---|---|---|
-| GLM-5.2 | 744B (~40–55B) | ~372GB | 16GB / 24GB | 1M | Apache-2.0 engine / MIT weights |
-| Inkling | 975B (~41B) | ~469GB | 64GB / 120GB | 1M | Apache 2.0 |
-| Kimi K3 | 2.8T (~104B) | ~1.6TB | 32GB / 32GB | ~1.05M | Kimi K3 License (custom) |
-| DeepSeek V4 Flash | 284B (~13B) | ~167GB | 16GB / 22GB | 1M | MIT |
-| OLMoE | 7B (~1B) | ~4GB | 8GB / 8GB | 4096 | Apache 2.0 (+ Gemma ToU note) |
+| Model | Params (active) | Disk | RAM (min / comfortable) | Context | License | `_COLIBRI_REPO_ID` |
+|---|---|---|---|---|---|---|
+| GLM-5.2 | 744B (~40–55B) | ~372GB | 16GB / 24GB | 1M | Apache-2.0 engine / MIT weights | `jlnsrk/GLM-5.2-colibri-int4` |
+| Inkling | 975B (~41B) | ~469GB | 64GB / 120GB | 1M | Apache 2.0 | `sabrewing-engine/Inkling-colibri-int4` |
+| Kimi K3 | 2.8T (~104B) | ~1.6TB | 32GB / 32GB | ~1.05M | Kimi K3 License (custom) | `moonshotai/Kimi-K3` |
+| DeepSeek V4 Flash | 284B (~13B) | ~167GB | 16GB / 22GB | 1M | MIT | `deepseek-ai/DeepSeek-V4-Flash-0731` |
+| OLMoE | 7B (~1B) | ~4GB | 8GB / 8GB | 4096 | Apache 2.0 (+ Gemma ToU note) | `allenai/OLMoE-1B-7B-0924-Instruct` |
+
+GLM-5.2 and Inkling need a one-time int4 conversion Colibri doesn't do
+automatically, so their `_COLIBRI_REPO_ID` points at a pre-converted
+community mirror rather than the base checkpoint. Kimi K3, DeepSeek V4
+Flash, and OLMoE stream directly from their official repos — no conversion
+needed. Downloading needs `huggingface_hub` installed
+(`pip install huggingface_hub`) — deliberately **not** the full
+torch/transformers chat-time stack, since Colibri needs neither.
 
 (Inkling's 64GB floor is Colibri's own doc'd threshold — below it the process
 dies mid-generation; a 25GB int4-dense-container fallback mode exists but is
 disk-bound and impractically slow, so it isn't what's rated here.)
 
-- [x] Five new model files under `Multi-AI/multi_ai/models/` — one per family
+- [x] Five model files under `Multi-AI/multi_ai/models/` — one per family
       (`glm_5_2_colibri.pyx`, `inkling_colibri.pyx`, `kimi_k3_colibri.pyx`,
       `deepseek_v4_flash_colibri.pyx`, `olmoe_colibri.pyx`), each declaring
       `_EXTERNAL_ENDPOINT = "colibri"`, `_EXTERNAL_ENDPOINT_PORT = 8010`,
-      `_EXTERNAL_MIN_RAM_GB`/`_EXTERNAL_RECOMMENDED_RAM_GB`, and a `get_info()`
-      with the figures in the table above.
-- [x] `server.pyx`: a third dispatch branch in `_chat_reply` — `_colibri_generate()`
-      translates `{model, message, history}` into Colibri's OpenAI-compatible
-      `/v1/chat/completions` body (reusing `_coerce_history()`'s existing
-      role/content shape directly), proxies the request, and maps the reply
-      back to a plain string. Connection failures return a clear
-      "start `coli serve --port 8010`" message rather than hanging or
-      stack-tracing. `_resolve_server_model` is untouched — these still return
-      its existing 400 "no server-side weights to manage" since nothing is
-      MULTI-AI-managed here.
-- [x] `hardware.pyx`: new `rate_external_model(min_ram_gb, recommended_ram_gb,
+      `_EXTERNAL_MIN_RAM_GB`/`_EXTERNAL_RECOMMENDED_RAM_GB`, `_COLIBRI_REPO_ID`
+      (the Hub source above), and a `get_info()` with the figures in the
+      table above.
+- [x] `server.pyx`: `_resolve_server_model` now recognizes `_COLIBRI_REPO_ID`
+      alongside `_REPO_ID` (returning which *kind* it is), so the existing
+      `GET/POST/DELETE /api/models/{id}/cache|download` routes work for
+      Colibri models too — `_download_colibri_weights()` fetches the repo via
+      `huggingface_hub.snapshot_download()` without loading it (unlike
+      `_download_hf_weights`, which would try to load a 284B-2.8T checkpoint
+      through `transformers`).
+- [x] `server.pyx`: `_ensure_colibri_running(model_id, port)` — spawns
+      `coli serve --model <path> --port 8010` (subprocess.Popen, output
+      drained on a daemon thread so the pipe never blocks the child) and
+      polls `GET /health` until it answers or a timeout/early-exit produces a
+      clear error with the captured log tail. Called from `_chat_reply`
+      before `_colibri_generate()` proxies the actual request. Requires
+      weights already downloaded (`local_files_only=True` — chatting never
+      triggers a 167GB-1.6TB download itself) and the `coli` binary on PATH;
+      each missing piece gets its own specific error message.
+- [x] `hardware.pyx`: `rate_external_model(min_ram_gb, recommended_ram_gb,
       disk_gb, specs)` — rates off local RAM against each family's own stated
       minimums (`rate_model`'s `bool(gguf)` discriminator couldn't grow a third
       case in place, so this is a sibling function, not a branch inside it).
@@ -251,29 +278,37 @@ disk-bound and impractically slow, so it isn't what's rated here.)
       own backend on 8000). All five default to the same port since realistically
       only one Colibri process runs at a time — each family needs its own
       hundreds-of-GB-to-terabyte weight set, so running two simultaneously isn't
-      a realistic scenario. A per-model `_EXTERNAL_ENDPOINT_PORT` override exists
-      if that assumption ever needs to change.
+      a realistic scenario; `_ensure_colibri_running` stops whichever family was
+      running before starting a different one. A per-model
+      `_EXTERNAL_ENDPOINT_PORT` override exists if that assumption ever needs
+      to change.
 - [x] Dart side — `api_client.dart`/`model_pool.dart`/`chat_screen.dart` route
       these through the normal `_api.sendChat()` path unchanged (no `gguf`
       field), as originally expected. What wasn't anticipated: `ModelInfo` had
       no way to tell a `_REPO_ID` model (server-managed weights) apart from an
-      `_EXTERNAL_ENDPOINT` one (nothing to manage) — both lack `gguf`. That
-      made `model_detail_screen.dart`'s server-install section call the
-      backend's cache-status endpoint for these models and surface its "no
-      server-side weights to manage" error as if it were a bug, and made
-      `model_pool.dart`'s `isDownloaded()` permanently mark them "not
-      downloaded." Fixed by adding `external_endpoint` to `/api/models` and
-      threading it through both call sites — see `ModelInfo.externalEndpoint`.
-- [ ] Verify: `pytest -q` → start backend, confirm `/api/models` lists all five
-      with a sane fit rating → chat request with no Colibri running returns the
-      "start `coli serve`" error, not a crash → chat request with a real Colibri
-      instance running round-trips correctly, including with prior turns in
-      history.
+      `_EXTERNAL_ENDPOINT` one — both lack `gguf`, and now some
+      `_EXTERNAL_ENDPOINT` models (the Colibri five) also have server-managed
+      weights while others hypothetically might not. Fixed by adding
+      `has_server_weights` to `/api/models` (true for `_REPO_ID` or
+      `_COLIBRI_REPO_ID`) and threading it through `ModelInfo.hasServerWeights`,
+      `model_detail_screen.dart`'s `_isServerModel` gate (now shows the normal
+      download/cache/delete section for Colibri models instead of a static
+      "run this command yourself" block), and `model_pool.dart`'s
+      `isDownloaded()` (now genuinely checks cache status for these instead of
+      hardcoding `true`).
+- [x] Verify: `pytest -q` passes, including the Hub-resolution checks for all
+      five `_COLIBRI_REPO_ID` values.
+- [ ] Verify against a real `coli` install: start the backend, download OLMoE
+      (the ~4GB family, the only one realistic to actually pull) from the
+      Models tab, send it a chat message with no `coli serve` running yet, and
+      confirm the backend spawns it automatically and the reply round-trips —
+      including a second chat to a *different* Colibri model correctly
+      stopping the first process first.
 
-Explicitly out of scope: bundling the Colibri binary or any family's weights,
-supervising a `coli serve` subprocess, any installer/packaging changes, SSE
-streaming in MULTI-AI's own `/api/chat`, running multiple Colibri families at
-once.
+Explicitly out of scope: auto-fetching the `coli` binary itself (still a
+one-time manual PATH install — see above), any installer/packaging changes,
+SSE streaming in MULTI-AI's own `/api/chat`, running multiple Colibri
+families at once.
 
 ## TODO: A real speedup for GPT-OSS 20B and the dense 10–14B models
 

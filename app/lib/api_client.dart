@@ -135,6 +135,7 @@ class ModelInfo {
     this.gguf,
     this.mmproj,
     this.externalEndpoint,
+    this.hasServerWeights = false,
     this.params,
     this.sizeGb,
     this.modality,
@@ -166,12 +167,21 @@ class ModelInfo {
   /// needs both downloaded — see [OnDeviceEngine.generate].
   final String? mmproj;
 
-  /// Set for a BYO external-server model (currently only `"colibri"`) — the
-  /// backend proxies chat requests to a process the user runs themselves.
-  /// Null for both `_REPO_ID` and `_GGUF_SOURCE` models. Distinguishes this
-  /// from a `_REPO_ID` model (both have no [gguf]), since only the latter
-  /// has server-managed weights this app can download/cache/delete.
+  /// Set for an external-server model (currently only `"colibri"`) — the
+  /// backend proxies chat requests to a separate engine process rather than
+  /// loading weights itself. Null for both `_REPO_ID` and `_GGUF_SOURCE`
+  /// models. Does NOT by itself mean this app can't manage its weights —
+  /// see [hasServerWeights].
   final String? externalEndpoint;
+
+  /// Whether the backend's cache/download/delete routes
+  /// (`getServerModelCacheStatus`/`downloadServerModel`/`deleteServerModel`)
+  /// work for this model id — true for a `_REPO_ID` model (transformers-
+  /// managed) and for a Colibri model with a `_COLIBRI_REPO_ID` (this app
+  /// downloads the weights, then spawns/supervises `coli serve` itself).
+  /// False for a plain on-device `gguf` entry or a stub. Gates
+  /// [ModelDetailScreen]'s server-install section.
+  final bool hasServerWeights;
 
   /// Parameter count as a human label (e.g. `"7B"`, `"124M"`), for the
   /// Models tab. Null for entries the backend hasn't annotated.
@@ -237,6 +247,9 @@ class ModelInfo {
       gguf: json['gguf'] as String?,
       mmproj: json['mmproj'] as String?,
       externalEndpoint: json['external_endpoint'] as String?,
+      // Absent on an older backend that predates Colibri weight management;
+      // false is the safe default (no server-install section offered).
+      hasServerWeights: json['has_server_weights'] as bool? ?? false,
       params: json['params'] as String?,
       sizeGb: (json['size_gb'] as num?)?.toDouble(),
       modality: json['modality'] as String?,
