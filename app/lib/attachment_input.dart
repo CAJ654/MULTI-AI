@@ -48,24 +48,27 @@ class DefaultAttachmentSource implements AttachmentSource {
 
   @override
   Future<List<Attachment>> pickImages() async {
-    final result = await FilePicker.pickFiles(
+    // pickFiles() is multi-select by default as of file_picker 12 (no more
+    // allowMultiple) and returns [] rather than null on cancel.
+    final files = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: _imageMimeTypes.keys.toList(),
-      allowMultiple: true,
-      // The picker hands back paths by default on desktop/mobile; we need the
-      // bytes to base64 them onto the wire anyway.
-      withData: true,
     );
-    if (result == null) return [];
     final attachments = <Attachment>[];
-    for (final file in result.files) {
-      final bytes = file.bytes ??
-          (file.path != null ? await File(file.path!).readAsBytes() : null);
-      if (bytes == null) continue;
+    for (final file in files) {
+      // readAsBytes() replaces the deprecated withData: true — it reads from
+      // whichever source the platform actually populated (bytes, a local
+      // path, or a stream), so we need to base64 them onto the wire anyway.
+      final bytes = await file.readAsBytes();
+      // PlatformFile dropped its own `extension` getter in the federated
+      // rewrite (file_picker 12) — derive it from the name, same source the
+      // old getter used internally.
+      final dot = file.name.lastIndexOf('.');
+      final extension = dot >= 0 ? file.name.substring(dot + 1) : null;
       attachments.add(Attachment(
         kind: AttachmentKind.image,
         bytes: bytes,
-        mimeType: _imageMimeTypes[file.extension?.toLowerCase()] ?? 'image/png',
+        mimeType: _imageMimeTypes[extension?.toLowerCase()] ?? 'image/png',
         name: file.name,
       ));
     }

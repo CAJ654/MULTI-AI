@@ -17,4 +17,21 @@
         <domain includeSubdomains="false">localhost</domain>
         <domain includeSubdomains="false">127.0.0.1</domain>
     </domain-config>
+    <!--
+      Debug builds only (android:debuggable="true" — every `flutter run`),
+      never release: trusts user-installed CAs alongside the system ones.
+      Without this, a dev machine behind a TLS-intercepting antivirus/proxy
+      (matches the Gradle/pip TLS-interception notes elsewhere in this repo)
+      can't download anything over HTTPS from inside the emulator/device —
+      CERTIFICATE_VERIFY_FAILED on the intercepted chain, even though the
+      real huggingface.co cert would validate fine. Install the intercepting
+      root CA as a user certificate (Settings > Security > Encryption &
+      credentials > Install a certificate) to actually fix a download.
+    -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
 </network-security-config>

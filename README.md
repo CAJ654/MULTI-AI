@@ -37,8 +37,7 @@ increasingly lands on communities with the least ability to push back
 ([Fortune, 2026](https://fortune.com/2026/04/29/where-do-critical-minerals-come-from-ai-boom-data-centers-africa-middle-east/);
 [Roha, 2026](https://medium.com/@Jamesroha/the-new-strip-mines-how-ai-infrastructure-is-repeating-appalachias-extraction-history-e4ac29c1b88b)).
 A phone or laptop that already exists needs none of that new extraction —
-on-device inference reuses hardware the user already owns instead of adding
-to server-rack demand.
+on-device inference reuses hardware the user already owns instead of adding to server-rack demand.
 
 ## Run using
 
@@ -509,7 +508,7 @@ Verified against real weights (2026-07-19): `ministral_3_3b` and `gemma3n` both 
 
 `torchvision` must match your torch build — on CUDA 12.8, `pip install torchvision --index-url https://download.pytorch.org/whl/cu128`. Without it, image sends fail with "PixtralProcessor requires the Torchvision library".
 
-> **The Flutter app now needs Windows Developer Mode.** The image picker (`file_picker`) and recorder (`record`) are plugins, and Flutter's Windows desktop build symlinks plugin sources — so `flutter run -d windows` fails with "Building with plugins requires symlink support" until you run `start ms-settings:developers` and turn Developer Mode on (one-time). This is a change from before: the app previously avoided all plugins for exactly this reason (see the note in `chat_store.dart` about not using `path_provider`). Android/iOS builds are unaffected.
+> **The Flutter app now needs Windows Developer Mode.** The image picker (`file_picker`) and recorder (`record`) are plugins, and Flutter's Windows desktop build symlinks plugin sources — so `flutter run -d windows` fails with "Building with plugins requires symlink support" until you run `start ms-settings:developers` and turn Developer Mode on (one-time). This is a change from before: the app previously avoided all plugins for exactly this reason. That reasoning is now fully moot — `path_provider` was added too once `file_picker`/`record` had already paid this cost (see the Android persistence fix above). Android/iOS builds are unaffected.
 
 > **Partial downloads used to fail silently.** Weights are loaded with `local_files_only=True` first (fast, and it dodges hub rate limits), but a half-finished cache satisfies that: the config JSON lands before the vocabulary, so a tokenizer loads *without error* and then encodes every token to `<unk>`. The prompt became one junk token, generation produced noise, and the reply was an unexplained "(model returned an empty response)" — which then repeated for the rest of the server's life, because the broken tokenizer was cached in memory. The server now sanity-checks a freshly loaded tokenizer, re-fetches from the hub if it's degenerate, and says so plainly if it still is.
 
@@ -583,30 +582,55 @@ Already done, contrary to what the on-device TODO above still says: the
 exists, and `chat_screen.dart` already has a `LayoutBuilder`/`Drawer` phone
 layout.
 
-- [ ] **Bundle the model roster as an asset** — the app has no local roster.
-      `_GGUF_SOURCE` lives in `Multi-AI/multi_ai/models/*.pyx`, which is
-      Cython-compiled and server-side, so the app gets its 24 on-device entries
-      from the backend's `/api/models`. With no backend reachable,
-      `chat_screen.dart`'s catch falls back to `_models = [onDeviceModel]` —
-      **one** hardcoded Qwen2.5 0.5B plus a red "Backend unreachable" banner. So
-      an Android build today is not "on-device models", it is *one* on-device
-      model and an error message. Fix: a build-time generator writes
-      `assets/on_device_roster.json` and Android loads that instead of calling
-      `fetchModels()`. The parser already exists — `_parseRoster` in
-      `app/tool/verify_on_device.dart` reads `_GGUF_SOURCE`,
-      `_GGUF_MMPROJ_SOURCE`, `size_gb` and `_INPUT_MODALITIES` out of the `.pyx`
-      files and asserts the entry count, so `.pyx` stays the single source of
-      truth. Drop the error banner on Android while you're there.
-- [ ] **Fix persistence — it is silently broken on mobile.**
-      `chat_store.dart` and `thinking_settings.dart` resolve their data
-      directory from `Platform.environment`, which is effectively empty on
-      Android: no `APPDATA`, no `HOME`, no `XDG_DATA_HOME`. Both fall through to
-      the relative `.multi_ai_data`, resolved against a CWD of `/`, which is not
-      writable — and `load()`'s `catch (_)` swallows it into "no history". Use
-      `path_provider`. The comment saying it was avoided because the plugin needs
-      Windows Developer Mode is **stale**: `file_picker` and `record` already
-      force Developer Mode (see the note under Python Backend), so that cost is
-      already paid. This also determines where llamadart's download cache lands.
+- [x] **Bundle the model roster as an asset** — the app had no local roster:
+      `_GGUF_SOURCE` lives in `Multi-AI/multi_ai/models/*.pyx`, Cython-compiled
+      and server-side, so with no reachable backend `ModelPool.refresh()` fell
+      back to a single hardcoded Qwen2.5 0.5B plus a red "Backend unreachable"
+      banner. Fixed: `app/tool/generate_on_device_roster.dart` (a new,
+      standalone `dart run` script, duplicating rather than importing
+      `verify_on_device.dart`'s private `_parseRoster` — that one only reads 4
+      of the 9 fields `ModelInfo` needs) parses every `.pyx` declaring a
+      module-level `_GGUF_SOURCE` (27 today) and writes
+      `app/assets/on_device_roster.json` in the same shape `/api/models`
+      already emits, so `ModelInfo.fromJson` reads it with zero new parsing
+      code. `ModelPool.refresh()` branches on a real, OS-level Android check
+      (see the `platform_check.dart` note below) to load the asset instead of
+      calling `fetchModels()`. Re-run the generator after any `.pyx` change and
+      before any Android build — nothing does it automatically yet.
+- [x] **Fix persistence — it was silently broken on mobile.**
+      `chat_store.dart` and `thinking_settings.dart` (a byte-for-byte
+      duplicate) resolved their data directory from `Platform.environment`,
+      empty on Android, falling through to an unwritable relative path with a
+      `catch (_)` swallowing the failure into "no history". Fixed with
+      `path_provider`'s `getApplicationSupportDirectory()` — the stale
+      Developer-Mode-avoidance reasoning no longer applies (`file_picker`/`record`
+      already pay that cost). `thinking_settings.dart`'s duplicate is gone;
+      it now calls `chat_store.dart`'s shared `appDataFile`, which also means
+      `addon_host.dart`'s `AddOnStateStore` inherited the fix for free.
+      `ChatStore`/`ThinkingSettingsStore` are now interfaces
+      (`FileChatStore`/`FileThinkingSettingsStore` are the real
+      implementations) so `InMemoryChatStore`/`InMemoryThinkingSettingsStore`
+      exist for tests, mirroring `InMemoryAddOnStateStore`.
+      A second, previously-unflagged gap: the on-device model *cache* has
+      three independent construction sites (`ModelPool`, `ModelDetailScreen`,
+      and `OnDeviceEngine`'s own `LlamaEngine`), each defaulting to
+      `DefaultModelDownloadManager()`'s OS-purgeable temp-directory fallback on
+      Android. All three now share one durable directory
+      (`androidModelCacheDirectory()` in `model_pool.dart`) via
+      `DefaultModelDownloadManager.appPrivate(...)`, threaded into
+      `OnDeviceEngine` through a new settable `downloadManager` field (it stays
+      Flutter-plugin-free itself, so `verify_on_device.dart` still runs under
+      plain `dart run` — only the already-Flutter-bound `ModelPool` does the
+      `path_provider` resolution and hands down the finished manager).
+      **Trap worth knowing:** `defaultTargetPlatform` — the obvious way to
+      check "is this Android" — is overridden to `TargetPlatform.android` by
+      the `flutter_test` binding on every host OS, which silently broke every
+      existing widget test the first time this landed (confirmed by probing it
+      directly under `flutter test`). `app/lib/platform_check.dart` provides
+      `isAndroidHost` instead: a conditional-import shim (`dart:io`'s real
+      `Platform.isAndroid` where available, `false` on web) that's accurate
+      under test. Everything above keys off `isAndroidPlatform` in
+      `model_pool.dart` (`!kIsWeb && isAndroidHost`), not `defaultTargetPlatform`.
 - [ ] **Device-side fit ratings** — currently `fit` comes from the backend and
       is null with no server, so every badge vanishes on the platform that needs
       it most: the roster carries `gptOSS` at 12.11GB and several 7–14B entries,

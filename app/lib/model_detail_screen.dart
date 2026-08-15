@@ -1,10 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:llamadart/llamadart.dart';
 
 import 'api_client.dart';
 import 'model_fit_badge.dart';
+import 'model_pool.dart' show ModelPool, androidModelCacheDirectory, isAndroidPlatform;
 import 'theme.dart';
 
 /// Full-page breakdown of a single model, pushed when its card is tapped in
@@ -14,11 +13,20 @@ class ModelDetailScreen extends StatefulWidget {
     super.key,
     required this.model,
     required this.runsInApp,
+    required this.pool,
     this.source,
     this.api,
+    this.downloadManager,
   });
 
   final ModelInfo model;
+
+  /// Owns the on-device download this screen starts/watches/cancels — see
+  /// ModelPool.ensureOnDeviceDownload. Living there instead of in this
+  /// screen's own State means popping this page (to browse other models, or
+  /// because the app backgrounded) doesn't cancel an in-flight download the
+  /// way disposing a screen-owned controller used to.
+  final ModelPool pool;
 
   /// Whether this model runs in-app via llama.cpp, vs. via the local Python
   /// backend. Both run entirely on this machine — see chat_screen.dart.
@@ -35,6 +43,12 @@ class ModelDetailScreen extends StatefulWidget {
   /// unavailable/stub entries with no weights to manage.
   final ApiClient? api;
 
+  /// Overrides the on-device cache manager this screen resolves on its own
+  /// (a durable app-support directory on Android, the package default
+  /// elsewhere) — for tests, so they never touch real disk or a real
+  /// path_provider platform channel.
+  final ModelDownloadManager? downloadManager;
+
   @override
   State<ModelDetailScreen> createState() => _ModelDetailScreenState();
 }
@@ -42,13 +56,15 @@ class ModelDetailScreen extends StatefulWidget {
 class _ModelDetailScreenState extends State<ModelDetailScreen> {
   static const _unknown = 'Not documented for this model yet';
 
-  final _downloadManager = DefaultModelDownloadManager();
-  ModelDownloadController? _downloadController;
-  StreamSubscription<ModelDownloadTaskSnapshot>? _downloadSub;
+  // Resolved in initState — null until then, since the durable Android
+  // directory needs an await (path_provider) that a field initializer can't
+  // do. _checkingCache stays true for this whole window (it only flips once
+  // _refreshCacheStatus runs, below), so the UI already reads as "checking"
+  // rather than needing separate state for the resolution step.
+  ModelDownloadManager? _downloadManager;
 
   bool _checkingCache = true;
   ModelCacheEntry? _cacheEntry;
-  ModelDownloadTaskSnapshot? _downloadSnapshot;
 
   // Server-backed (_REPO_ID) model install state — same shape as the
   // on-device fields above, but driven by the Python backend's Hugging
@@ -87,29 +103,54 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _refreshCacheStatus();
+    // The pool owns the on-device download; this screen only ever reads its
+    // snapshot (see _buildInstallSection), so it needs to rebuild whenever
+    // that snapshot changes — including one already in flight before this
+    // page was (re)opened.
+    widget.pool.addListener(_onPoolChanged);
+    _resolveDownloadManager();
     _refreshServerCacheStatus();
+  }
+
+  void _onPoolChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    _downloadSub?.cancel();
-    _downloadController?.dispose();
+    widget.pool.removeListener(_onPoolChanged);
     super.dispose();
+  }
+
+  /// A durable app-support directory on Android — [DefaultModelDownloadManager]'s
+  /// bare constructor falls back to the OS-purgeable temp/cache directory
+  /// there — the package default (unchanged) everywhere else. Shares its
+  /// directory computation with ModelPool/OnDeviceEngine via
+  /// androidModelCacheDirectory() so all three agree on one location.
+  Future<void> _resolveDownloadManager() async {
+    _downloadManager = widget.downloadManager ??
+        (isAndroidPlatform
+            ? DefaultModelDownloadManager.appPrivate(
+                cacheDirectory: await androidModelCacheDirectory(),
+              )
+            : DefaultModelDownloadManager());
+    if (!mounted) return;
+    await _refreshCacheStatus();
   }
 
   Future<void> _refreshCacheStatus() async {
     final source = _parsedSource;
-    if (source == null) {
+    final downloadManager = _downloadManager;
+    if (source == null || downloadManager == null) {
       setState(() => _checkingCache = false);
       return;
     }
-    var entry = await _downloadManager.get(source.cacheKey);
+    var entry = await downloadManager.get(source.cacheKey);
     // Same rule the chat picker applies: a vision model missing its projector
     // isn't downloaded, so this page keeps offering Download until both land.
     final mmproj = _parsedMmproj;
     if (entry != null && mmproj != null) {
-      if (await _downloadManager.get(mmproj.cacheKey) == null) entry = null;
+      if (await downloadManager.get(mmproj.cacheKey) == null) entry = null;
     }
     if (!mounted) return;
     setState(() {
@@ -193,40 +234,19 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
     }
   }
 
+  /// Starts (or reattaches to) this model's on-device download via the pool
+  /// — see ModelDetailScreen.pool's doc comment for why it doesn't own the
+  /// controller itself. Progress/failure/completion arrive through
+  /// _onPoolChanged rebuilding this screen and _buildInstallSection reading
+  /// widget.pool.downloadSnapshotFor; this only needs to kick it off and
+  /// then refresh the on-disk cache status once it settles.
   Future<void> _download() async {
-    final source = _parsedSource;
-    if (source == null) return;
-    final controller = ModelDownloadController();
-    _downloadController = controller;
-    setState(() => _downloadSnapshot = controller.snapshot);
-    _downloadSub = controller.snapshots.listen((snapshot) {
-      if (!mounted) return;
-      setState(() => _downloadSnapshot = snapshot);
-    });
-    try {
-      final entry = await controller.start(source);
-      // Then the projector, if this is a vision model. It's a fraction of the
-      // weights' size and has no separate progress UI — the download simply
-      // isn't reported complete until both files are in the cache, so the
-      // chat picker can't offer image input against a half-downloaded model.
-      final mmproj = _parsedMmproj;
-      if (mmproj != null) await _downloadManager.ensureModel(mmproj);
-      if (!mounted) return;
-      setState(() {
-        _cacheEntry = entry;
-        _downloadSnapshot = null;
-      });
-    } catch (_) {
-      // Failure/cancellation is already reflected in _downloadSnapshot.
-    } finally {
-      await _downloadSub?.cancel();
-      _downloadSub = null;
-      await controller.dispose();
-      if (identical(_downloadController, controller)) _downloadController = null;
-    }
+    await widget.pool.ensureOnDeviceDownload(widget.model);
+    if (!mounted) return;
+    await _refreshCacheStatus();
   }
 
-  void _cancelDownload() => _downloadController?.cancel();
+  void _cancelDownload() => widget.pool.cancelDownload(widget.model.id);
 
   Future<void> _delete() async {
     final source = _parsedSource;
@@ -252,11 +272,13 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
       ),
     );
     if (confirmed != true) return;
-    await _downloadManager.remove(source.cacheKey);
+    final downloadManager = _downloadManager;
+    if (downloadManager == null) return;
+    await downloadManager.remove(source.cacheKey);
     // The projector is dead weight without its model — leaving it behind
     // would silently keep hundreds of MB on a device the user just freed.
     final mmproj = _parsedMmproj;
-    if (mmproj != null) await _downloadManager.remove(mmproj.cacheKey);
+    if (mmproj != null) await downloadManager.remove(mmproj.cacheKey);
     if (!mounted) return;
     setState(() => _cacheEntry = null);
   }
@@ -416,7 +438,7 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
       return const SizedBox.shrink();
     }
 
-    final snapshot = _downloadSnapshot;
+    final snapshot = widget.pool.downloadSnapshotFor(widget.model.id);
     final isDownloading = snapshot != null && snapshot.isRunning;
     final failed = snapshot != null && snapshot.stage == ModelDownloadTaskStage.failed;
     final installed = _cacheEntry != null && !isDownloading;

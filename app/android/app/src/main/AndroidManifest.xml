@@ -9,6 +9,17 @@
          still requested at runtime — the button reports a denial rather than
          arming. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Keeps an on-device model download alive when the app is backgrounded
+         (Home/screen off/app-switch) instead of Android suspending the
+         process mid-fetch — see DownloadForegroundService.kt and
+         download_foreground_service.dart. FOREGROUND_SERVICE_DATA_SYNC is
+         the service's declared type (targetSdk 36 requires one);
+         POST_NOTIFICATIONS is requested at runtime on API 33+, same shape as
+         RECORD_AUDIO above — a denial just means no visible progress
+         notification, not a failed download. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="multi_ai"
         android:name="${applicationName}"
@@ -41,6 +52,13 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- See DownloadForegroundService.kt. dataSync matches what an
+             on-device model download actually is; exported="false" because
+             nothing outside this app starts or binds to it. -->
+        <service
+            android:name=".DownloadForegroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

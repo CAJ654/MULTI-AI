@@ -43,3 +43,10 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // NotificationCompat/ContextCompat, used by DownloadForegroundService.kt
+    // and MainActivity.kt's foreground-service start call — not otherwise
+    // pulled in as a direct dependency of this app module.
+    implementation("androidx.core:core-ktx:1.13.1")
+}

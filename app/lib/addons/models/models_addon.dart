@@ -202,6 +202,7 @@ class ModelCard extends StatelessWidget {
               builder: (_) => ModelDetailScreen(
                 model: m,
                 runsInApp: inApp,
+                pool: pool,
                 source: inApp ? ModelPool.localSourceOf(m) : null,
                 api: inApp ? null : pool.api,
               ),

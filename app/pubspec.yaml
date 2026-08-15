@@ -36,7 +36,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.6.0
   llamadart: ^0.8.11
-  file_picker: ^11.0.2
+  # 12.0.0+ drops file_picker's own explicit Kotlin Gradle Plugin application,
+  # which otherwise fails Android Java compilation ("cannot find symbol
+  # FilePickerPlugin") under this project's AGP/Kotlin toolchain version.
+  file_picker: ^12.0.0
   record: ^7.1.1
 
   # In-app delta updates. See lib/update_service.dart; releases are packaged by
@@ -46,6 +49,17 @@ dependencies:
   # machine needs a toolchain on PATH, which the release workflow installs.
   velopack_flutter: ^0.3.2
   url_launcher: ^6.3.2
+
+  # Data directory resolution for chat history / settings / the on-device
+  # model cache — dart:io's Platform.environment (the prior approach) is
+  # empty on Android and silently resolved to an unwritable path. See
+  # chat_store.dart's appDataFile().
+  path_provider: ^2.1.5
+
+  # device_ram_io.dart's Windows RAM read (GlobalMemoryStatusEx) — already
+  # resolved transitively before this, pinned explicitly now that lib/ calls
+  # into it directly instead of only depending on it through other packages.
+  ffi: ^2.1.0
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +72,11 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # Lets tests fake path_provider's platform channel instead of hitting real
+  # disk — see chat_store_test.dart.
+  path_provider_platform_interface: ^2.1.2
+  plugin_platform_interface: ^2.1.8
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -69,9 +88,13 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
+  # On Android, which never talks to the Python backend, the on-device roster
+  # ships as this build-time asset instead of coming from /api/models — see
+  # tool/generate_on_device_roster.dart and model_pool.dart's Android branch
+  # of refresh(). Re-run that script after any change under
+  # Multi-AI/multi_ai/models/*.pyx; nothing regenerates it automatically.
+  assets:
+    - assets/on_device_roster.json
 
 # velopack_flutter 0.3.2 (latest published) pins code_assets ^1.0.0 / hooks
 # ^1.0.3, but Flutter >=3.44.0's native-assets build daemon speaks a newer

@@ -43,8 +43,8 @@ class ChatController extends ChangeNotifier {
     ChatStore? store,
     ThinkingSettingsStore? thinkingSettingsStore,
   })  : _providedAttachments = attachmentSource,
-        _store = store ?? ChatStore(),
-        _thinkingSettingsStore = thinkingSettingsStore ?? ThinkingSettingsStore();
+        _store = store ?? FileChatStore(),
+        _thinkingSettingsStore = thinkingSettingsStore ?? FileThinkingSettingsStore();
 
   final ModelPool pool;
   final AttachmentSource? _providedAttachments;

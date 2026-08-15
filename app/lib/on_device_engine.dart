@@ -138,6 +138,16 @@ const int _historyCharBudget = 4096 * 4;
 /// network after a model's first download. Server-roster models can opt in
 /// by declaring a `_GGUF_SOURCE` (surfaced as `gguf` in /api/models).
 class OnDeviceEngine {
+  OnDeviceEngine({this.downloadManager});
+
+  /// Where model weights are cached, threaded down into every [LlamaEngine]
+  /// this class creates. Left null on every platform except Android — see
+  /// ModelPool's Android branch, which resolves a durable app-support
+  /// directory via path_provider and sets this. This file otherwise stays
+  /// Flutter-plugin-free (see the header comment), so it can't do that
+  /// resolution itself; it can only accept the finished manager.
+  ModelDownloadManager? downloadManager;
+
   LlamaEngine? _engine;
   String? _loadedSource;
   String? _loadedMmproj;
@@ -166,7 +176,7 @@ class OnDeviceEngine {
     Object? lastError;
     StackTrace? lastStack;
     for (final gpuLayers in _gpuLayerLadder) {
-      final engine = LlamaEngine(LlamaBackend());
+      final engine = LlamaEngine(LlamaBackend(), modelDownloadManager: downloadManager);
       try {
         await engine.loadModelSource(
           ModelSource.parse(source),

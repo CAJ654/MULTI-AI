@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:path_provider/path_provider.dart' show getApplicationSupportDirectory;
+
 import 'api_client.dart';
 
 class ChatMessage {
@@ -79,39 +81,37 @@ class ChatSession {
 
 /// The directory this app keeps its own files in, created if missing.
 ///
-/// Resolved from environment variables instead of path_provider: the plugin
-/// needs Windows Developer Mode (symlinks) to build, which this app otherwise
-/// doesn't require.
-///
 /// Shared by everything that persists something (chat history, thinking
-/// settings, which add-ons are enabled) so there is one directory to fix when
-/// this moves to path_provider — the env vars this reads are empty on Android,
-/// where it silently falls through to a relative path that isn't writable.
+/// settings, which add-ons are enabled, the on-device model cache) so there's
+/// one directory to get right. Used to resolve from `Platform.environment`
+/// (APPDATA/HOME/XDG_DATA_HOME) — those are all empty on Android, so it
+/// silently fell through to a relative path against an unwritable CWD, and
+/// callers' `catch (_)` swallowed the failure into "no history" with no
+/// visible error. path_provider gets Android (and every other platform)
+/// right without a manual env-var branch.
 Future<File> appDataFile(String name) async {
-  final env = Platform.environment;
-  String? base;
-  if (Platform.isWindows) {
-    base = env['APPDATA'];
-  } else if (Platform.isMacOS) {
-    final home = env['HOME'];
-    if (home != null) base = '$home/Library/Application Support';
-  } else {
-    base = env['XDG_DATA_HOME'] ?? (env['HOME'] != null ? '${env['HOME']}/.local/share' : null);
-  }
-  final sep = Platform.pathSeparator;
-  final dir = Directory(base != null ? '$base${sep}multi_ai' : '.multi_ai_data');
+  final dir = await getApplicationSupportDirectory();
   await dir.create(recursive: true);
-  return File('${dir.path}$sep$name');
+  return File('${dir.path}${Platform.pathSeparator}$name');
+}
+
+/// Where chat sessions are persisted. [FileChatStore] is the real,
+/// file-backed implementation; [InMemoryChatStore] stands in for tests and
+/// any platform where the real one can't write.
+abstract class ChatStore {
+  Future<List<ChatSession>> load();
+  Future<void> save(List<ChatSession> sessions);
 }
 
 /// Persists chat sessions as a JSON file in the app's data directory, so
 /// chats survive restarts until the user explicitly deletes them.
-class ChatStore {
+class FileChatStore implements ChatStore {
   // Chains writes so a save never interleaves with a previous one.
   Future<void> _lastWrite = Future.value();
 
   Future<File> _file() => appDataFile('chat_sessions.json');
 
+  @override
   Future<List<ChatSession>> load() async {
     try {
       final file = await _file();
@@ -126,6 +126,7 @@ class ChatStore {
     }
   }
 
+  @override
   Future<void> save(List<ChatSession> sessions) {
     // Snapshot now, before awaiting, so the write reflects this call's state.
     final payload = jsonEncode({
@@ -142,5 +143,23 @@ class ChatStore {
         // Persistence is best-effort; the in-memory session still works.
       }
     });
+  }
+}
+
+/// In-memory store for tests and for any platform where the real one can't
+/// write. Behaves like a file that starts empty — mirrors
+/// InMemoryAddOnStateStore in addon_host.dart.
+class InMemoryChatStore implements ChatStore {
+  List<ChatSession> _sessions = const [];
+
+  @override
+  Future<List<ChatSession>> load() async => _sessions;
+
+  @override
+  Future<void> save(List<ChatSession> sessions) async {
+    _sessions = [
+      for (final s in sessions)
+        if (s.messages.isNotEmpty) s,
+    ];
   }
 }

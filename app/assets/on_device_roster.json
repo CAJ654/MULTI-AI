@@ -1,0 +1,477 @@
+{
+  "models": [
+    {
+      "id": "deepseek_r1_distill_1_5b_on_device",
+      "name": "DeepSeek-R1-Distill-Qwen-1.5B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "1.5B",
+      "size_gb": 1.12,
+      "modality": "Text",
+      "context_tokens": 131072,
+      "license": "MIT",
+      "strengths": "Distilled from DeepSeek-R1's reasoning traces onto a small Qwen2.5 backbone — punches well above its size on math and step-by-step reasoning. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Fast, surprisingly strong reasoning for its size"
+    },
+    {
+      "id": "falcon2_11b_on_device",
+      "name": "Falcon2 11B (On-Device)",
+      "available": true,
+      "gguf": "hf://bartowski/falcon-11B-GGUF/falcon-11B-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "11B",
+      "size_gb": 6.85,
+      "modality": "Text",
+      "context_tokens": 8192,
+      "license": "TII Falcon License 2.0",
+      "strengths": "TII's multilingual generalist — decent breadth across languages for a mid-size dense model. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Moderate speed, solid general intelligence"
+    },
+    {
+      "id": "falcon3_on_device",
+      "name": "Falcon3 3B (On-Device)",
+      "available": true,
+      "gguf": "hf://tiiuae/Falcon3-3B-Instruct-GGUF/Falcon3-3B-Instruct-q4_k_m.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "3B",
+      "size_gb": 2.01,
+      "modality": "Text",
+      "context_tokens": 32768,
+      "license": "TII Falcon License 2.0",
+      "strengths": "Efficient small model tuned for reasoning, coding, and instruction-following at an edge-friendly size. q4_k_m GGUF build runs fully on-device.",
+      "speed_profile": "Fast, good intelligence for its size"
+    },
+    {
+      "id": "falcon_7b_on_device",
+      "name": "Falcon 7B Instruct (On-Device)",
+      "available": true,
+      "gguf": "hf://maddes8cht/tiiuae-falcon-7b-instruct-gguf/tiiuae-falcon-7b-instruct-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "7B",
+      "size_gb": 4.98,
+      "modality": "Text",
+      "context_tokens": 2048,
+      "license": "Apache 2.0",
+      "strengths": "TII's original instruction-tuned Falcon — capable general chat, but its config declares no fixed context cap and it was trained at a short 2048-token sequence length, which limits long conversations. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Moderate speed, dated but competent"
+    },
+    {
+      "id": "falcon_h1_on_device",
+      "name": "Falcon-H1 1.5B (On-Device)",
+      "available": true,
+      "gguf": "hf://tiiuae/Falcon-H1-1.5B-Instruct-GGUF/Falcon-H1-1.5B-Instruct-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "1.5B",
+      "size_gb": 0.94,
+      "modality": "Text",
+      "context_tokens": 131072,
+      "license": "TII Falcon License 2.0",
+      "strengths": "Hybrid Transformer+Mamba architecture — combines attention quality with state-space efficiency, so it handles very long context cheaply. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Fast, efficient long-context handling"
+    },
+    {
+      "id": "falcon_mamba_7b_on_device",
+      "name": "FalconMamba 7B (On-Device)",
+      "available": true,
+      "gguf": "hf://tiiuae/falcon-mamba-7b-instruct-Q4_K_M-GGUF/falcon-mamba-7B-instruct-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "7B",
+      "size_gb": 4.2,
+      "modality": "Text",
+      "context_tokens": 8192,
+      "license": "TII Falcon License 2.0",
+      "strengths": "Pure state-space (Mamba) model, not a Transformer — trained at an 8192-token sequence length but, unlike attention models, has no hard context cap: constant memory per token means throughput doesn't degrade on longer inputs. Q4_K_M GGUF build runs fully on-device. Note: the on-device build is the instruct-tuned FalconMamba (the server sibling runs the base model).",
+      "speed_profile": "Fast at long context, moderate raw intelligence"
+    },
+    {
+      "id": "gemma1_on_device",
+      "name": "Gemma 2B (On-Device)",
+      "available": true,
+      "gguf": "hf://second-state/gemma-2b-it-GGUF/gemma-2b-it-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "2B",
+      "size_gb": 1.5,
+      "modality": "Text",
+      "context_tokens": 8192,
+      "license": "Gemma Terms of Use",
+      "strengths": "Google's first Gemma generation — solid for its size but superseded by Gemma 2/3 on most benchmarks. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Fast, modest intelligence"
+    },
+    {
+      "id": "gemma2_on_device",
+      "name": "Gemma 2 2B (On-Device)",
+      "available": true,
+      "gguf": "hf://bartowski/gemma-2-2b-it-GGUF/gemma-2-2b-it-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "2B",
+      "size_gb": 1.71,
+      "modality": "Text",
+      "context_tokens": 8192,
+      "license": "Gemma Terms of Use",
+      "strengths": "Improved training recipe over Gemma 1 — noticeably better reasoning and instruction-following at the same size. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Fast, good intelligence for 2B"
+    },
+    {
+      "id": "gemma3_on_device",
+      "name": "Gemma 3 1B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/gemma-3-1b-it-GGUF/gemma-3-1b-it-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "1B",
+      "size_gb": 0.81,
+      "modality": "Text",
+      "context_tokens": 32768,
+      "license": "Gemma Terms of Use",
+      "strengths": "Smallest Gemma 3 — tuned for on-device/edge use with a much longer context window than earlier Gemma generations. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Very fast, lighter intelligence"
+    },
+    {
+      "id": "gemma3n_on_device",
+      "name": "Gemma 3n E2B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/gemma-3n-E2B-it-GGUF/gemma-3n-E2B-it-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "E2B",
+      "size_gb": 3.03,
+      "modality": "Text",
+      "context_tokens": 32768,
+      "license": "Gemma Terms of Use",
+      "strengths": "Designed to run efficiently on-device — 'E2B' denotes ~2B effective inference cost despite more raw parameters. Q4_K_M GGUF build runs fully on-device. Text only here: the checkpoint is natively multimodal, but llama.cpp runs just its text path — pick the server-backed 'Gemma 3n E2B' entry for image and audio input.",
+      "speed_profile": "Fast for a multimodal model, good general intelligence"
+    },
+    {
+      "id": "gemma4_e2b_on_device",
+      "name": "Gemma 4 E2B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/gemma-4-E2B-it-GGUF/gemma-4-E2B-it-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/gemma-4-E2B-it-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image",
+        "audio"
+      ],
+      "params": "E2B",
+      "size_gb": 3.11,
+      "modality": "Text + Image + Audio",
+      "context_tokens": 131072,
+      "license": "Apache 2.0",
+      "strengths": "The roster's only fully multimodal on-device model — image and audio input both run through llama.cpp with no server and no network after the first download. 'E2B' denotes ~2B effective inference cost via Per-Layer Embeddings, so it stays phone-viable despite more raw parameters. Add ~0.99GB for its projector.",
+      "speed_profile": "Fast for a multimodal model, phone-viable"
+    },
+    {
+      "id": "gemma4_e4b_on_device",
+      "name": "Gemma 4 E4B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/gemma-4-E4B-it-GGUF/gemma-4-E4B-it-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/gemma-4-E4B-it-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image",
+        "audio"
+      ],
+      "params": "E4B",
+      "size_gb": 4.98,
+      "modality": "Text + Image + Audio",
+      "context_tokens": 131072,
+      "license": "Apache 2.0",
+      "strengths": "Fully multimodal on-device — image and audio input both run through llama.cpp with no server. 'E4B' denotes ~4B effective inference cost via Per-Layer Embeddings; stronger than the E2B build at roughly 1.9GB more weights, and better suited to desktop than to a phone. Add ~0.99GB for its projector.",
+      "speed_profile": "Moderate speed, strong multimodal intelligence"
+    },
+    {
+      "id": "gemma_3_4b_on_device",
+      "name": "Gemma 3 4B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/gemma-3-4b-it-GGUF/gemma-3-4b-it-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/gemma-3-4b-it-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "params": "4B",
+      "size_gb": 2.49,
+      "modality": "Text + Image",
+      "context_tokens": 131072,
+      "license": "Gemma Terms of Use",
+      "strengths": "Vision-language Gemma 3 — handles image understanding alongside text, with a long 128K context window. Q4_K_M GGUF build plus its F16 projector run fully on-device, so image input works with no server and no network.",
+      "speed_profile": "Moderate speed, strong multimodal intelligence"
+    },
+    {
+      "id": "gptOSS",
+      "name": "GPT-OSS 20B",
+      "available": true,
+      "gguf": "hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "20B",
+      "size_gb": 12.11,
+      "modality": "Text",
+      "context_tokens": 131072,
+      "license": "Apache 2.0",
+      "strengths": "OpenAI's open-weight reasoning model — Mixture-of-Experts with only ~3.6B active parameters per token, so it reasons like a much bigger model while staying fast.",
+      "speed_profile": "Fast for its reasoning quality (sparse MoE), large download"
+    },
+    {
+      "id": "llama3_1_on_device",
+      "name": "Llama 3.1 8B Instruct (On-Device)",
+      "available": true,
+      "gguf": "hf://bartowski/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "8B",
+      "size_gb": 4.92,
+      "modality": "Text",
+      "context_tokens": 131072,
+      "license": "Meta Llama 3.1 Community License",
+      "strengths": "Extends Llama 3 with a 128K context window and better multilingual and tool-use performance. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Moderate speed, strong general intelligence"
+    },
+    {
+      "id": "llama3_on_device",
+      "name": "Llama 3 8B Instruct (On-Device)",
+      "available": true,
+      "gguf": "hf://bartowski/Meta-Llama-3-8B-Instruct-GGUF/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "8B",
+      "size_gb": 4.92,
+      "modality": "Text",
+      "context_tokens": 8192,
+      "license": "Meta Llama 3 Community License",
+      "strengths": "Meta's original Llama 3 — strong general chat and instruction-following, the baseline the later 3.1/3.2 releases improved on. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Moderate speed, solid general intelligence"
+    },
+    {
+      "id": "llama_3_2_1b_on_device",
+      "name": "Llama 3.2 1B Instruct (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/Llama-3.2-1B-Instruct-GGUF/Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "1B",
+      "size_gb": 0.81,
+      "modality": "Text",
+      "context_tokens": 131072,
+      "license": "Meta Llama 3.2 Community License",
+      "strengths": "Meta's smallest Llama 3.2 — built for low-resource/edge use; lighter reasoning than the 3B sibling. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Very fast, lighter intelligence"
+    },
+    {
+      "id": "llama_3_2_3b_on_device",
+      "name": "Llama 3.2 3B Instruct (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/Llama-3.2-3B-Instruct-GGUF/Llama-3.2-3B-Instruct-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "3B",
+      "size_gb": 2.02,
+      "modality": "Text",
+      "context_tokens": 131072,
+      "license": "Meta Llama 3.2 Community License",
+      "strengths": "Compact Llama 3.2 tuned for edge/on-device deployment — good instruction-following for its size. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Fast, good intelligence for 3B"
+    },
+    {
+      "id": "ministral_3_14b_on_device",
+      "name": "Ministral 3 14B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/Ministral-3-14B-Instruct-2512-GGUF/Ministral-3-14B-Instruct-2512-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/Ministral-3-14B-Instruct-2512-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "params": "14B",
+      "size_gb": 8.24,
+      "modality": "Text + Image",
+      "context_tokens": 262144,
+      "license": "Apache 2.0",
+      "strengths": "Mistral's largest edge model — the deepest reasoning in the Ministral 3 family, at the cost of the slowest replies and biggest download. Q4_K_M GGUF build plus its F16 projector run fully on-device, so image input works with no server and no network.",
+      "speed_profile": "Slower, deep multimodal reasoning"
+    },
+    {
+      "id": "ministral_3_3b_on_device",
+      "name": "Ministral 3 3B (On-Device)",
+      "available": true,
+      "gguf": "hf://mistralai/Ministral-3-3B-Instruct-2512-GGUF/Ministral-3-3B-Instruct-2512-Q4_K_M.gguf",
+      "mmproj": "hf://mistralai/Ministral-3-3B-Instruct-2512-GGUF/Ministral-3-3B-Instruct-2512-BF16-mmproj.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "params": "3B",
+      "size_gb": 2.15,
+      "modality": "Text + Image",
+      "context_tokens": 262144,
+      "license": "Apache 2.0",
+      "strengths": "Mistral's compact edge model — vision-capable and quick, the lightest of the Ministral 3 family. Q4_K_M GGUF build plus its F16 projector run fully on-device, so image input works with no server and no network.",
+      "speed_profile": "Fast, capable multimodal reasoning for 3B"
+    },
+    {
+      "id": "ministral_3_8b_on_device",
+      "name": "Ministral 3 8B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/Ministral-3-8B-Instruct-2512-GGUF/Ministral-3-8B-Instruct-2512-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/Ministral-3-8B-Instruct-2512-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "params": "8B",
+      "size_gb": 5.2,
+      "modality": "Text + Image",
+      "context_tokens": 262144,
+      "license": "Apache 2.0",
+      "strengths": "Mistral's mid-size edge model — a step up in reasoning depth from the 3B variant while staying vision-capable. Q4_K_M GGUF build plus its F16 projector run fully on-device, so image input works with no server and no network.",
+      "speed_profile": "Moderate speed, strong multimodal reasoning"
+    },
+    {
+      "id": "mistral_7b_on_device",
+      "name": "Mistral 7B Instruct (On-Device)",
+      "available": true,
+      "gguf": "hf://MaziyarPanahi/Mistral-7B-Instruct-v0.3-GGUF/Mistral-7B-Instruct-v0.3.Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "7B",
+      "size_gb": 4.37,
+      "modality": "Text",
+      "context_tokens": 32768,
+      "license": "Apache 2.0",
+      "strengths": "Mistral AI's original efficient 7B — a strong, well-rounded generalist that helped popularize small-but-capable open models. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Moderate speed, solid general intelligence"
+    },
+    {
+      "id": "mistral_nemo_12b_on_device",
+      "name": "Mistral Nemo 12B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/Mistral-Nemo-Instruct-2407-GGUF/Mistral-Nemo-Instruct-2407.Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "12B",
+      "size_gb": 7.48,
+      "modality": "Text",
+      "context_tokens": 131072,
+      "license": "Apache 2.0",
+      "strengths": "Mistral's multilingual model co-developed with NVIDIA — strong across non-English languages with a large 128K context window. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Moderate speed, strong multilingual intelligence"
+    },
+    {
+      "id": "qwen2_5_coder_1_5b_on_device",
+      "name": "Qwen2.5-Coder 1.5B Instruct (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/Qwen2.5-Coder-1.5B-Instruct-GGUF/Qwen2.5-Coder-1.5B-Instruct-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "1.5B",
+      "size_gb": 1.12,
+      "modality": "Text",
+      "context_tokens": 32768,
+      "license": "Apache 2.0",
+      "strengths": "Tiny code-specialized Qwen2.5 — the lightest on-device coder, quick completions and simple generation on very modest hardware. Q4_K_M GGUF build.",
+      "speed_profile": "Very fast, capable coding for its tiny size"
+    },
+    {
+      "id": "qwen2_5_coder_3b_on_device",
+      "name": "Qwen2.5-Coder 3B Instruct (On-Device)",
+      "available": true,
+      "gguf": "hf://Qwen/Qwen2.5-Coder-3B-Instruct-GGUF/qwen2.5-coder-3b-instruct-q4_k_m.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "3B",
+      "size_gb": 1.93,
+      "modality": "Text",
+      "context_tokens": 32768,
+      "license": "Apache 2.0",
+      "strengths": "Compact code-specialized Qwen2.5 — good code completion and generation for its size, small enough to run comfortably on-device including phones. Q4_K_M GGUF build.",
+      "speed_profile": "Fast, good coding intelligence for 3B"
+    },
+    {
+      "id": "qwen2_5_coder_7b_on_device",
+      "name": "Qwen2.5-Coder 7B Instruct (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/Qwen2.5-Coder-7B-Instruct-GGUF/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "7B",
+      "size_gb": 4.68,
+      "modality": "Text",
+      "context_tokens": 32768,
+      "license": "Apache 2.0",
+      "strengths": "Code-specialized Qwen2.5 at 7B — strong code generation and refactoring. Q4_K_M GGUF build runs fully on-device with no server or network after the first download.",
+      "speed_profile": "Fast for a 7B, coding-focused intelligence"
+    },
+    {
+      "id": "qwen3_8b_on_device",
+      "name": "Qwen3 8B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/Qwen3-8B-GGUF/Qwen3-8B-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "8B",
+      "size_gb": 5.03,
+      "modality": "Text",
+      "context_tokens": 40960,
+      "license": "Apache 2.0",
+      "strengths": "Hybrid thinking/non-thinking model — can switch on step-by-step reasoning for hard problems or answer directly for quick ones. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Moderate speed, strong reasoning (hybrid think mode)"
+    }
+  ]
+}

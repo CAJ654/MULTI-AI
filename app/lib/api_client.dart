@@ -235,6 +235,29 @@ class ModelInfo {
   /// reasoning"`). Null for entries the backend hasn't annotated.
   final String? speedProfile;
 
+  /// A copy with [fit] replaced — used to annotate the bundled on-device
+  /// roster with a client-computed rating after load (see device_fit.dart),
+  /// since that asset carries no fit of its own. Narrow on purpose: nothing
+  /// else needs a copy of this many fields today.
+  ModelInfo copyWithFit(ModelFit? fit) => ModelInfo(
+        id: id,
+        name: name,
+        available: available,
+        fit: fit,
+        gguf: gguf,
+        mmproj: mmproj,
+        externalEndpoint: externalEndpoint,
+        hasServerWeights: hasServerWeights,
+        params: params,
+        sizeGb: sizeGb,
+        modality: modality,
+        inputModalities: inputModalities,
+        contextTokens: contextTokens,
+        license: license,
+        strengths: strengths,
+        speedProfile: speedProfile,
+      );
+
   factory ModelInfo.fromJson(Map<String, dynamic> json) {
     return ModelInfo(
       id: json['id'] as String,
