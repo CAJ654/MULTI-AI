@@ -1,7 +1,22 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Release signing. key.properties/upload-keystore.jks are both gitignored —
+// generated once locally (see the README's "Shipping an Android release"
+// section) and reconstructed in CI from repo secrets. Their absence (a fresh
+// clone with no keystore) falls back to debug signing below rather than
+// failing the build, so `flutter run`/`flutter build apk` keep working for
+// anyone who hasn't set one up.
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+val hasKeystore = keystorePropertiesFile.exists()
+if (hasKeystore) {
+    keystoreProperties.load(keystorePropertiesFile.inputStream())
 }
 
 android {
@@ -25,11 +40,30 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasKeystore) {
+            create("release") {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                // rootProject, not file(): this script's own project dir is
+                // android/app/, but key.properties' storeFile path (and the
+                // .jks itself) sit next to key.properties in android/.
+                storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Real signing when key.properties is present (a real machine or
+            // CI with the secrets restored); debug keys otherwise, so the
+            // build never hard-fails just because nobody's set one up yet.
+            signingConfig = if (hasKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

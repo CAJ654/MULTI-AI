@@ -176,6 +176,47 @@ The app owns the backend process in a packaged build: [`app/lib/backend_process.
 
 In development none of this engages: with no `backend/` directory next to the executable, `BackendRuntime.isBundled` is false, [`startup_gate.dart`](app/lib/startup_gate.dart) falls straight through to the chat screen, and you keep starting the server yourself as before.
 
+## Shipping an Android release
+
+Android ships as a signed APK attached to the same GitHub release as the Windows installer — deliberately **not** the Play Store. The Play Console path adds a $25 developer-account fee, a mandatory 14-day/12-tester closed test before any production release, a privacy-policy URL, and a Data Safety questionnaire, none of which this project needs for a sideloaded download. The tradeoff: no store listing, and no automatic updates — see "No in-app updater" below.
+
+Pushing a tag builds and attaches both platforms to one release:
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+[`.github/workflows/release.yml`](.github/workflows/release.yml) runs `build-windows` and `build-android` in parallel, then a `publish` job attaches both platforms' outputs to one draft release. Android needs none of the Windows job's backend-bundling steps — per the on-device-only scoping decision below, the APK is just the Flutter app.
+
+### The release keystore
+
+Android refuses to install an update over an existing app unless the new APK is signed with the *same* key, so unlike Windows (which ships unsigned and eats a SmartScreen warning) Android needs a real, stable signing identity from the first release onward.
+
+The keystore was generated once, locally:
+
+```powershell
+keytool -genkeypair -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias multiai -storepass:file <password-file> -keypass:file <password-file> -dname "CN=Multi-AI, OU=CAJ654, O=Multi-AI, L=Unknown, ST=Unknown, C=US"
+```
+
+`app/android/upload-keystore.jks` and `app/android/key.properties` (storePassword/keyPassword/keyAlias/storeFile) are both gitignored — never commit them. [`app/android/app/build.gradle.kts`](app/android/app/build.gradle.kts) reads `key.properties` if present and signs with it; if it's absent (a fresh clone with no keystore set up), it falls back to debug signing so `flutter run`/`flutter build apk` still work locally without extra setup.
+
+CI reconstructs the keystore from three repo secrets — **Settings → Secrets and variables → Actions** on GitHub:
+
+| Secret | Value |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | `[Convert]::ToBase64String([System.IO.File]::ReadAllBytes("upload-keystore.jks"))` |
+| `ANDROID_KEYSTORE_PASSWORD` | The store/key password (PKCS12 keystores require these to match) |
+| `ANDROID_KEY_ALIAS` | `multiai` |
+
+The `build-android` job decodes the first secret back into `upload-keystore.jks`, writes `key.properties` from the other two, builds, then verifies with `apksigner verify --print-certs` that the result is *not* signed with the debug key — a missing or wrong secret fails that check loudly instead of silently shipping a debug-signed APK nobody can update over later.
+
+**If the keystore is ever lost**, there is no recovery — a new one means a new signing identity, and every existing install has to be uninstalled before it can take an "update" signed by the new key. Back up `upload-keystore.jks` and its password somewhere durable (a password manager, not just this machine) the same way you'd back up any other credential with no reset flow.
+
+### No in-app updater
+
+`velopack_flutter` (the Windows updater — see "Shipping a Windows release" above) explicitly no-ops its native build on Android (`hook/build.dart` returns early for `OS.android`/`OS.iOS`), and `initializeVelopack`/`UpdateService.checkNow()` are called unconditionally at startup on every platform but fail silently where there's no Velopack install to check against — so Android runs the same code path as everyone else without needing a platform guard, it just never finds an update. Getting a new version means downloading the new APK from the release page and installing it over the old one; Android accepts that as an upgrade (not a fresh install) as long as it's signed with the same key, so chat history and downloaded on-device models are preserved.
+
 ## TODO: Extend on-device (GGUF/llama.cpp) model support
 
 Mobile can't run the `transformers`/`torch`/`bitsandbytes` server backend (no CUDA, no mobile builds of those libs) — the on-device path is GGUF weights run through `llamadart`/llama.cpp, already proven with the built-in Qwen2.5 0.5B (`app/lib/on_device_engine.dart`). The `_GGUF_SOURCE` → `"gguf"` JSON field → `ModelInfo.gguf` routing in `chat_screen.dart` is already generic (any model with a `gguf` field auto-routes through `OnDeviceEngine`, no Dart changes needed) — only one model (`gptOSS.pyx`) currently uses it.
@@ -651,8 +692,12 @@ layout.
 - [ ] **Foreground service for downloads** — Android kills a multi-GB fetch as
       soon as the app backgrounds. Pairs with the download-progress indicator
       already open above.
-- [ ] **Release signing** — `android/app/build.gradle.kts` still signs release
-      builds with the debug keys.
+- [x] **Release signing** — see "Shipping an Android release" above. A real
+      keystore now signs release builds (falling back to debug only when
+      `key.properties` is absent, e.g. a fresh clone); CI reconstructs it from
+      repo secrets and verifies the result isn't debug-signed before shipping.
+      Distribution is a signed APK on GitHub releases, not the Play Store —
+      see that section for why.
 - [ ] **On-device image input is unverified on Android** — the `mtmd` symbol
       resolution problem root-caused under `dart run` (see the on-device
       verification notes) has never been checked against an Android bundle.
@@ -660,7 +705,7 @@ layout.
 Suggested order: roster asset and `path_provider` first (both independent of
 any device being present, and together they make the build testable at all),
 then `flutter run` on the Pixel_9 emulator for the first honest signal, then
-device-side fit, then downloads and signing.
+device-side fit, then the foreground-download service.
 
 ### Linux
 

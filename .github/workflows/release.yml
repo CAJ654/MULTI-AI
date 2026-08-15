@@ -1,24 +1,39 @@
-# Builds the Windows release packages and attaches them to a GitHub release.
+# Builds the Windows and Android release packages and attaches them both to a
+# single GitHub release.
 #
 # Triggered by pushing a tag like `v1.0.0`, or manually from the Actions tab
-# (which builds and uploads the packages as a workflow artifact without
+# (which builds and uploads the packages as workflow artifacts without
 # publishing a release — useful for testing the pipeline itself).
 #
-# Packaging is Velopack's `vpk`, not Inno Setup. The reason is delta updates:
-# vpk diffs each release against the previous one and emits a patch alongside
-# the full package, so an existing install downloads a few MB instead of the
-# whole app, and the app applies it itself behind a "Relaunch to Update"
-# button. See app/lib/update_service.dart. installer/multi-ai.iss is no longer
-# built by anything and is kept only for reference.
+# Windows packaging is Velopack's `vpk`, not Inno Setup. The reason is delta
+# updates: vpk diffs each release against the previous one and emits a patch
+# alongside the full package, so an existing install downloads a few MB
+# instead of the whole app, and the app applies it itself behind a "Relaunch
+# to Update" button. See app/lib/update_service.dart. installer/multi-ai.iss
+# is no longer built by anything and is kept only for reference.
 #
-# The interesting constraint is that this cannot ship a self-contained bundle.
-# The backend's dependencies are ~4.5GB installed (torch alone is 4.12GB,
-# because the cu128 wheel carries the CUDA runtime), and a GitHub release asset
-# is capped at 2GB. So the package carries the app, an embeddable CPython and
-# the Cython-compiled backend — about 200MB — and the app pip-installs the rest
-# on first launch. See app/lib/backend_process.dart.
+# The interesting constraint on Windows is that this cannot ship a
+# self-contained bundle. The backend's dependencies are ~4.5GB installed
+# (torch alone is 4.12GB, because the cu128 wheel carries the CUDA runtime),
+# and a GitHub release asset is capped at 2GB. So the package carries the
+# app, an embeddable CPython and the Cython-compiled backend — about 200MB —
+# and the app pip-installs the rest on first launch. See
+# app/lib/backend_process.dart.
+#
+# Android ships as a plain signed APK instead of going through the Play
+# Store — no developer-account review, data-safety form, or closed-testing
+# gate, at the cost of no store listing and no automatic updates (users
+# re-download and reinstall over the existing app for each new version).
+# It needs none of the Windows job's backend-bundling complexity: per the
+# README, Android is on-device-GGUF-only and never talks to the Python
+# backend, so the APK is just the Flutter app. Release signing uses a
+# keystore reconstructed from repo secrets — see the "Shipping an Android
+# release" section of the README for how it was generated and how to rotate
+# it. velopack_flutter (the Windows/Linux/macOS updater) explicitly no-ops
+# its native build on Android/iOS (see its hook/build.dart), so this job
+# needs no Rust toolchain.
 
-name: Release (Windows)
+name: Release
 
 on:
   push:
@@ -26,7 +41,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # required to create the release and upload the installer
+  contents: write # required to create the release and upload assets
 
 env:
   # Must match the embeddable runtime below at the minor version: the compiled
@@ -37,21 +52,24 @@ env:
   FLUTTER_VERSION: '3.44.4'
 
 jobs:
-  build:
-    runs-on: windows-latest
-
+  # ---------------------------------------------------------------
+  # 0. Derive one version string both platform jobs build against
+  # ---------------------------------------------------------------
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
-
       - name: Derive version
         id: version
-        shell: pwsh
+        shell: bash
         run: |
           # A tag push releases that version; a manual run is an untagged test
           # build, labelled from the commit so two of them can't collide.
           #
           # Two things about the dev version are load-bearing, both learned the
-          # hard way:
+          # hard way (on the Windows/vpk side, but the version string is shared,
+          # so both jobs inherit the constraint):
           #
           #  - It starts 0.0.1, not 0.0.0. `vpk pack` rejects anything below
           #    0.0.1 outright ("it must be >= 0.0.1"), which would fail every
@@ -64,17 +82,27 @@ jobs:
           #    (vpk also drops the '+sha' from package filenames, so the run
           #    number is what actually keeps two builds distinct on disk. The
           #    sha stays on for traceability.)
-          if ($env:GITHUB_REF -like 'refs/tags/v*') {
-            $v = $env:GITHUB_REF -replace '^refs/tags/v', ''
-          } else {
-            $v = "0.0.1-dev.${{ github.run_number }}+$($env:GITHUB_SHA.Substring(0,7))"
-          }
-          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          Write-Output "Building version $v"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            v="${GITHUB_REF#refs/tags/v}"
+          else
+            v="0.0.1-dev.${{ github.run_number }}+$(echo "$GITHUB_SHA" | cut -c1-7)"
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Building version $v"
 
-      # ---------------------------------------------------------------
-      # 1. Compile the Cython backend
-      # ---------------------------------------------------------------
+  # ---------------------------------------------------------------
+  # 1. Windows
+  # ---------------------------------------------------------------
+  build-windows:
+    needs: version
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # -------------------------------------------------------
+      # 1a. Compile the Cython backend
+      # -------------------------------------------------------
       # The .pyd files are git-ignored (platform- and version-specific), so
       # they are built here rather than committed. windows-latest ships the
       # MSVC build tools Cython needs.
@@ -103,9 +131,9 @@ jobs:
           $env:PYTHONPATH = "$PWD\Multi-AI"
           python -c "from multi_ai.server import run; import multi_ai.hardware; print('backend imports OK')"
 
-      # ---------------------------------------------------------------
-      # 2. Build the Flutter Windows app
-      # ---------------------------------------------------------------
+      # -------------------------------------------------------
+      # 1b. Build the Flutter Windows app
+      # -------------------------------------------------------
 
       # Must come before the Flutter build, not just before packaging. The app
       # depends on velopack_flutter, which is a flutter_rust_bridge package —
@@ -131,11 +159,11 @@ jobs:
           # under a FLUTTER_VERSION bump.
           flutter config --enable-native-assets
           flutter pub get
-          flutter build windows --release --build-name=${{ steps.version.outputs.version }}
+          flutter build windows --release --build-name=${{ needs.version.outputs.version }}
 
-      # ---------------------------------------------------------------
-      # 3. Assemble the package payload
-      # ---------------------------------------------------------------
+      # -------------------------------------------------------
+      # 1c. Assemble the package payload
+      # -------------------------------------------------------
       # Everything lands in one tree, installer\staging\app, with the backend
       # nested at staging\app\backend. Inno used to merge two sibling trees at
       # install time via two [Files] entries; vpk pack takes a single --packDir
@@ -214,9 +242,9 @@ jobs:
           $env:MULTI_AI_PATH = $backend
           & "$backend\python\python.exe" -c "import sys; sys.path.insert(0, r'$backend'); from multi_ai.server import run, _list_models; n = len(_list_models()); assert n > 0, 'staged backend lists no models - roster enumeration is not finding the compiled .pyd modules'; print(f'bundled backend imports OK; /api/models lists {n} models')"
 
-      # ---------------------------------------------------------------
-      # 4. Pack the release
-      # ---------------------------------------------------------------
+      # -------------------------------------------------------
+      # 1d. Pack the release
+      # -------------------------------------------------------
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -257,7 +285,7 @@ jobs:
               --packId MultiAI `
               --packTitle "Multi-AI" `
               --packAuthors "CAJ654" `
-              --packVersion ${{ steps.version.outputs.version }} `
+              --packVersion ${{ needs.version.outputs.version }} `
               --packDir installer\staging\app `
               --mainExe multi_ai.exe `
               -o Releases
@@ -267,7 +295,7 @@ jobs:
           # delta patches the copy it already has on disk, and one too far
           # behind for the delta chain falls back to the *new* full package -
           # so shipping it again would add ~200MB to every release for nothing.
-          $version = "${{ steps.version.outputs.version }}"
+          $version = "${{ needs.version.outputs.version }}"
           Get-ChildItem Releases\*-full.nupkg |
             Where-Object { $_.Name -ne "MultiAI-$version-full.nupkg" } |
             Remove-Item -Force
@@ -291,35 +319,145 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MultiAI-${{ steps.version.outputs.version }}
+          name: MultiAI-windows-${{ needs.version.outputs.version }}
           path: Releases/*
 
+  # ---------------------------------------------------------------
+  # 2. Android
+  # ---------------------------------------------------------------
+  build-android:
+    needs: version
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Restore the release keystore
+        working-directory: app/android
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          # key.properties/upload-keystore.jks are gitignored (see
+          # app/android/.gitignore) - build.gradle.kts falls back to debug
+          # signing when they're absent, so a missing/misconfigured secret
+          # here fails loudly at "verify signing" below rather than silently
+          # shipping a debug-signed APK.
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 secret is not set - see the README's Shipping an Android release section"
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > upload-keystore.jks
+          cat > key.properties <<EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Regenerate the on-device roster asset
+        working-directory: app
+        run: |
+          # Android never talks to the Python backend, so the model roster
+          # ships as a build-time asset generated from the .pyx sources
+          # instead of coming from /api/models. See tool/generate_on_device_roster.dart
+          # and the README's "Bundle the model roster as an asset" note.
+          dart run tool/generate_on_device_roster.dart
+
+      - name: Build release APK
+        working-directory: app
+        run: |
+          flutter pub get
+          flutter build apk --release \
+            --build-name=${{ needs.version.outputs.version }} \
+            --build-number=${{ github.run_number }}
+
+      - name: Verify the APK is signed with the release key, not debug
+        shell: bash
+        run: |
+          # Catches the failure mode key.properties exists to prevent: a
+          # missing/empty secret silently falling back to Gradle's debug
+          # signingConfig, which produces an APK nobody can update over later
+          # (Android refuses to install-over an app when the signing
+          # certificate changes) without every existing user uninstalling first.
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 | sort -V | tail -1)"
+          CERT_DN=$("$BUILD_TOOLS/apksigner" verify --print-certs \
+            app/build/app/outputs/flutter-apk/app-release.apk | grep 'certificate DN' | head -1)
+          echo "Signed by: $CERT_DN"
+          if echo "$CERT_DN" | grep -qi "Android Debug"; then
+            echo "::error::APK is signed with the debug key - ANDROID_KEYSTORE_BASE64 was not applied"
+            exit 1
+          fi
+
+      - name: Stage the release asset
+        shell: bash
+        run: |
+          mkdir -p Releases-android
+          cp app/build/app/outputs/flutter-apk/app-release.apk \
+            "Releases-android/MultiAI-${{ needs.version.outputs.version }}-android.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MultiAI-android-${{ needs.version.outputs.version }}
+          path: Releases-android/*
+
+  # ---------------------------------------------------------------
+  # 3. Publish both platforms to one release
+  # ---------------------------------------------------------------
+  publish:
+    needs: [version, build-windows, build-android]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: MultiAI-windows-${{ needs.version.outputs.version }}
+          path: Releases
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: MultiAI-android-${{ needs.version.outputs.version }}
+          path: Releases
+
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          # The whole folder, not just the installer. releases.win.json is the
-          # feed installed apps read, and the .nupkg files are what they
-          # download; an installer on its own would leave every existing
-          # install unable to see the release at all.
+          # The whole folder: releases.win.json is the feed installed Windows
+          # apps read, the .nupkg files are what they download, and the APK is
+          # the Android download. An installer on its own would leave every
+          # existing Windows install unable to see the release at all.
           files: Releases/*
           # Stays a draft until reviewed - and that review is now also the
-          # update gate. Installed apps read the feed from
+          # update gate. Installed Windows apps read the feed from
           # /releases/latest/download/, which GitHub resolves to the latest
           # *published* release, so a draft is invisible to them. Publishing is
           # what ships the update. Do not auto-publish to work around this.
           draft: true
           generate_release_notes: true
           body: |
-            ## Install
+            ## Windows
 
             New here? Download **MultiAI-win-Setup.exe** below and run it. The
-            other files are for the in-app updater.
+            other Windows files are for the in-app updater.
 
-            **Already running Multi-AI?** Do nothing. The app checks for updates
-            on launch, downloads this version in the background, and shows a
-            **Relaunch to Update** button when it is ready. The download is a
-            small patch, not the whole app.
+            **Already running Multi-AI on Windows?** Do nothing. The app checks
+            for updates on launch, downloads this version in the background,
+            and shows a **Relaunch to Update** button when it is ready. The
+            download is a small patch, not the whole app.
 
             Windows SmartScreen will warn that the publisher is unknown — the
             installer is unsigned. Choose *More info* → *Run anyway*.
@@ -331,3 +469,16 @@ jobs:
             **An NVIDIA GPU is recommended.** The server-backed models are
             4-bit quantized for consumer VRAM; the app rates each model against
             your hardware and tells you before you download one.
+
+            ## Android
+
+            Download **MultiAI-\<version\>-android.apk** below. This is a
+            direct install, not the Play Store, so Android will warn about
+            installing from an unknown source the first time — allow it for
+            whichever app you downloaded with (browser, Files app, etc.).
+
+            The Android build is on-device only: every model runs locally via
+            llama.cpp, nothing talks to a server, and there's no separate
+            backend download. There is also no in-app auto-updater on Android
+            — for a new version, download the new APK and install it over the
+            old one (your chat history and downloaded models are unaffected).

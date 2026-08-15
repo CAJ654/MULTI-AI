@@ -12,3 +12,7 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+# The base64 form staged here only long enough to paste into a GitHub Actions
+# secret (see the README's "Shipping an Android release" section) - same
+# sensitivity as the .jks itself, so it's excluded the same way.
+**/*.jks.base64.txt
