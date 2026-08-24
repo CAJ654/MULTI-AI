@@ -67,6 +67,11 @@ _DEFAULT_INPUT_MODALITIES = ("text",)
 _model_module_cache: dict[str, object] = {}
 _hf_model_cache: dict[str, tuple] = {}
 _processor_cache: dict[str, object] = {}
+# Set on first _list_models() call. Safe for the life of the process: the
+# roster is discovered from files under models/ (fixed until restart, same
+# assumption _load_model_module already makes) and rated against
+# hardware.detect_specs(), which is itself cached for the same reason.
+_cached_models: list[dict] | None = None
 
 
 def _load_model_module(model_id: str):
@@ -113,6 +118,13 @@ def _discover_model_ids() -> list[str]:
 
 
 def _list_models() -> list[dict]:
+    # /api/chat calls this on every single message just to validate the model
+    # id, so an uncached listing meant re-globbing models/ and re-running
+    # every model's get_info()/fit rating on the hot path of every send.
+    global _cached_models
+    if _cached_models is not None:
+        return _cached_models
+
     # Probed once per listing, not once per model: every entry is rated against
     # the same machine, and detection lazily initializes CUDA.
     specs = hardware.detect_specs()
@@ -197,6 +209,7 @@ def _list_models() -> list[dict]:
         if info.get("speed_profile"):
             entry["speed_profile"] = info["speed_profile"]
         entries.append(entry)
+    _cached_models = entries
     return entries
 
 
