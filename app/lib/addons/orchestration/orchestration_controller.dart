@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../api_client.dart';
 import '../../model_pool.dart';
+import 'orchestration_store.dart';
 
 /// How the council members answer relative to one another.
 enum DeliberationMode {
@@ -31,10 +34,72 @@ class CouncilStep {
   StepStatus status = StepStatus.pending;
 
   bool get isDone => status == StepStatus.done;
+
+  Map<String, dynamic> toJson() => {
+        'modelId': model.id,
+        'modelName': model.name,
+        'text': text,
+        'status': status.name,
+      };
+
+  /// A step loaded from disk whose status is still `pending`/`running` was
+  /// interrupted mid-run (the app closed before it finished) and can never
+  /// resume — surfaced as failed rather than a permanently "Thinking…" row.
+  factory CouncilStep.fromJson(Map<String, dynamic> json) {
+    final step = CouncilStep(ModelInfo(
+      id: json['modelId'] as String? ?? '',
+      name: json['modelName'] as String? ?? 'Unknown model',
+    ))
+      ..text = json['text'] as String? ?? '';
+    final status = StepStatus.values
+        .firstWhere((s) => s.name == json['status'], orElse: () => StepStatus.error);
+    step.status =
+        status == StepStatus.pending || status == StepStatus.running ? StepStatus.error : status;
+    return step;
+  }
+}
+
+/// One council run: the question asked, the mode it ran under, every
+/// member's answer, and the lead's synthesis. Mirrors `ChatSession` in
+/// `chat_store.dart` — a run only counts as history once it has a question.
+class OrchestrationSession {
+  OrchestrationSession();
+
+  String? question;
+  DeliberationMode mode = DeliberationMode.parallel;
+  List<CouncilStep> memberSteps = [];
+  CouncilStep? synthesisStep;
+  String? error;
+
+  bool get hasRun => question != null;
+
+  Map<String, dynamic> toJson() => {
+        if (question != null) 'question': question,
+        'mode': mode.name,
+        'memberSteps': memberSteps.map((s) => s.toJson()).toList(),
+        if (synthesisStep != null) 'synthesis': synthesisStep!.toJson(),
+        if (error != null) 'error': error,
+      };
+
+  factory OrchestrationSession.fromJson(Map<String, dynamic> json) {
+    final synthesisJson = json['synthesis'] as Map<String, dynamic>?;
+    return OrchestrationSession()
+      ..question = json['question'] as String?
+      ..mode = DeliberationMode.values
+          .firstWhere((m) => m.name == json['mode'], orElse: () => DeliberationMode.parallel)
+      ..memberSteps = [
+        for (final s in (json['memberSteps'] as List<dynamic>? ?? []))
+          CouncilStep.fromJson(s as Map<String, dynamic>),
+      ]
+      ..synthesisStep = synthesisJson == null ? null : CouncilStep.fromJson(synthesisJson)
+      ..error = json['error'] as String?;
+  }
 }
 
 /// Runs a "Model Council": several models answer a question, and a designated
-/// lead synthesizes their answers into one.
+/// lead synthesizes their answers into one. Keeps every past run so the
+/// sidebar can show a history of them, the same way `ChatController` keeps
+/// past conversations.
 ///
 /// Built directly on [ModelPool.generate] rather than on an agent framework —
 /// the council is fan-out plus a synthesis prompt, not tool use or planning,
@@ -49,9 +114,11 @@ class CouncilStep {
 /// hardware. "Parallel" here is the spec's *semantic* distinction — members
 /// answer independently — not a threading one.
 class OrchestrationController extends ChangeNotifier {
-  OrchestrationController({required this.pool});
+  OrchestrationController({required this.pool, OrchestrationStore? store})
+      : _store = store ?? FileOrchestrationStore();
 
   final ModelPool pool;
+  final OrchestrationStore _store;
 
   final Set<String> _selectedIds = {};
   String? _leadId;
@@ -59,10 +126,13 @@ class OrchestrationController extends ChangeNotifier {
 
   bool _running = false;
   int _runGeneration = 0;
-  String? _question;
-  List<CouncilStep> _memberSteps = const [];
-  CouncilStep? _synthesisStep;
-  String? _error;
+
+  final _sessions = <OrchestrationSession>[OrchestrationSession()];
+  int _activeSession = 0;
+
+  List<OrchestrationSession> get sessions => List.unmodifiable(_sessions);
+  int get activeSessionIndex => _activeSession;
+  OrchestrationSession get session => _sessions[_activeSession];
 
   /// Models that can actually be convened — the downloaded ones, same gate the
   /// chat picker uses. Selecting an undownloaded model would kick off a
@@ -75,20 +145,21 @@ class OrchestrationController extends ChangeNotifier {
 
   bool get running => _running;
 
-  /// Non-null once a run has started — the question that was asked.
-  String? get question => _question;
+  /// Non-null once the active session has been asked something.
+  String? get question => session.question;
 
-  /// The members' answers, in council order. Empty before the first run.
-  List<CouncilStep> get memberSteps => List.unmodifiable(_memberSteps);
+  /// The active session's member answers, in council order. Empty before its
+  /// first run.
+  List<CouncilStep> get memberSteps => List.unmodifiable(session.memberSteps);
 
-  /// The lead's synthesis. Null before the first run.
-  CouncilStep? get synthesisStep => _synthesisStep;
+  /// The active session's lead synthesis. Null before its first run.
+  CouncilStep? get synthesisStep => session.synthesisStep;
 
-  /// A run-level failure (nobody answered), distinct from a single step's
-  /// error. Null when the run is fine.
-  String? get error => _error;
+  /// A run-level failure (nobody answered) for the active session, distinct
+  /// from a single step's error. Null when the run is fine.
+  String? get error => session.error;
 
-  bool get hasRun => _question != null;
+  bool get hasRun => session.hasRun;
 
   ModelInfo? get leadModel => _leadId == null ? null : _modelById(_leadId!);
 
@@ -108,6 +179,15 @@ class OrchestrationController extends ChangeNotifier {
   void start() {
     pool.addListener(_onPoolChanged);
     _onPoolChanged();
+    unawaited(_loadStoredSessions());
+  }
+
+  Future<void> _loadStoredSessions() async {
+    final stored = await _store.load();
+    if (stored.isEmpty) return;
+    // Keep the fresh empty session on top and resume with history below it.
+    _sessions.addAll(stored);
+    notifyListeners();
   }
 
   /// Drops any selection that's no longer downloadable — a model deleted from
@@ -122,6 +202,38 @@ class OrchestrationController extends ChangeNotifier {
       }
     }
     notifyListeners();
+  }
+
+  // ---------------------------------------------------------------- sessions
+
+  void newSession() {
+    // Reuse an existing empty session (they're hidden from the sidebar, so
+    // stacking up duplicates would leak invisible entries).
+    final existing = _sessions.indexWhere((s) => !s.hasRun);
+    if (existing >= 0) {
+      _activeSession = existing;
+    } else {
+      _sessions.insert(0, OrchestrationSession());
+      _activeSession = 0;
+    }
+    notifyListeners();
+  }
+
+  void selectSession(int index) {
+    _activeSession = index;
+    notifyListeners();
+  }
+
+  void deleteSession(int index) {
+    _sessions.removeAt(index);
+    if (_sessions.isEmpty) _sessions.add(OrchestrationSession());
+    if (_activeSession >= _sessions.length) {
+      _activeSession = _sessions.length - 1;
+    } else if (index < _activeSession) {
+      _activeSession -= 1;
+    }
+    notifyListeners();
+    _store.save(_sessions);
   }
 
   // ---------------------------------------------------------------- selection
@@ -159,23 +271,35 @@ class OrchestrationController extends ChangeNotifier {
     final members = memberModels;
     if (_running || trimmed.isEmpty || lead == null || members.isEmpty) return;
 
+    // A run always lands in a fresh session — the active one only if it
+    // hasn't been asked anything yet (mirrors ChatController filling a
+    // pre-existing empty session rather than appending to an answered one,
+    // since a council run has no notion of a follow-up turn).
+    var session = this.session;
+    if (session.hasRun) {
+      session = OrchestrationSession();
+      _sessions.insert(0, session);
+      _activeSession = 0;
+    }
+
     final generation = ++_runGeneration;
     _running = true;
-    _error = null;
-    _question = trimmed;
-    _memberSteps = [for (final m in members) CouncilStep(m)];
-    _synthesisStep = CouncilStep(lead);
+    session.question = trimmed;
+    session.mode = _mode;
+    session.memberSteps = [for (final m in members) CouncilStep(m)];
+    session.synthesisStep = CouncilStep(lead);
     notifyListeners();
+    _store.save(_sessions);
 
     try {
-      for (var i = 0; i < _memberSteps.length; i++) {
+      for (var i = 0; i < session.memberSteps.length; i++) {
         if (generation != _runGeneration) return;
         final prior = _mode == DeliberationMode.sequential
-            ? _formatAnswers(_memberSteps.take(i))
+            ? _formatAnswers(session.memberSteps.take(i))
             : null;
         await _runStep(
           generation,
-          _memberSteps[i],
+          session.memberSteps[i],
           prior == null || prior.isEmpty
               ? trimmed
               : _sequentialPrompt(trimmed, prior),
@@ -183,21 +307,22 @@ class OrchestrationController extends ChangeNotifier {
       }
       if (generation != _runGeneration) return;
 
-      if (!_memberSteps.any((s) => s.isDone)) {
-        _error = 'Every council member failed to answer, so there was nothing '
+      if (!session.memberSteps.any((s) => s.isDone)) {
+        session.error = 'Every council member failed to answer, so there was nothing '
             'to synthesize.';
         return;
       }
       await _runStep(
         generation,
-        _synthesisStep!,
-        _synthesisPrompt(trimmed, _memberSteps),
+        session.synthesisStep!,
+        _synthesisPrompt(trimmed, session.memberSteps),
       );
     } finally {
       if (generation == _runGeneration) {
         _running = false;
         notifyListeners();
       }
+      _store.save(_sessions);
     }
   }
 
@@ -230,6 +355,7 @@ class OrchestrationController extends ChangeNotifier {
     pool.cancel();
     _running = false;
     notifyListeners();
+    _store.save(_sessions);
   }
 
   // ------------------------------------------------------------------ prompts

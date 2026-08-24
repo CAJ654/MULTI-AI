@@ -51,7 +51,7 @@ bool _runsInApp(ModelInfo m) => m.id == onDeviceModelId || m.gguf != null;
 
 // ------------------------------------------------------------------- sidebar
 
-/// Mode toggle plus the member/lead picker.
+/// Past runs, plus the mode toggle and member/lead picker for the next one.
 class OrchestrationPanel extends StatelessWidget {
   const OrchestrationPanel({super.key, required this.controller});
 
@@ -67,7 +67,23 @@ class OrchestrationPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: cardColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: controller.newSession,
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('New Council'),
+              ),
+            ),
+            Expanded(child: OrchestrationSessionList(controller: controller)),
+            const Divider(height: 1, color: borderColor),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
               child: _ModeToggle(controller: controller),
             ),
             const Padding(
@@ -85,6 +101,7 @@ class OrchestrationPanel extends StatelessWidget {
               )
             else
               Expanded(
+                flex: 2,
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   itemCount: models.length,
@@ -93,6 +110,92 @@ class OrchestrationPanel extends StatelessWidget {
                 ),
               ),
           ],
+        );
+      },
+    );
+  }
+}
+
+/// Past council runs, newest first. Mirrors `ChatSessionList` in
+/// `chat_addon.dart`: a run only appears here once it has a question, right-
+/// click (or long-press) opens Delete, and the selected run highlights.
+class OrchestrationSessionList extends StatelessWidget {
+  const OrchestrationSessionList({super.key, required this.controller});
+
+  final OrchestrationController controller;
+
+  Future<void> _showSessionMenu(
+      BuildContext context, Offset position, int index) async {
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final action = await showMenu<String>(
+      context: context,
+      color: cardColor,
+      position: RelativeRect.fromRect(
+        position & const Size(1, 1),
+        Offset.zero & overlay.size,
+      ),
+      items: const [
+        PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+              SizedBox(width: 10),
+              Text('Delete', style: TextStyle(color: Colors.redAccent)),
+            ],
+          ),
+        ),
+      ],
+    );
+    if (action == 'delete') controller.deleteSession(index);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final sessions = controller.sessions;
+        final visible = [
+          for (var i = 0; i < sessions.length; i++)
+            if (sessions[i].hasRun) i,
+        ];
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          itemCount: visible.length,
+          itemBuilder: (context, i) {
+            final index = visible[i];
+            final s = sessions[index];
+            final selected = index == controller.activeSessionIndex;
+            return GestureDetector(
+              onSecondaryTapUp: (details) =>
+                  _showSessionMenu(context, details.globalPosition, index),
+              child: Material(
+                color: selected ? cardColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+                child: ListTile(
+                  dense: true,
+                  shape:
+                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  leading: const Icon(Icons.account_tree_outlined,
+                      size: 16, color: Colors.white54),
+                  title: Text(
+                    s.question ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 13, color: selected ? Colors.white : Colors.white70),
+                  ),
+                  onTap: () => controller.selectSession(index),
+                  onLongPress: () {
+                    final box = context.findRenderObject() as RenderBox?;
+                    final origin = box?.localToGlobal(Offset.zero) ?? Offset.zero;
+                    _showSessionMenu(context, origin, index);
+                  },
+                ),
+              ),
+            );
+          },
         );
       },
     );

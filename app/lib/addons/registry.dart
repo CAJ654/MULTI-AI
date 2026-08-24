@@ -1,11 +1,9 @@
-import 'package:flutter/material.dart';
-
 import '../attachment_input.dart';
 import 'addon.dart';
 import 'chat/chat_addon.dart';
+import 'code/code_addon.dart';
 import 'models/models_addon.dart';
 import 'orchestration/orchestration_addon.dart';
-import 'placeholder_addon.dart';
 
 /// Every add-on this build ships. Adding a feature means adding one entry here
 /// and one file — not editing the shell, the sidebar, or any of its neighbours.
@@ -25,16 +23,6 @@ List<AddOn> buildRegistry({
       onMarkdownLinkTap: onMarkdownLinkTap,
     ),
     OrchestrationAddOn(),
-    const PlaceholderAddOn(
-      manifest: AddOnManifest(
-        id: 'code',
-        title: 'Code',
-        icon: Icons.code,
-        order: 3,
-        requires: [HostCapability.modelPool],
-      ),
-      blurb: 'Code-focused workspace — snippets, files and runnable '
-          'output — will live here.',
-    ),
+    CodeAddOn(),
   ];
 }

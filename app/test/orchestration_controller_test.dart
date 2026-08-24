@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:llamadart/llamadart.dart';
 
 import 'package:multi_ai/addons/orchestration/orchestration_controller.dart';
+import 'package:multi_ai/addons/orchestration/orchestration_store.dart';
 import 'package:multi_ai/api_client.dart';
 import 'package:multi_ai/model_pool.dart';
 
@@ -202,5 +203,87 @@ void main() {
     controller.toggleSelected('alpha'); // deselect the lead
     expect(controller.selectedIds, {'beta'});
     expect(controller.leadId, 'beta');
+  });
+
+  group('history', () {
+    test('asking a second question starts a new session, leaving the first in history',
+        () async {
+      final (controller, _) = await _buildReady([_a, _b]);
+      controller.toggleSelected('alpha'); // lead
+      controller.toggleSelected('beta');
+
+      await controller.ask('first question');
+      expect(controller.sessions.where((s) => s.hasRun), hasLength(1));
+
+      await controller.ask('second question');
+
+      final answered = controller.sessions.where((s) => s.hasRun).toList();
+      expect(answered, hasLength(2));
+      // Newest run is active and on top; the first one is preserved below it.
+      expect(controller.question, 'second question');
+      expect(answered.map((s) => s.question), ['second question', 'first question']);
+    });
+
+    test('newSession reuses the empty slot instead of piling up duplicates', () async {
+      final (controller, _) = await _buildReady([_a, _b]);
+      final before = controller.sessions.length;
+
+      controller.newSession();
+      controller.newSession();
+
+      expect(controller.sessions.length, before);
+      expect(controller.hasRun, isFalse);
+    });
+
+    test('selectSession switches which run is shown without disturbing the others',
+        () async {
+      final (controller, _) = await _buildReady([_a, _b]);
+      controller.toggleSelected('alpha');
+      controller.toggleSelected('beta');
+      await controller.ask('first question');
+      await controller.ask('second question');
+
+      // Index 0 is the newest ("second question"); index 1 is the first run.
+      controller.selectSession(1);
+      expect(controller.question, 'first question');
+
+      controller.selectSession(0);
+      expect(controller.question, 'second question');
+    });
+
+    test('deleteSession removes a run and falls back to another one', () async {
+      final (controller, _) = await _buildReady([_a, _b]);
+      controller.toggleSelected('alpha');
+      controller.toggleSelected('beta');
+      await controller.ask('first question');
+      await controller.ask('second question');
+
+      controller.deleteSession(0); // the active ("second question") run
+      expect(controller.sessions.where((s) => s.hasRun).map((s) => s.question),
+          ['first question']);
+    });
+
+    test('a run persists through InMemoryOrchestrationStore and reloads into a fresh controller',
+        () async {
+      final sharedStore = InMemoryOrchestrationStore();
+      final api = _RecordingApi([_a, _b]);
+      final pool = ModelPool(api: api, downloadManager: const _NoDownloads());
+      await pool.refresh();
+
+      final first = OrchestrationController(pool: pool, store: sharedStore);
+      first.start();
+      await Future<void>.delayed(Duration.zero); // let the empty initial load settle
+      first.toggleSelected('alpha'); // lead
+      first.toggleSelected('beta');
+      await first.ask('what is 2+2?');
+
+      final second = OrchestrationController(pool: pool, store: sharedStore);
+      second.start();
+      await Future<void>.delayed(Duration.zero); // let the stored history load
+
+      final restored = second.sessions.firstWhere((s) => s.hasRun);
+      expect(restored.question, 'what is 2+2?');
+      expect(restored.synthesisStep!.text, '[alpha answers]');
+    });
   });
 }

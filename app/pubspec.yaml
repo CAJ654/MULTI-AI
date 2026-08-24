@@ -61,6 +61,21 @@ dependencies:
   # into it directly instead of only depending on it through other packages.
   ffi: ^2.1.0
 
+  # The Code tab's agent loop (tool-use, hooks, StatefulAgent) — see
+  # addons/code/. Its LLMClient interface is what lets it run against
+  # ModelPool.generate() instead of a cloud provider.
+  dart_agent_core: ^2.1.0
+  # Root-scoping tool paths under the chosen project directory — see
+  # addons/code/agent_tools.dart.
+  path: ^1.9.0
+  # glob_search tool pattern matching (e.g. "**/*.dart") — see
+  # addons/code/agent_tools.dart.
+  glob: ^2.1.2
+  # CancelToken, used only in LLMClient's interface signature — see
+  # addons/code/agent_llm_client.dart. A transitive dep of dart_agent_core
+  # already, pinned directly since we reference its type by name.
+  dio: ^5.7.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
