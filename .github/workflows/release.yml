@@ -360,19 +360,7 @@ jobs:
             echo "::error::ANDROID_KEYSTORE_BASE64 secret is not set - see the README's Shipping an Android release section"
             exit 1
           fi
-          # --ignore-garbage: tolerates stray whitespace/newlines a copy-paste
-          # into the GitHub secrets UI can introduce, which otherwise fails
-          # decode with a content-free "invalid input" and no indication why.
-          if ! echo "$ANDROID_KEYSTORE_BASE64" | base64 -d --ignore-garbage > upload-keystore.jks; then
-            echo "::error::ANDROID_KEYSTORE_BASE64 did not decode as base64. Make sure the secret is the *entire* contents of app/android/upload-keystore.jks.base64.txt - not app/android/key.properties (easy to grab the wrong file; its contents aren't valid base64 either, e.g. storeFile=upload-keystore.jks has a hyphen and a dot)."
-            exit 1
-          fi
-          size=$(stat -c%s upload-keystore.jks)
-          echo "Decoded keystore: $size bytes"
-          if [ "$size" -lt 500 ]; then
-            echo "::error::Decoded keystore is only $size bytes, too small to be real - ANDROID_KEYSTORE_BASE64 is wrong or truncated. Re-copy the full contents of upload-keystore.jks.base64.txt into the secret."
-            exit 1
-          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > upload-keystore.jks
           cat > key.properties <<EOF
           storePassword=$ANDROID_KEYSTORE_PASSWORD
           keyPassword=$ANDROID_KEYSTORE_PASSWORD
