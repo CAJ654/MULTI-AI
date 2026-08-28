@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../api_client.dart';
+import '../../copy_button.dart';
 import '../../markdown_text.dart';
 import '../../on_device_engine.dart';
 import '../../theme.dart';
@@ -627,6 +628,11 @@ class _StepCard extends StatelessWidget {
             else
               MarkdownText(step.text,
                   baseStyle: const TextStyle(height: 1.5, color: Colors.white)),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: CopyButton(step.text),
+            ),
           ],
         ],
       ),

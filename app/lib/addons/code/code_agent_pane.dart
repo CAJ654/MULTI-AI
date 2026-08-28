@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../copy_button.dart';
 import '../../markdown_text.dart';
 import '../../theme.dart';
 import 'code_agent_controller.dart';
@@ -314,7 +315,17 @@ class _AssistantTextCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: borderColor),
         ),
-        child: MarkdownText(text, baseStyle: const TextStyle(height: 1.5, color: Colors.white)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MarkdownText(text, baseStyle: const TextStyle(height: 1.5, color: Colors.white)),
+            if (text.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              CopyButton(text),
+            ],
+          ],
+        ),
       ),
     );
   }

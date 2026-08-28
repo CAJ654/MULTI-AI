@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../api_client.dart';
 import '../../attachment_input.dart';
 import '../../chat_store.dart';
+import '../../copy_button.dart';
 import '../../markdown_text.dart';
 import '../../theme.dart';
 import '../../thinking_indicator.dart';
@@ -609,6 +610,13 @@ class _ChatPaneState extends State<ChatPane> {
                     baseStyle: const TextStyle(height: 1.5, color: Colors.white),
                     onTapLink: widget.onMarkdownLinkTap,
                   ),
+                if (message.text.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: CopyButton(message.text),
+                  ),
+                ],
               ],
             ),
           ),
