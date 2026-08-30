@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.models.deepseek_v4_flash_colibri",
         "sources": [
-            "Multi-AI\\multi_ai\\models\\deepseek_v4_flash_colibri.pyx"
+            "Multi-AI/multi_ai/models/deepseek_v4_flash_colibri.pyx"
         ]
     },
     "module_name": "multi_ai.models.deepseek_v4_flash_colibri"

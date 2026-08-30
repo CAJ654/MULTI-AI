@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.__init__",
         "sources": [
-            "Multi-AI\\multi_ai\\__init__.pyx"
+            "Multi-AI/multi_ai/__init__.pyx"
         ]
     },
     "module_name": "multi_ai.__init__"

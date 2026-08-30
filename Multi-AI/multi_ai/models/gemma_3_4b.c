@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.models.gemma_3_4b",
         "sources": [
-            "Multi-AI\\multi_ai\\models\\gemma_3_4b.pyx"
+            "Multi-AI/multi_ai/models/gemma_3_4b.pyx"
         ]
     },
     "module_name": "multi_ai.models.gemma_3_4b"

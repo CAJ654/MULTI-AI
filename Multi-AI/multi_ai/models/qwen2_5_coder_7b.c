@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.models.qwen2_5_coder_7b",
         "sources": [
-            "Multi-AI\\multi_ai\\models\\qwen2_5_coder_7b.pyx"
+            "Multi-AI/multi_ai/models/qwen2_5_coder_7b.pyx"
         ]
     },
     "module_name": "multi_ai.models.qwen2_5_coder_7b"

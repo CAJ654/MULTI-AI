@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.models.gemma_3_4b_on_device",
         "sources": [
-            "Multi-AI\\multi_ai\\models\\gemma_3_4b_on_device.pyx"
+            "Multi-AI/multi_ai/models/gemma_3_4b_on_device.pyx"
         ]
     },
     "module_name": "multi_ai.models.gemma_3_4b_on_device"

@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.models.olmoe_colibri",
         "sources": [
-            "Multi-AI\\multi_ai\\models\\olmoe_colibri.pyx"
+            "Multi-AI/multi_ai/models/olmoe_colibri.pyx"
         ]
     },
     "module_name": "multi_ai.models.olmoe_colibri"

@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.models.pytorch",
         "sources": [
-            "Multi-AI\\multi_ai\\models\\pytorch.pyx"
+            "Multi-AI/multi_ai/models/pytorch.pyx"
         ]
     },
     "module_name": "multi_ai.models.pytorch"

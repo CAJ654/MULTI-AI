@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.hardware",
         "sources": [
-            "Multi-AI\\multi_ai\\hardware.pyx"
+            "Multi-AI/multi_ai/hardware.pyx"
         ]
     },
     "module_name": "multi_ai.hardware"

@@ -50,6 +50,10 @@ env:
   PYTHON_VERSION: '3.14'
   PYTHON_EMBED_VERSION: '3.14.6'
   FLUTTER_VERSION: '3.44.4'
+  # Only used to re-verify the committed .c is in sync before packaging (the
+  # build itself compiles the .c and needs no Cython). Must match the pin in
+  # scripts/regen_cython.py — Cython's codegen isn't byte-stable across versions.
+  CYTHON_VERSION: '3.3.0'
 
 jobs:
   # ---------------------------------------------------------------
@@ -101,21 +105,38 @@ jobs:
       - uses: actions/checkout@v4
 
       # -------------------------------------------------------
-      # 1a. Compile the Cython backend
+      # 1a. Compile the backend
       # -------------------------------------------------------
-      # The .pyd files are git-ignored (platform- and version-specific), so
-      # they are built here rather than committed. windows-latest ships the
-      # MSVC build tools Cython needs.
+      # The committed .c files (regenerated from the .pyx sources by
+      # scripts/regen_cython.py) are compiled straight to .pyd here — Cython
+      # does not run in this job. The .pyd are git-ignored (platform- and
+      # version-specific) so they're built here rather than committed;
+      # windows-latest ships the MSVC toolchain the C compile needs.
 
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Verify the committed C matches the .pyx sources
+        shell: pwsh
+        run: |
+          # A stale .c ships code that doesn't match its .pyx — exactly what
+          # broke the v1.0.1 release. backend-check.yml already gates this on
+          # PRs, but a tag can be pushed from a branch that skipped it, so
+          # re-check here before building anything.
+          python -m pip install "Cython==${{ env.CYTHON_VERSION }}"
+          python scripts/regen_cython.py
+          $stale = git diff --name-only -- '*.c'
+          if ($stale) {
+            git diff -- '*.c'
+            throw "Committed .c is out of sync with the .pyx sources. Run 'python scripts/regen_cython.py' and commit:`n$stale"
+          }
+
       - name: Build the compiled backend
         shell: pwsh
         run: |
-          python -m pip install --upgrade pip setuptools wheel "Cython>=3.0"
-          # --inplace puts each .pyd next to its .pyx, which is the layout the
+          python -m pip install --upgrade pip setuptools wheel
+          # --inplace puts each .pyd next to its source, which is the layout the
           # staging step below copies and the runtime imports.
           python setup.py build_ext --inplace
           $pyds = Get-ChildItem Multi-AI\multi_ai -Recurse -Filter *.pyd

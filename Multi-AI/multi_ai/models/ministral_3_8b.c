@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.models.ministral_3_8b",
         "sources": [
-            "Multi-AI\\multi_ai\\models\\ministral_3_8b.pyx"
+            "Multi-AI/multi_ai/models/ministral_3_8b.pyx"
         ]
     },
     "module_name": "multi_ai.models.ministral_3_8b"

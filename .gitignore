@@ -19,9 +19,10 @@ venv/
 *.egg-info/
 
 # Cython / native build artifacts.
-# The .pyx sources (and their generated .c) are tracked; the compiled
-# extensions are platform- and Python-version-specific, so they're rebuilt
-# from source (`pip install -e . --no-deps`) rather than committed.
+# The .pyx sources and their generated .c are BOTH tracked: setup.py compiles
+# the committed .c directly (scripts/regen_cython.py regenerates them from the
+# .pyx). The compiled extensions are platform- and Python-version-specific, so
+# they're rebuilt from source (`pip install -e . --no-deps`) rather than committed.
 build/
 *.pyd
 *.so

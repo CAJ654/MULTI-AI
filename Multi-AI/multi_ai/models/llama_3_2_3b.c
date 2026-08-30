@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.models.llama_3_2_3b",
         "sources": [
-            "Multi-AI\\multi_ai\\models\\llama_3_2_3b.pyx"
+            "Multi-AI/multi_ai/models/llama_3_2_3b.pyx"
         ]
     },
     "module_name": "multi_ai.models.llama_3_2_3b"

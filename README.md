@@ -100,7 +100,14 @@ flutter run -d emulator-5554
 .\scripts\restart-backend.ps1
 ```
 
-That finds and kills whatever holds port 8000, then restarts the compiled backend's entry point — equivalent to, in order:
+That finds and kills whatever holds port 8000, then restarts the compiled backend's entry point. It only restarts the process — it does **not** build. If you changed a `.pyx` since the last build, regenerate its C and recompile first:
+
+```powershell
+python scripts/regen_cython.py      # needs Cython==3.3.0
+pip install -e . --no-deps
+```
+
+`.\scripts\restart-backend.ps1` is equivalent to, in order:
 
 1. Find the process ID using port 8000:
 Get-NetTCPConnection -LocalPort 8000 | Select-Object OwningProcess
@@ -114,7 +121,7 @@ cd "c:/Users/cajga/Documents/GitHub/MULTI-AI/Multi-AI"
 python -c "from multi_ai.server import run; run()"
 
 multi-ai-server
-(equivalently: `python -c "from multi_ai.server import run; run()"`. If you changed any .pyx, rebuild first — see Python Backend below.)
+(equivalently: `python -c "from multi_ai.server import run; run()"`)
 
 A hybrid Python/Dart edge computing platform for managing and running multiple AI models locally, with a Flutter mobile/desktop frontend.
 
@@ -385,13 +392,15 @@ Possible directions, none investigated yet:
 
 ```
 MULTI-AI/
-├── pyproject.toml                 # build-system: setuptools + Cython (so `pip install -e .` works)
-├── setup.py                       # Cython build — compiles every .pyx under Multi-AI/ to a .pyd/.so
+├── pyproject.toml                 # build-system: setuptools only — no Cython in the build path
+├── setup.py                       # compiles every committed .c under Multi-AI/ to a .pyd/.so
+├── backend_build.py               # shared .pyx/.c module discovery (setup.py + regen_cython.py)
+├── scripts/regen_cython.py        # the one place Cython runs: regenerates the .c from the .pyx
 ├── Multi-AI/
 │   ├── multi_ai/                  # the importable Python package
 │   │   ├── server.pyx             # stdlib HTTP backend: /api/models, /api/chat, /api/hello, /api/device
 │   │   ├── hardware.pyx           # GPU/RAM detection + per-model green/yellow/red fit ratings
-│   │   ├── server.c               #   └─ Cython-generated C (build input, regenerated)
+│   │   ├── server.c               #   └─ Cython-generated C, committed — what setup.py compiles
 │   │   ├── server.cp314-win_amd64.pyd  #   └─ compiled module — what actually runs (git-ignored)
 │   │   ├── __init__.pyx           # package init (compiled like everything else)
 │   │   └── models/                # 47 model entries — one file per model (server + on-device siblings)
@@ -420,10 +429,12 @@ The Python backend is written in **Cython** and **must be compiled before it run
 | File | Stage | Role |
 |---|---|---|
 | **`.pyx`** | source | What you edit. The source of truth — one file per model, plus `server.pyx`. Tracked in git. |
-| **`.c`** | generated | Cython transpiles each `.pyx` into equivalent C (`cythonize()` in [setup.py](setup.py)). A build input, regenerated from the `.pyx` — never edited by hand. |
+| **`.c`** | generated, **committed** | Cython's transpilation of the `.pyx`. Regenerated only by [`scripts/regen_cython.py`](scripts/regen_cython.py) (pinned Cython) — never edited by hand — and committed alongside the `.pyx`. This is what the build actually compiles, so Cython isn't needed to build. |
 | **`.pyd`** (Windows) / **`.so`** (Linux/macOS) | compiled | A C compiler turns the `.c` into a native **CPython extension module** — the thing that's actually imported and run. The suffix (`.cp314-win_amd64.pyd`) is the ABI tag — CPython 3.14, win-amd64 — so the interpreter only loads a binary built for its exact version and platform. **Git-ignored**: platform/version-specific, so each machine rebuilds it. |
 
-**You must compile before running.** `pip install -e . --no-deps` (from the repo root) invokes [setup.py](setup.py), which Cython-compiles every `.pyx` into a `.pyd`/`.so` next to its source and registers the package. This needs **Cython + a C compiler** (MSVC Build Tools on Windows, `gcc`/`clang` elsewhere). `--no-deps` builds the extensions without pulling the heavy chat-time deps (torch/transformers), which are lazy-imported only when you actually chat. Re-run it after adding or editing any `.pyx` — until you do, that model imports as `(broken)`.
+**You must compile before running.** `pip install -e . --no-deps` (from the repo root) invokes [setup.py](setup.py), which compiles every committed `.c` into a `.pyd`/`.so` next to its source and registers the package. This needs **a C compiler** (MSVC Build Tools on Windows, `gcc`/`clang` elsewhere) but **not Cython**. `--no-deps` builds the extensions without pulling the heavy chat-time deps (torch/transformers), which are lazy-imported only when you actually chat. Re-run it after adding or editing any `.pyx` — until you do, that model imports as `(broken)`.
+
+**If you change a `.pyx`:** run `python scripts/regen_cython.py` (needs `Cython==3.3.0` — the pin is in that script) and commit the regenerated `.c` with it. CI ([backend-check.yml](.github/workflows/backend-check.yml)) regenerates the `.c` and fails if the committed copy doesn't match, and the release build repeats that check before packaging — a stale `.c` shipped broken once (v1.0.1) and this is what stops it recurring.
 
 ### How models are loaded (compiled imports, no source fallback)
 
@@ -466,13 +477,15 @@ The chat model dropdown always includes one **on-device** entry (currently Qwen2
 
 ## Python Backend
 
-The backend is compiled — build it once (and after any `.pyx` change) from the repo root:
+The backend is compiled — build it once (and after any `.pyx`/`.c` change) from the repo root:
 
 ```bash
 pip install -e . --no-deps
 ```
 
-This Cython-compiles every `.pyx` under `Multi-AI/` into a native `.pyd`/`.so` next to its source and registers the package. It needs **Cython + a C compiler** (MSVC Build Tools on Windows; `gcc`/`clang` elsewhere). `--no-deps` skips the heavy chat-time deps (torch/transformers), which are imported lazily only when you chat — install them separately when you need them.
+This compiles every committed `.c` under `Multi-AI/` into a native `.pyd`/`.so` next to its source and registers the package. It needs **a C compiler** (MSVC Build Tools on Windows; `gcc`/`clang` elsewhere) but **not Cython** — the `.c` are checked in. `--no-deps` skips the heavy chat-time deps (torch/transformers), which are imported lazily only when you chat — install them separately when you need them.
+
+If you edit a `.pyx`, regenerate its `.c` before rebuilding: `pip install "Cython==3.3.0" && python scripts/regen_cython.py`, then commit the `.c` alongside the `.pyx` (CI enforces they stay in sync).
 
 Run a model directly (imports the compiled module and prints its metadata):
 
@@ -717,11 +730,13 @@ been attempted or verified, but very little of it looks hard.
 
 What already works by construction, and is worth not re-solving:
 
-- `setup.py` is platform-agnostic — it walks for `.pyx` and hands everything to
-  `cythonize()`, so `pip install -e . --no-deps` should produce
-  `.cpython-314-x86_64-linux-gnu.so` files under `gcc`/`clang` with no changes.
-  (The `.pyd` naming throughout this README is Windows-specific prose, not a
-  code assumption.)
+- `setup.py` is platform-agnostic — it walks for the committed `.c` (via
+  `backend_build.py`) and compiles each as an `Extension`, so `pip install -e .
+  --no-deps` should produce `.cpython-314-x86_64-linux-gnu.so` files under
+  `gcc`/`clang` with no changes. The `.c` are OS-independent (the regen
+  normalises paths), so `scripts/regen_cython.py` and the backend-check CI job
+  run anywhere. (The `.pyd` naming throughout this README is Windows-specific
+  prose, not a code assumption.)
 - `hardware.pyx` already branches: `GlobalMemoryStatusEx` on `win32`, and
   `os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")` everywhere else.
   The VRAM path is `torch.cuda`, which is if anything better supported on Linux.

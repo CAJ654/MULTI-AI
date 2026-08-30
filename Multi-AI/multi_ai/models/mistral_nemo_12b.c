@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.models.mistral_nemo_12b",
         "sources": [
-            "Multi-AI\\multi_ai\\models\\mistral_nemo_12b.pyx"
+            "Multi-AI/multi_ai/models/mistral_nemo_12b.pyx"
         ]
     },
     "module_name": "multi_ai.models.mistral_nemo_12b"

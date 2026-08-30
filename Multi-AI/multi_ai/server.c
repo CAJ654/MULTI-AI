@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.server",
         "sources": [
-            "Multi-AI\\multi_ai\\server.pyx"
+            "Multi-AI/multi_ai/server.pyx"
         ]
     },
     "module_name": "multi_ai.server"

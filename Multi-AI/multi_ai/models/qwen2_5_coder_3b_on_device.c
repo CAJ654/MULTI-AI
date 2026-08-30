@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.models.qwen2_5_coder_3b_on_device",
         "sources": [
-            "Multi-AI\\multi_ai\\models\\qwen2_5_coder_3b_on_device.pyx"
+            "Multi-AI/multi_ai/models/qwen2_5_coder_3b_on_device.pyx"
         ]
     },
     "module_name": "multi_ai.models.qwen2_5_coder_3b_on_device"

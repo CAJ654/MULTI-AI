@@ -5,7 +5,7 @@
     "distutils": {
         "name": "multi_ai.models.gptOSS",
         "sources": [
-            "Multi-AI\\multi_ai\\models\\gptOSS.pyx"
+            "Multi-AI/multi_ai/models/gptOSS.pyx"
         ]
     },
     "module_name": "multi_ai.models.gptOSS"

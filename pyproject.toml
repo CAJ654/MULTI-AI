@@ -1,9 +1,11 @@
 # Build configuration for the compiled Python backend.
 # Package metadata, extension modules, and the console entry point live in
-# setup.py (it Cython-compiles every .pyx under Multi-AI/). This file only
-# declares the build backend + build-time requirements so that
-# `pip install -e . --no-deps` works with build isolation — Cython and a C
-# compiler (MSVC on Windows) are needed to produce the .pyd/.so extensions.
+# setup.py. It compiles the committed .c files (regenerated from the .pyx
+# sources by scripts/regen_cython.py) directly, so the build needs a C
+# compiler (MSVC on Windows) but NOT Cython — Cython only runs in
+# scripts/regen_cython.py and the backend-check CI job, both at a pinned
+# version. This keeps `pip install -e . --no-deps` working with build
+# isolation.
 [build-system]
-requires = ["setuptools>=61.0", "wheel", "Cython>=3.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
