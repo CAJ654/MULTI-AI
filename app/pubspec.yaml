@@ -110,6 +110,12 @@ flutter:
   # Multi-AI/multi_ai/models/*.pyx; nothing regenerates it automatically.
   assets:
     - assets/on_device_roster.json
+    # Requirements files, a settings.yml template, and Python bootstrap
+    # scripts for the Add-ons tab's downloadable components (SearXNG,
+    # yt-dlp) — see lib/addons/components/component_runtime.dart. Small
+    # text files only; the actual Python packages they name are pip-installed
+    # on demand, not shipped here.
+    - assets/components/
 
 # velopack_flutter 0.3.2 (latest published) pins code_assets ^1.0.0 / hooks
 # ^1.0.3, but Flutter >=3.44.0's native-assets build daemon speaks a newer

@@ -4,6 +4,18 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'theme.dart';
 
+/// Opens [url] in the default browser. Silently ignores anything that isn't a
+/// launchable absolute URL — a malformed href in a model reply, or in a web
+/// search citation chip (see `chat_addon.dart`'s source strip), shouldn't
+/// throw into the chat. Top-level rather than private to [MarkdownText] so
+/// both places share one implementation instead of two copies of the same
+/// four lines.
+void openExternalUrl(String url) {
+  final uri = Uri.tryParse(url.trim());
+  if (uri == null || !uri.hasScheme) return;
+  launchUrl(uri, mode: LaunchMode.externalApplication).then((_) {}, onError: (_) {});
+}
+
 /// Renders model output as Markdown.
 ///
 /// Every model in this app — server-backed (`transformers`) and on-device
@@ -73,7 +85,7 @@ class _MarkdownTextState extends State<MarkdownText> {
 
   List<Widget> _render() {
     _disposeRecognizers();
-    final ctx = _MdContext(widget.onTapLink ?? _openExternally, _recognizers);
+    final ctx = _MdContext(widget.onTapLink ?? openExternalUrl, _recognizers);
     return _buildBlocks(widget.data, widget.baseStyle, ctx);
   }
 
@@ -82,16 +94,6 @@ class _MarkdownTextState extends State<MarkdownText> {
       r.dispose();
     }
     _recognizers.clear();
-  }
-
-  /// Opens a tapped link in the default browser. Silently ignores anything that
-  /// isn't a launchable absolute URL — a malformed href in a model reply
-  /// shouldn't throw into the chat.
-  void _openExternally(String url) {
-    final uri = Uri.tryParse(url.trim());
-    if (uri == null || !uri.hasScheme) return;
-    launchUrl(uri, mode: LaunchMode.externalApplication)
-        .then((_) {}, onError: (_) {});
   }
 
   @override

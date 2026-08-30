@@ -1,0 +1,17 @@
+# SearXNG has no PyPI package and no tagged GitHub releases (it ships as a
+# rolling CalVer+commit build off `master`) — see the doc comment on
+# ComponentRuntime in lib/addons/components/component_runtime.dart. So instead
+# of a package name + version, this pins a specific commit's source archive.
+#
+# Its own setup.py reads install_requires from the same commit's
+# requirements.txt at build time, so `pip install --target <dir> -r
+# this-file` pulls in SearXNG's entire pinned dependency set (Flask, Jinja2,
+# lxml, Babel, httpx, a Valkey client, etc.) automatically — nothing else
+# needs listing here. Confirmed against this commit: lxml 6.1.2 ships a
+# win_amd64 wheel for the app's bundled CPython 3.14, so nothing in this tree
+# needs a compiler.
+#
+# Pinned 2026-08-28. To pick up SearXNG changes, replace the SHA below with a
+# newer `master` commit (see https://github.com/searxng/searxng/commits/master)
+# and delete this component's .installed marker so it re-provisions.
+https://github.com/searxng/searxng/archive/a30b2d47492ab46ae82ce25ee62a31626565cf67.zip

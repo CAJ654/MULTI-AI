@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart' show getApplicationSupportDirectory;
 
+import 'addons/chat/web_source.dart';
 import 'api_client.dart';
 
 class ChatMessage {
@@ -12,6 +13,7 @@ class ChatMessage {
     this.sender,
     this.isError = false,
     this.attachments = const [],
+    this.sources = const [],
   });
 
   final String text;
@@ -23,6 +25,11 @@ class ChatMessage {
   /// the models here only produce text.
   final List<Attachment> attachments;
 
+  /// Pages/videos a grounded reply drew on — see `web_grounding.dart`. Always
+  /// empty on a user message and on a reply Chat's web-search toggle wasn't
+  /// on for.
+  final List<WebSource> sources;
+
   Map<String, dynamic> toJson() => {
         'text': text,
         'isUser': isUser,
@@ -33,6 +40,7 @@ class ChatMessage {
         // with no second store to keep in sync when a chat is deleted.
         if (attachments.isNotEmpty)
           'attachments': [for (final a in attachments) a.toWireJson()],
+        if (sources.isNotEmpty) 'sources': [for (final s in sources) s.toJson()],
       };
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
@@ -43,6 +51,12 @@ class ChatMessage {
         attachments: [
           for (final a in (json['attachments'] as List<dynamic>? ?? []))
             ?_attachmentFromJson(a as Map<String, dynamic>),
+        ],
+        // Absent on any history written before this field existed — that's
+        // just a reply with no citations, not a load failure.
+        sources: [
+          for (final s in (json['sources'] as List<dynamic>? ?? []))
+            WebSource.fromJson(s as Map<String, dynamic>),
         ],
       );
 }

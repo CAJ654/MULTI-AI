@@ -2,6 +2,8 @@ import '../attachment_input.dart';
 import 'addon.dart';
 import 'chat/chat_addon.dart';
 import 'code/code_addon.dart';
+import 'components/component_manager.dart';
+import 'components/components_addon.dart';
 import 'models/models_addon.dart';
 import 'orchestration/orchestration_addon.dart';
 
@@ -15,14 +17,23 @@ import 'orchestration/orchestration_addon.dart';
 List<AddOn> buildRegistry({
   AttachmentSource? attachmentSource,
   void Function(String url)? onMarkdownLinkTap,
+  ComponentManager? componentManager,
 }) {
+  // Built once here (unless a test supplies its own) and handed to both Chat
+  // and the Add-ons tab, so they observe the same live install/running state
+  // with no HostCapability involved — see component_manager.dart's doc
+  // comment on why that would be the wrong fit for something optional that
+  // an essential tab (Chat) must keep working without.
+  final components = componentManager ?? ComponentManager();
   return [
     const ModelsAddOn(),
     ChatAddOn(
       attachmentSource: attachmentSource,
       onMarkdownLinkTap: onMarkdownLinkTap,
+      componentManager: components,
     ),
     OrchestrationAddOn(),
     CodeAddOn(),
+    ComponentsAddOn(manager: components),
   ];
 }

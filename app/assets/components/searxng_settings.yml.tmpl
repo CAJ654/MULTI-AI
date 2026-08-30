@@ -1,0 +1,36 @@
+# Generated once by SearxngSupervisor (see
+# lib/addons/components/searxng_supervisor.dart) into
+# <component runtime baseDir>/searxng/settings.yml, with __SECRET_KEY__
+# replaced by a random value on first write and left alone after that.
+#
+# This is a *local, single-caller* deployment, not a public instance — three
+# settings below only make sense in that light:
+#   - server.limiter is off: it exists to rate-limit/block bots hammering a
+#     public instance, which needs a Valkey/Redis database. The only caller
+#     here is this app itself on localhost, so there is nothing to rate-limit
+#     and no separate database process to bundle just for this.
+#   - search.formats includes json: public instances leave it out specifically
+#     to make scraping their results harder. That concern doesn't apply to an
+#     instance nothing but this app can reach.
+#   - server.bind_address is 127.0.0.1, not 0.0.0.0: nothing outside this
+#     machine should ever be able to reach it.
+
+use_default_settings: true
+
+general:
+  instance_name: "Multi-AI (local)"
+
+server:
+  port: 8891
+  bind_address: "127.0.0.1"
+  secret_key: "__SECRET_KEY__"
+  limiter: false
+  image_proxy: false
+
+search:
+  formats:
+    - html
+    - json
+
+ui:
+  static_use_hash: true

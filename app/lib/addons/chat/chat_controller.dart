@@ -8,6 +8,10 @@ import '../../chat_store.dart';
 import '../../model_pool.dart';
 import '../../on_device_engine.dart';
 import '../../thinking_settings.dart';
+import '../components/component_manager.dart';
+import 'web_access_settings.dart';
+import 'web_grounding.dart';
+import 'web_source.dart';
 
 /// Stands in for a reply the user cut short. Shown in the transcript but kept
 /// out of the history sent to the model — it's UI state, not something said.
@@ -39,17 +43,29 @@ String modelDisplayName(ModelInfo m) {
 class ChatController extends ChangeNotifier {
   ChatController({
     required this.pool,
+    required this.componentManager,
     AttachmentSource? attachmentSource,
     ChatStore? store,
     ThinkingSettingsStore? thinkingSettingsStore,
+    WebAccessSettingsStore? webAccessSettingsStore,
   })  : _providedAttachments = attachmentSource,
         _store = store ?? FileChatStore(),
-        _thinkingSettingsStore = thinkingSettingsStore ?? FileThinkingSettingsStore();
+        _thinkingSettingsStore = thinkingSettingsStore ?? FileThinkingSettingsStore(),
+        _webAccessSettingsStore = webAccessSettingsStore ?? FileWebAccessSettingsStore(),
+        _grounding = WebGrounding(componentManager);
 
   final ModelPool pool;
+
+  /// Shared with the Add-ons tab (see `registry.dart`) — lets the web-search
+  /// toggle below know whether SearXNG is installed at all, and start it on
+  /// first use.
+  final ComponentManager componentManager;
+
   final AttachmentSource? _providedAttachments;
   final ChatStore _store;
   final ThinkingSettingsStore _thinkingSettingsStore;
+  final WebAccessSettingsStore _webAccessSettingsStore;
+  final WebGrounding _grounding;
 
   /// Built on first use, never at construction: [DefaultAttachmentSource]
   /// opens a `record` platform channel in its constructor, which throws
@@ -97,6 +113,39 @@ class ChatController extends ChangeNotifier {
   ThinkingSettings _thinkingSettings = ThinkingSettings.defaults();
   ThinkingSettings get thinkingSettings => _thinkingSettings;
 
+  bool _webAccessEnabled = false;
+
+  /// Whether the next send should try to ground its reply in a web search
+  /// (or a YouTube transcript, for a message containing a video link).
+  /// Starts false on every launch — see `WebAccessSettings`'s doc comment on
+  /// why only the explainer having-been-seen persists, not this.
+  bool get webAccessEnabled => _webAccessEnabled;
+
+  WebAccessSettings _webAccessSettings = WebAccessSettings.defaults();
+  bool get webAccessExplainerSeen => _webAccessSettings.explainerSeen;
+
+  /// Whether the toggle can be turned on at all right now — SearXNG has to be
+  /// installed first (see the Add-ons tab). Chat's toggle button reads this
+  /// to show a greyed, explanatory state instead of a functional one.
+  bool get webAccessAvailable =>
+      componentManager.available && componentManager.isInstalled('searxng');
+
+  /// Flips the toggle. Does nothing if [webAccessAvailable] is false, so a
+  /// stale tap (e.g. right after the component was deleted from another tab)
+  /// can't silently turn on a feature with nothing behind it.
+  void setWebAccessEnabled(bool enabled) {
+    if (enabled && !webAccessAvailable) return;
+    _webAccessEnabled = enabled;
+    notifyListeners();
+  }
+
+  void markWebAccessExplainerSeen() {
+    if (_webAccessSettings.explainerSeen) return;
+    _webAccessSettings = WebAccessSettings(explainerSeen: true);
+    _webAccessSettingsStore.save(_webAccessSettings);
+    notifyListeners();
+  }
+
   /// Bumped every time the transcript should be scrolled to the bottom. The
   /// pane owns the ScrollController, so it watches this instead of being
   /// called directly.
@@ -131,7 +180,17 @@ class ChatController extends ChangeNotifier {
     // a listener that only reacts to the *next* change would then leave the
     // picker empty until something unrelated moved.
     _onPoolChanged();
-    await Future.wait([_loadStoredSessions(), _loadThinkingSettings()]);
+    // So the web-search toggle updates the moment SearXNG finishes installing
+    // from the Add-ons tab, without needing some unrelated Chat state change
+    // to force a rebuild first.
+    componentManager.addListener(notifyListeners);
+    await Future.wait(
+        [_loadStoredSessions(), _loadThinkingSettings(), _loadWebAccessSettings()]);
+  }
+
+  Future<void> _loadWebAccessSettings() async {
+    _webAccessSettings = await _webAccessSettingsStore.load();
+    notifyListeners();
   }
 
   Future<void> _loadStoredSessions() async {
@@ -237,17 +296,42 @@ class ChatController extends ChangeNotifier {
     _store.save(_sessions);
 
     try {
+      // Retrieval runs before the model sees the prompt at all — this is a
+      // deterministic one-shot pass (search, or a YouTube transcript for a
+      // video link), not a tool the model decides to call. See
+      // web_grounding.dart's doc comment for why that shape was chosen.
+      // A failure here (SearXNG failed to start, a network error) falls back
+      // to answering without it rather than failing the whole turn — the
+      // same soft-failure posture as a failed image pick or recording.
+      List<WebSource> sources = const [];
+      var promptForModel = text;
+      if (_webAccessEnabled && text.isNotEmpty) {
+        try {
+          final grounding = await _grounding.gather(text);
+          sources = grounding.sources;
+          if (grounding.contextBlock.isNotEmpty) {
+            promptForModel = '${grounding.contextBlock}\n\n$text';
+          }
+        } catch (e) {
+          _errors.add('Web search unavailable — answering without it.');
+        }
+      }
+      if (generation != _sendGeneration) return; // stopped by the user
+
       // Which of the two run paths this model takes is the pool's call — see
-      // ModelPool.generate.
+      // ModelPool.generate. The *decorated* prompt goes to the model; history
+      // sent on future turns (built at the top of this method, from
+      // session.messages) still only ever sees the plain text the user typed
+      // — grounding is a one-time addition to this call, never replayed.
       final reply = await pool.generate(
         model: model,
-        prompt: text,
+        prompt: promptForModel,
         attachments: attachments,
         history: history,
       );
       if (generation != _sendGeneration) return; // stopped by the user
-      session.messages
-          .add(ChatMessage(text: reply, isUser: false, sender: modelDisplayName(model)));
+      session.messages.add(ChatMessage(
+          text: reply, isUser: false, sender: modelDisplayName(model), sources: sources));
       notifyListeners();
     } catch (e) {
       if (generation != _sendGeneration) return; // aborting throws; not a real error
@@ -378,6 +462,7 @@ class ChatController extends ChangeNotifier {
   @override
   void dispose() {
     pool.removeListener(_onPoolChanged);
+    componentManager.removeListener(notifyListeners);
     textController.dispose();
     if (_attachmentsUsed) _attachments.dispose();
     _errors.close();

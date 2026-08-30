@@ -12,7 +12,10 @@ import '../../theme.dart';
 import '../../thinking_indicator.dart';
 import '../../thinking_settings_dialog.dart';
 import '../addon.dart';
+import '../components/component_manager.dart';
 import 'chat_controller.dart';
+import 'web_access_explainer_dialog.dart';
+import 'web_source.dart';
 
 /// The conversation tab: a list of chats in the sidebar, the transcript and
 /// composer in the main pane, and the model picker in the top bar.
@@ -21,9 +24,11 @@ import 'chat_controller.dart';
 /// at all has nothing to show.
 class ChatAddOn extends AddOn {
   ChatAddOn({
+    required this.componentManager,
     this.attachmentSource,
     this.onMarkdownLinkTap,
     this.modelsAddOnId = 'models',
+    this.componentsAddOnId = 'components',
   });
 
   /// Injectable so widget tests can drive the attach/mic buttons without
@@ -39,6 +44,15 @@ class ChatAddOn extends AddOn {
   /// so the button quietly does nothing if that add-on isn't registered,
   /// instead of the two files having to know about each other.
   final String modelsAddOnId;
+
+  /// Which tab the web-search toggle's "install it" prompt jumps to — see
+  /// [modelsAddOnId] for why this is named rather than hardcoded.
+  final String componentsAddOnId;
+
+  /// Shared with the Add-ons tab — see `component_manager.dart`'s doc
+  /// comment for why this is a plain injected object rather than a
+  /// `HostCapability`.
+  final ComponentManager componentManager;
 
   ChatController? _controller;
 
@@ -56,6 +70,7 @@ class ChatAddOn extends AddOn {
   Future<void> onEnable(AddOnContext context) async {
     final controller = ChatController(
       pool: context.modelPool,
+      componentManager: componentManager,
       attachmentSource: attachmentSource,
     );
     _controller = controller;
@@ -80,6 +95,7 @@ class ChatAddOn extends AddOn {
         controller: controller,
         onMarkdownLinkTap: onMarkdownLinkTap,
         onGoToModels: () => context.showTab(modelsAddOnId),
+        onGoToAddOns: () => context.showTab(componentsAddOnId),
       ),
       topBarSlot: (_) => ChatModelPicker(controller: controller),
     );
@@ -278,11 +294,16 @@ class ChatPane extends StatefulWidget {
     required this.controller,
     this.onMarkdownLinkTap,
     this.onGoToModels,
+    this.onGoToAddOns,
   });
 
   final ChatController controller;
   final void Function(String url)? onMarkdownLinkTap;
   final VoidCallback? onGoToModels;
+
+  /// Where the web-search toggle's "install it" tooltip sends the user when
+  /// SearXNG isn't installed yet.
+  final VoidCallback? onGoToAddOns;
 
   @override
   State<ChatPane> createState() => _ChatPaneState();
@@ -617,11 +638,30 @@ class _ChatPaneState extends State<ChatPane> {
                     child: CopyButton(message.text),
                   ),
                 ],
+                if (message.sources.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _buildSourceStrip(message.sources),
+                ],
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  /// Numbered citation chips under a grounded reply — the "show sources, not
+  /// just a trust-me answer" half of the web-access plan's ethics table. Each
+  /// opens its URL; reuses `markdown_text.dart`'s promoted [openExternalUrl]
+  /// rather than duplicating the same four lines a second time.
+  Widget _buildSourceStrip(List<WebSource> sources) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (var i = 0; i < sources.length; i++)
+          _SourceChip(index: i + 1, source: sources[i], onTap: openExternalUrl),
+      ],
     );
   }
 
@@ -711,6 +751,7 @@ class _ChatPaneState extends State<ChatPane> {
                           icon: const Icon(Icons.add, size: 22, color: Colors.white70),
                           onPressed: sending || recording ? null : _c.pickImages,
                         ),
+                      _buildWebAccessToggle(),
                       Expanded(
                         child: TextField(
                           controller: _c.textController,
@@ -834,6 +875,92 @@ class _ChatPaneState extends State<ChatPane> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------- web access
+
+  /// The composer's "search the web for this reply" chip — three states:
+  /// off, on, and disabled-with-tooltip when SearXNG isn't installed. Stays
+  /// visible-but-greyed rather than disappearing when unavailable, the same
+  /// "never silently drop, always show why" convention `app_shell.dart`
+  /// already applies to whole tabs.
+  Widget _buildWebAccessToggle() {
+    final available = _c.webAccessAvailable;
+    final enabled = _c.webAccessEnabled;
+    if (!available) {
+      return IconButton(
+        tooltip: 'Install web search from the Add-ons tab',
+        icon: const Icon(Icons.public_off, size: 20, color: Colors.white24),
+        onPressed: widget.onGoToAddOns,
+      );
+    }
+    return IconButton(
+      tooltip: enabled ? 'Web search is on for this message' : 'Search the web for this reply',
+      icon: Icon(Icons.public,
+          size: 20, color: enabled ? Colors.deepPurple.shade200 : Colors.white70),
+      onPressed: _c.sending ? null : _onToggleWebAccess,
+    );
+  }
+
+  Future<void> _onToggleWebAccess() async {
+    if (_c.webAccessEnabled) {
+      _c.setWebAccessEnabled(false);
+      return;
+    }
+    if (!_c.webAccessExplainerSeen) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => const WebAccessExplainerDialog(),
+      );
+      _c.markWebAccessExplainerSeen();
+      if (confirmed != true) return;
+    }
+    _c.setWebAccessEnabled(true);
+  }
+}
+
+/// One numbered citation chip — see `_ChatPaneState._buildSourceStrip`.
+class _SourceChip extends StatelessWidget {
+  const _SourceChip({required this.index, required this.source, required this.onTap});
+
+  final int index;
+  final WebSource source;
+  final void Function(String url) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final host = Uri.tryParse(source.url)?.host ?? source.url;
+    return Material(
+      color: cardColor,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => onTap(source.url),
+        child: Tooltip(
+          message: source.title,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('$index. ',
+                    style: TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w600, color: Colors.deepPurple.shade200)),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 160),
+                  child: Text(
+                    host,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11, color: Colors.white70),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

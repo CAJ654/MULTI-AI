@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:llamadart/llamadart.dart';
 
 import 'package:multi_ai/addons/chat/chat_controller.dart';
+import 'package:multi_ai/addons/components/component_manager.dart';
 import 'package:multi_ai/api_client.dart';
 import 'package:multi_ai/chat_store.dart';
 import 'package:multi_ai/model_pool.dart';
@@ -63,9 +64,11 @@ void main() {
     final api = _RecordingApi([_model]);
     final pool = ModelPool(api: api, downloadManager: const _AlwaysDownloaded());
     await pool.refresh();
+    final components = ComponentManager();
 
     final first = ChatController(
       pool: pool,
+      componentManager: components,
       store: sharedStore,
       thinkingSettingsStore: InMemoryThinkingSettingsStore(),
     );
@@ -79,6 +82,7 @@ void main() {
 
     final second = ChatController(
       pool: pool,
+      componentManager: components,
       store: sharedStore,
       thinkingSettingsStore: InMemoryThinkingSettingsStore(),
     );

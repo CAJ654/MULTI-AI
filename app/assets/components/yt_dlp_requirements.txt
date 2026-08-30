@@ -1,0 +1,3 @@
+# yt-dlp: pure Python, no ML/compiled deps, published normally on PyPI —
+# unlike SearXNG this needs nothing but a plain pinned version.
+yt-dlp==2026.08.19
