@@ -419,19 +419,51 @@ jobs:
   # ---------------------------------------------------------------
   publish:
     needs: [version, build-windows, build-android]
-    if: startsWith(github.ref, 'refs/tags/v')
+    # `always()` is required here: a job's own `if:` is otherwise implicitly
+    # ANDed with `success()` over everything in `needs`, so with a plain
+    # `startsWith(...)` condition a single failed platform (e.g. Android's
+    # keystore secret going stale) would skip this job entirely and silently
+    # withhold the platform that *did* build. `always()` removes that implicit
+    # gate so the explicit success check below is the only one that applies -
+    # publish proceeds as long as at least one platform succeeded, and ships
+    # only that platform's assets (see the two download steps below).
+    if: always() && startsWith(github.ref, 'refs/tags/v') && (needs.build-windows.result == 'success' || needs.build-android.result == 'success')
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/download-artifact@v4
+      # Each download is conditional on its own build having actually
+      # produced something. Steps don't inherit the job's needs-success
+      # gating the way jobs inherit it from their own needs (a step's
+      # implicit success() only looks at earlier steps in this same job,
+      # not at needs.*), so without this explicit check a missing platform
+      # would fail this download outright instead of just being absent.
+      - name: Download the Windows artifact
+        if: needs.build-windows.result == 'success'
+        uses: actions/download-artifact@v4
         with:
           name: MultiAI-windows-${{ needs.version.outputs.version }}
           path: Releases
 
-      - uses: actions/download-artifact@v4
+      - name: Download the Android artifact
+        if: needs.build-android.result == 'success'
+        uses: actions/download-artifact@v4
         with:
           name: MultiAI-android-${{ needs.version.outputs.version }}
           path: Releases
+
+      # Non-fatal - just makes a partial release loudly obvious in the run's
+      # summary instead of something a reviewer only notices later, looking
+      # at which files landed on the draft.
+      - name: Warn about a missing platform
+        if: needs.build-windows.result != 'success' || needs.build-android.result != 'success'
+        shell: bash
+        run: |
+          if [ "${{ needs.build-windows.result }}" != "success" ]; then
+            echo "::warning::build-windows did not succeed (${{ needs.build-windows.result }}) - this release will ship without Windows assets."
+          fi
+          if [ "${{ needs.build-android.result }}" != "success" ]; then
+            echo "::warning::build-android did not succeed (${{ needs.build-android.result }}) - this release will ship without the Android APK."
+          fi
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
