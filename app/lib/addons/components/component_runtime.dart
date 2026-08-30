@@ -68,14 +68,20 @@ class ComponentRuntime {
     return destination;
   }
 
-  /// Downloads and installs this component into [sitePackages]. Emits pip's
-  /// output line by line and completes when it exits, throwing on a non-zero
-  /// exit code — the same streaming shape as [BackendRuntime]'s own
+  /// Downloads and installs this component into [sitePackages]. Emits the
+  /// installer's output line by line and completes when it exits, throwing on
+  /// a non-zero exit code — the same streaming shape as [BackendRuntime]'s own
   /// top-level `provision()`, which this deliberately mirrors rather than
   /// shares: that one targets the main backend's CUDA-specific index URL,
   /// this one doesn't need it, and duplicating a ~30 line function reads
   /// clearer than threading a flag through a shared one for a single
   /// difference.
+  ///
+  /// Most components are a plain `pip install -r <requirements>` of wheels.
+  /// SearXNG can't be — it's an sdist, and the embeddable interpreter can't
+  /// build one (PEP 517 build isolation hands setuptools over PYTHONPATH,
+  /// which `python._pth` makes it ignore), so it gets a bespoke installer
+  /// script. See `assets/components/searxng_install.py`.
   Stream<ProvisionProgress> provision() async* {
     if (!available) {
       yield const ProvisionProgress(
@@ -93,9 +99,18 @@ class ComponentRuntime {
       _requirementsFile,
     );
 
-    final process = await Process.start(
-      BackendRuntime.pythonExe.path,
-      [
+    final List<String> args;
+    if (component.id == 'searxng') {
+      final installer =
+          await materializeAsset('searxng_install.py', into: 'install.py');
+      args = [
+        installer.path,
+        '--target', sitePackages.path,
+        '--requirements', _requirementsFile.path,
+        '--pip', BackendRuntime.pipPyz.path,
+      ];
+    } else {
+      args = [
         BackendRuntime.pipPyz.path,
         'install',
         '--target', sitePackages.path,
@@ -106,31 +121,48 @@ class ComponentRuntime {
         '--upgrade',
         '--no-warn-script-location',
         '--progress-bar', 'off',
-      ],
+      ];
+    }
+
+    final process = await Process.start(
+      BackendRuntime.pythonExe.path,
+      args,
       workingDirectory: baseDir.path,
     );
 
-    process.stdout
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .listen((l) => controller.add(ProvisionProgress(l)));
-    process.stderr
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .listen((l) => controller.add(ProvisionProgress(l, isError: true)));
+    // The last line the installer wrote to stderr — pip's real complaint, or
+    // one of searxng_install.py's own one-line failures. Folded into the
+    // thrown exception below so the setup screen shows *why* it failed rather
+    // than just "exit code 1", which is what it lands on otherwise (the error
+    // event overwrites the last streamed line — see ComponentDetailScreen).
+    String? lastError;
 
-    unawaited(process.exitCode.then((code) async {
+    Future<void> pump(Stream<List<int>> out, {required bool isError}) => out
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())
+        .forEach((l) {
+          if (isError && l.trim().isNotEmpty) lastError = l;
+          controller.add(ProvisionProgress(l, isError: isError));
+        })
+        // A decode hiccup on one line shouldn't sink the whole install.
+        .catchError((_) {});
+    final streamsDone =
+        Future.wait([pump(process.stdout, isError: false), pump(process.stderr, isError: true)]);
+
+    unawaited(() async {
+      final code = await process.exitCode;
+      await streamsDone;
       if (code == 0) {
         await _marker.writeAsString(DateTime.now().toIso8601String());
-        await controller.close();
       } else {
+        final detail = lastError == null ? '' : '\n\n$lastError';
         controller.addError(
-          Exception('Install failed (pip exited $code). Check your internet '
-              'connection and try again.'),
+          Exception('Install failed (exit code $code). Check your internet '
+              'connection and try again.$detail'),
         );
-        await controller.close();
       }
-    }));
+      await controller.close();
+    }());
 
     yield* controller.stream;
   }
