@@ -9,7 +9,9 @@
 //
 // Ports in use by this app, so a future addition doesn't collide: main
 // backend 8000 (backend_process.dart), Colibri 8010
-// (Multi-AI/multi_ai/server.pyx), SearXNG 8891 (here).
+// (Multi-AI/multi_ai/server.pyx), SearXNG 8891 (here), llama-server 8100 and
+// opencode serve 8101 (addons/code/llama_server_supervisor.dart and
+// opencode_process_supervisor.dart, the Code tab).
 
 import 'dart:async';
 import 'dart:convert';

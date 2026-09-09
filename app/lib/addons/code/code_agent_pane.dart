@@ -7,14 +7,17 @@ import 'code_agent_controller.dart';
 import 'tool_approval.dart';
 import 'tool_approval_dialog.dart';
 
-/// Icon per tool name, for the collapsed [_ToolCallRow]. Falls back to a
-/// generic build icon for anything not in this v1 tool set.
+/// Icon per tool name, for the collapsed [_ToolCallRow]. Names are
+/// opencode's own built-in tools (confirmed against a running `opencode
+/// serve`'s OpenAPI spec and docs) — falls back to a generic build icon for
+/// anything else (`task`, `todowrite`, `webfetch`, `websearch`, `skill`,
+/// `lsp`, `question`, or an MCP-provided tool).
 IconData _iconFor(String toolName) => switch (toolName) {
-      'read_file' => Icons.description_outlined,
-      'list_dir' => Icons.folder_outlined,
-      'glob_search' => Icons.search,
-      'write_file' || 'edit_file' => Icons.edit_outlined,
-      'run_command' => Icons.terminal,
+      'read' => Icons.description_outlined,
+      'list' => Icons.folder_outlined,
+      'glob' || 'grep' => Icons.search,
+      'write' || 'edit' || 'patch' => Icons.edit_outlined,
+      'bash' => Icons.terminal,
       _ => Icons.build_outlined,
     };
 
@@ -84,15 +87,6 @@ class _CodeAgentPaneState extends State<CodeAgentPane> {
     _c.send(text);
     _input.clear();
   }
-
-  /// Tool calls are elicited by prompting a specific `<tool_call>` tag (see
-  /// `agent_llm_client.dart`), which only Qwen2.5-Coder was actually trained
-  /// to reliably produce — a generic chat model like the app's bundled
-  /// Qwen2.5 0.5B fallback will happily ignore those instructions and just
-  /// ask the user for the file instead. This is a naming-convention check,
-  /// not a real capability flag (none exists on [ModelInfo]), so it only
-  /// warns rather than blocking a model that might still work.
-  bool _looksToolCapable(String modelId) => modelId.toLowerCase().contains('coder');
 
   @override
   Widget build(BuildContext context) {
@@ -184,48 +178,12 @@ class _CodeAgentPaneState extends State<CodeAgentPane> {
 
   Widget _buildInput() {
     final running = _c.running;
-    final model = _c.selectedModel;
-    final showToolWarning = model != null && !_looksToolCapable(model.id);
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 820),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (showToolWarning) _buildToolWarning(model.name),
-              _buildInputField(running),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildToolWarning(String modelName) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.amber.withValues(alpha: 0.08),
-          border: Border.all(color: Colors.amber.withValues(alpha: 0.35)),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, size: 16, color: Colors.amber.shade300),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                '$modelName isn\'t tuned for tool use — it may answer in plain '
-                'text instead of reading files. Try a Qwen2.5-Coder model for '
-                'reliable file access.',
-                style: TextStyle(fontSize: 11.5, color: Colors.amber.shade100),
-              ),
-            ),
-          ],
+          child: _buildInputField(running),
         ),
       ),
     );

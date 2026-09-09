@@ -48,7 +48,8 @@ class LocalComponent {
 /// Every component the Add-ons tab can install. A `server`-kind component's
 /// [LocalComponent.port] must be unique against every other local service
 /// this app runs — see the port list in `searxng_supervisor.dart`'s doc
-/// comment (main backend 8000, Colibri 8010, SearXNG 8891).
+/// comment (main backend 8000, Colibri 8010, SearXNG 8891, llama-server 8100,
+/// opencode serve 8101).
 const componentCatalog = <LocalComponent>[
   LocalComponent(
     id: 'searxng',

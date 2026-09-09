@@ -357,6 +357,82 @@ one-time manual PATH install — see above), any installer/packaging changes,
 SSE streaming in MULTI-AI's own `/api/chat`, running multiple Colibri
 families at once.
 
+## Code tab: opencode + llama-server
+
+The Code tab (`app/lib/addons/code/`) is a local coding agent — read/edit
+files and run shell commands in a real project folder, gated by an approval
+dialog before anything risky. It used to run a hand-rolled agent loop over
+[`dart_agent_core`](https://pub.dev/packages/dart_agent_core), eliciting tool
+calls by prompting the model to reply with a literal
+`<tool_call>{"name":...}</tool_call>` tag — Qwen2.5-Coder's own trained
+Hermes-style format. Every other model just answered in prose and asked the
+user to paste file contents instead of actually reading them, because
+tool-calling that only works via one model family's trained text format isn't
+tool-calling any model can reliably use — confirmed not just as a hunch but
+by [`llamadart`](https://pub.dev/packages/llamadart)'s own bundled reference
+coding-agent example (`example/tui_coding_agent`), which hits the identical
+limitation with the identical protocol.
+
+The fix was to stop eliciting tool calls by prompting and use a real agent
+with native, model-agnostic tool-calling instead:
+[opencode](https://opencode.ai) ([source](https://github.com/sst/opencode)),
+run headless (`opencode serve`) and driven entirely over its HTTP/SSE API —
+this app never shows opencode's own TUI. Two local processes back the tab:
+
+- **`llama-server`** — llama.cpp's own server, serving the currently selected
+  on-device (GGUF) model over an OpenAI-compatible API with `--jinja` enabled
+  for real per-model-family tool-call grammar/parsing (llama.cpp implements
+  this for Hermes/Qwen, Llama 3.x, Mistral, and others — solving generically
+  what the old text-tag parser only solved for one). `llamadart`'s own
+  embedded engine (`on_device_engine.dart`, used by on-device chat) has no
+  server mode, so this is a second, independent inference process — chat is
+  unaffected.
+- **`opencode serve`** — runs the actual agent loop (tool selection, file
+  edits, shell commands, permission checks) against that endpoint. A single
+  instance is started lazily on the Code tab's first message and stays up for
+  the app's life: opencode's server hosts any number of project
+  directories/sessions at once via a `directory` query parameter on every
+  request (confirmed against a running server, not documented), so switching
+  project folders never needs a restart — only `llama-server` restarts, and
+  only when the selected model actually changes.
+
+Both binaries are **one-time manual PATH installs**, the same shape as the
+`coli` binary above — not auto-fetched:
+
+- `llama-server`: [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases)
+- `opencode`: `curl -fsSL https://opencode.ai/install | bash`, or see
+  [opencode.ai](https://opencode.ai) for other install methods (its own npm
+  package, `opencode-ai`, works on Windows too)
+
+A missing binary surfaces as a clear in-tab error rather than a hang or a
+generic failure, the same as Colibri's "install `coli`" message.
+
+`app/lib/addons/code/llama_server_supervisor.dart` and
+`opencode_process_supervisor.dart` own these two processes (ping before
+spawning so an already-running instance is adopted, health-poll after
+starting, drain output into a log surfaced only on failure) — structurally
+the same shape as `SearxngSupervisor`. `code_engine.dart`'s `CodeEngine`
+composes both behind one `ensureRunning()` call `CodeAgentController` makes
+at the top of every turn, mirroring `server.pyx`'s `_ensure_colibri_running`:
+reuse if already correct, stop-and-restart if not, nothing spawns until the
+first message is sent. `opencode_client.dart` is the HTTP/SSE client —
+`POST /session`, `POST /session/:id/prompt_async`, a shared `GET
+/event?directory=...` stream, and `POST /permission/:id/reply` for the
+approval flow, which now maps directly onto opencode's own permission system
+(`edit`/`bash`: ask; everything else: allow) instead of a hand-rolled gate.
+
+**Scope boundary:** only on-device (GGUF) models get this. Server-side
+(`_REPO_ID`) transformers models have no OpenAI-compatible tool-calling
+endpoint today — bridging them in would mean building one on top of
+`server.pyx`'s `/api/chat`, a separate, not-yet-started project. The Code
+tab's model list is filtered to `ModelPool.localSourceOf(m) != null`
+accordingly, the same kind of explicit scope line the Android section draws
+around on-device-only chat.
+
+Ports in use: see `searxng_supervisor.dart`'s header comment (backend 8000,
+Colibri 8010, SearXNG 8891) — this adds `llama-server` on 8100 and `opencode
+serve` on 8101.
+
 ## TODO: A real speedup for GPT-OSS 20B and the dense 10–14B models
 
 Colibri (above) can't be the answer for these — it only implements the five
@@ -419,7 +495,7 @@ MULTI-AI/
             ├── chat/              # chat_controller.dart + chat_addon.dart
             ├── models/            # the roster browser
             ├── orchestration/     # the Model Council (controller + addon)
-            └── placeholder_addon.dart   # the Code tab, for now
+            └── code/               # the Code tab — see "Code tab" below
 ```
 
 ### What the `.pyx`, `.c`, and `.pyd`/`.so` files are
@@ -618,8 +694,10 @@ pytest -q
     downloadable JSON recipe (the add-on contract's preset follow-on)
 
 ### AI Coding Tool Portion
-  - Look into models that are great at text output & coding
-  - Create coding page (still the placeholder add-on)
+  - [x] Create coding page — the Code tab, backed by `opencode` + `llama-server`
+    rather than a hand-rolled agent loop, see "Code tab" above
+  - [ ] Bridge server-side (`_REPO_ID`) models into the Code tab — currently
+    on-device (GGUF) models only, see that section's scope boundary
 
 ### Android
 
@@ -1130,9 +1208,13 @@ framework**. The evaluated options (Genkit Dart, Agenix, dart_agent_core) all
 assume an LLM provider client, so each would have needed a custom adapter for
 this app's two local run paths before doing anything — and the council is
 fan-out plus a synthesis prompt, not the tool-use / planning / delegation those
-frameworks exist for. `dart_agent_core` is the one to revisit *if* a future Code
-tab wants a real agent loop: it's the only local-first option and it takes a
-custom LLM client.
+frameworks exist for.
+
+(The Code tab *did* want a real agent loop, and did try `dart_agent_core`
+first — but its `LLMClient` abstraction still only elicits tool calls by
+prompting for a text tag, which turned out to be the actual problem, not
+something an agent framework fixes. It now runs on `opencode` instead; see
+"Code tab" above.)
 
 Two **deliberation modes**, picked in the sidebar (the README previously left
 these "to be decided"):
@@ -1168,7 +1250,7 @@ ship.
 - [ ] **Resource management** — `OnDeviceEngine._ensureLoaded` (`app/lib/on_device_engine.dart`) enforces one resident model and evicts on switch, which covers "which model is loaded". There is no RAM/VRAM *budget* — just single-tenancy.
 - [ ] **Desktop vs. mobile catalog split** — models split by `_REPO_ID` (server, 4-bit GPU) vs. `_GGUF_SOURCE` (in-app), but that's a *where it runs* distinction, not the hardware-aware gating layer the spec describes. No `platform_support` field, no per-device labelling.
 - [x] **Orchestration tab** — a working Model Council, see "Orchestration" above. Only the manifest-preset and multi-round pieces remain.
-- [ ] **Code tab** — still the placeholder add-on ([`addons/placeholder_addon.dart`](app/lib/addons/placeholder_addon.dart)): owns a sidebar panel and a full main pane, marked "under construction". No behavior yet.
+- [x] **Code tab** — a working local coding agent backed by `opencode` + `llama-server`, see "Code tab" above. Server-side (`_REPO_ID`) models aren't bridged in yet — on-device (GGUF) only.
 - [x] **Plugin/add-on interface contract** (spec #3) — landed; see "Add-on architecture" above. One capability so far (`model_pool`); `memory` is deliberately absent until the SQLite-vs-PocketBase question below is settled, and adding it is a new enum case plus a getter, not a redesign.
 
 ### Not started
@@ -1260,8 +1342,4 @@ Users can select multiple models, designate one as the **lead**, ask a question,
 
 The lead model should receive a specific system prompt for its synthesizer role, distinct from its normal inference prompt.
 
-### Why PocketBase over Dify
-
-- **Minimal footprint**: One binary vs. a full Docker Compose stack (Postgres, Redis, etc.) — runs my already setup backend
-- **Flutter SDK**: Fetching model data is a one-liner: `pb.collection('models').getFullList()`
-- **Built-in auth**: Email/password and OAuth (Google, Apple) out of the box.
+TODO: Delete Web folder

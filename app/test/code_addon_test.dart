@@ -7,17 +7,17 @@ import 'package:llamadart/llamadart.dart';
 
 import 'package:multi_ai/addons/code/code_agent_controller.dart';
 import 'package:multi_ai/addons/code/code_agent_pane.dart';
+import 'package:multi_ai/addons/code/code_engine.dart';
 import 'package:multi_ai/addons/code/code_session_store.dart';
+import 'package:multi_ai/addons/code/opencode_client.dart';
 import 'package:multi_ai/addons/code/project_root_source.dart';
+import 'package:multi_ai/addons/code/tool_approval.dart';
 import 'package:multi_ai/api_client.dart';
 import 'package:multi_ai/model_pool.dart';
 
-class _RecordingApi extends ApiClient {
-  _RecordingApi(this._models, this.replies);
-
+class _FakeApi extends ApiClient {
+  _FakeApi(this._models);
   final List<ModelInfo> _models;
-  final List<String> replies;
-  int _replyIndex = 0;
 
   @override
   Future<List<ModelInfo>> fetchModels() async => _models;
@@ -28,18 +28,6 @@ class _RecordingApi extends ApiClient {
   @override
   Future<ServerModelCacheStatus> getServerModelCacheStatus(String modelId) async =>
       const ServerModelCacheStatus(cached: true);
-
-  @override
-  Future<String> sendChat({
-    required String model,
-    required String message,
-    List<Attachment> attachments = const [],
-    List<ChatTurn> history = const [],
-  }) async {
-    final reply = replies[_replyIndex.clamp(0, replies.length - 1)];
-    if (_replyIndex < replies.length - 1) _replyIndex++;
-    return reply;
-  }
 }
 
 class _NoDownloads extends ThrowingModelDownloadManager {
@@ -59,25 +47,115 @@ class _FakeRootSource implements ProjectRootSource {
   Future<String?> pickDirectory() async => path;
 }
 
-const _alpha = ModelInfo(id: 'alpha', name: 'Alpha');
+/// A controllable double for opencode's HTTP/SSE API — see the identical
+/// class in code_agent_controller_test.dart for the full rationale; kept
+/// separate here since these two test files don't otherwise share code
+/// (mirrors how the old `_RecordingApi` was duplicated between them too).
+class _FakeOpencodeClient implements OpencodeClient {
+  final _events = StreamController<OpencodeEvent>.broadcast();
+  int _nextSessionId = 1;
+  String? lastCreatedSessionId;
 
-String _toolCall(String name, Map<String, dynamic> args) {
-  final entries = args.entries.map((e) => '"${e.key}": "${e.value}"').join(', ');
-  return '<tool_call>\n{"name": "$name", "arguments": {$entries}}\n</tool_call>';
+  void emit(OpencodeEvent event) => _events.add(event);
+
+  @override
+  Future<String> createSession(String projectRoot) async {
+    final id = 'ses_${_nextSessionId++}';
+    lastCreatedSessionId = id;
+    return id;
+  }
+
+  @override
+  Future<void> sendMessageAsync({
+    required String projectRoot,
+    required String sessionId,
+    required String providerId,
+    required String modelId,
+    required String text,
+  }) async {}
+
+  @override
+  Future<void> respondToPermission({
+    required String projectRoot,
+    required String permissionId,
+    required ToolApprovalDecision decision,
+  }) async {}
+
+  @override
+  Future<void> abort({required String projectRoot, required String sessionId}) async {}
+
+  @override
+  Stream<OpencodeEvent> events(String projectRoot) => _events.stream;
+
+  @override
+  Future<void> close() async {}
 }
 
-Future<(CodeAgentController, Directory)> _buildReady(
+class _FakeCodeEngine implements CodeEngine {
+  _FakeCodeEngine(this.client);
+
+  @override
+  final OpencodeClient client;
+  @override
+  final providerId = 'fake-provider';
+  @override
+  final modelId = 'fake-model';
+
+  @override
+  Future<void> ensureRunning({required ModelInfo model}) async {}
+
+  @override
+  Future<void> stop() async {}
+}
+
+OpencodePartEvent _toolPart(
+  String sessionId,
+  String callId,
+  String tool, {
+  required String status,
+  Map<String, dynamic> input = const {},
+  String? output,
+}) =>
+    OpencodePartEvent(sessionId, {
+      'id': 'prt_$callId',
+      'sessionID': sessionId,
+      'messageID': 'msg_1',
+      'type': 'tool',
+      'callID': callId,
+      'tool': tool,
+      'state': {
+        'status': status,
+        'input': input,
+        if (output != null) 'output': output,
+      },
+    });
+
+OpencodePartEvent _textPart(String sessionId, String partId, String text) =>
+    OpencodePartEvent(sessionId, {
+      'id': partId,
+      'sessionID': sessionId,
+      'messageID': 'msg_1',
+      'type': 'text',
+      'text': text,
+    });
+
+const _alpha = ModelInfo(id: 'alpha', name: 'Alpha');
+
+Future<void> _letSendReachTheCompleter() => Future<void>.delayed(Duration.zero);
+
+Future<(CodeAgentController, _FakeOpencodeClient, Directory)> _buildReady(
   WidgetTester tester,
-  List<String> replies,
 ) async {
   final root = await Directory.systemTemp.createTemp('code_addon_widget_test');
-  final api = _RecordingApi([_alpha], replies);
+  final api = _FakeApi([_alpha]);
   final pool = ModelPool(api: api, downloadManager: const _NoDownloads());
   await pool.refresh();
+  final client = _FakeOpencodeClient();
   final controller = CodeAgentController(
     pool: pool,
     projectRootSource: _FakeRootSource(root.path),
     store: InMemoryCodeSessionStore(),
+    engine: _FakeCodeEngine(client),
   )..start();
   await controller.pickProjectRoot();
   controller.selectModel('alpha');
@@ -87,110 +165,97 @@ Future<(CodeAgentController, Directory)> _buildReady(
   ));
   await tester.pump();
 
-  return (controller, root);
+  return (controller, client, root);
 }
 
 void main() {
-  // Every test body below runs inside tester.runAsync(): the agent loop does
-  // real file I/O (temp directories, reading/writing/listing real files
-  // through agent_tools.dart), and flutter_test's default zone otherwise
-  // never lets that resolve — a real async gap outside Flutter's own fake
-  // clock hangs forever unless it's escaped into runAsync, per
-  // https://api.flutter.dev/flutter/flutter_test/WidgetTester/runAsync.html.
+  // Every test body below runs inside tester.runAsync(): the fake client's
+  // event stream and the controller's awaited completers are real async
+  // gaps outside Flutter's fake clock, which otherwise never let them
+  // resolve — see https://api.flutter.dev/flutter/flutter_test/WidgetTester/runAsync.html.
   // pumpWidget/pump/tap all still work as normal from inside that callback.
 
   testWidgets('a completed tool-call turn renders a collapsed row and the final answer',
       (tester) async {
     await tester.runAsync(() async {
-      final (controller, root) = await _buildReady(tester, [
-        _toolCall('list_dir', {'path': '.'}),
-        'Found some files.',
-      ]);
+      final (controller, client, root) = await _buildReady(tester);
       addTearDown(() => root.delete(recursive: true));
-      await File('${root.path}/a.txt').create();
 
-      await controller.send('list the files');
+      final run = controller.send('list the files');
+      await _letSendReachTheCompleter();
+      final sessionId = client.lastCreatedSessionId!;
+      client.emit(_toolPart(sessionId, 'call_1', 'list', status: 'completed', output: 'a.txt'));
+      client.emit(_textPart(sessionId, 'prt_1', 'Found some files.'));
+      client.emit(OpencodeSessionIdleEvent(sessionId));
+      await run;
       await tester.pumpAndSettle();
 
       // Collapsed by default: the tool name is visible, the JSON arguments
       // and result are not until it's expanded.
-      expect(find.textContaining('list_dir'), findsOneWidget);
+      expect(find.textContaining('list'), findsWidgets);
       expect(find.text('Found some files.'), findsOneWidget);
       expect(find.text('Done', skipOffstage: false), findsOneWidget); // status chip
 
-      await tester.tap(find.textContaining('list_dir'));
+      await tester.tap(find.textContaining('list('));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('a.txt'), findsWidgets);
     });
   });
 
-  testWidgets('a gated tool call shows the approval dialog, and Deny refuses it',
-      (tester) async {
+  testWidgets('a gated tool call shows the approval dialog, and Deny refuses it', (tester) async {
     await tester.runAsync(() async {
-      final (controller, root) = await _buildReady(tester, [
-        _toolCall('write_file', {'path': 'out.txt', 'content': 'hello'}),
-        'Okay, skipping that.',
-      ]);
+      final (controller, client, root) = await _buildReady(tester);
       addTearDown(() => root.delete(recursive: true));
 
       unawaited(controller.send('write a file'));
-      // Approval is decided by the hook mid-`send()`, a real `Future` chain
-      // running outside Flutter's fake clock (see this file's `runAsync`
-      // doc comment) — pumpAndSettle() alone only pumps rendering frames, it
-      // doesn't drive that chain forward, so it needs a real event-loop gap
-      // first to reach the point where the approval dialog is pushed. A
-      // zero-duration delay isn't enough on its own: send() awaits a real
-      // directory listing (CodeAgentController._describeProjectRoot) before
-      // the model even sees the message, and that's genuine dart:io I/O.
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await _letSendReachTheCompleter();
+      final sessionId = client.lastCreatedSessionId!;
+      client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'pending'));
+      client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
+      await _letSendReachTheCompleter();
       await tester.pumpAndSettle();
 
       expect(find.text('Approve action'), findsOneWidget);
-      expect(find.textContaining('write_file'), findsWidgets);
+      expect(find.textContaining('write'), findsWidgets);
 
       await tester.tap(find.text('Deny'));
-      // Same real-async gap as above: resuming the awaited completer and
-      // running the model's follow-up reply happens on the real event loop,
-      // not on a pumped frame. A zero-duration delay only guarantees one
-      // microtask turn — real dart:io callbacks (the write below) resolve
-      // via the OS, so this needs actual elapsed time, not just a turn.
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await _letSendReachTheCompleter();
+      client.emit(_textPart(sessionId, 'prt_1', 'Okay, skipping that.'));
+      client.emit(OpencodeSessionIdleEvent(sessionId));
+      await _letSendReachTheCompleter();
       await tester.pumpAndSettle();
 
       expect(find.text('Approve action'), findsNothing);
-      expect(await File('${root.path}/out.txt').exists(), isFalse);
       expect(find.text('Okay, skipping that.'), findsOneWidget);
     });
   });
 
-  testWidgets('Allow once on a gated call runs the tool and closes the dialog', (tester) async {
+  testWidgets('Allow once on a gated call closes the dialog and lets the turn finish',
+      (tester) async {
     await tester.runAsync(() async {
-      final (controller, root) = await _buildReady(tester, [
-        _toolCall('write_file', {'path': 'out.txt', 'content': 'hello'}),
-        'Done.',
-      ]);
+      final (controller, client, root) = await _buildReady(tester);
       addTearDown(() => root.delete(recursive: true));
 
       unawaited(controller.send('write a file'));
-      // See the identical wait in the test above — send() awaits a real
-      // directory listing before the model runs, so this needs actual
-      // elapsed time, not just a microtask turn.
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await _letSendReachTheCompleter();
+      final sessionId = client.lastCreatedSessionId!;
+      client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'pending'));
+      client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
+      await _letSendReachTheCompleter();
       await tester.pumpAndSettle();
 
       expect(find.text('Approve action'), findsOneWidget);
 
       await tester.tap(find.text('Allow once'));
-      // Same real-async gap as above: the resumed write_file call and the
-      // model's follow-up reply run on the real event loop, not a pumped
-      // frame — and the write is a real dart:io call, so this needs actual
-      // elapsed time, not just one microtask turn.
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await _letSendReachTheCompleter();
+      client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'completed', output: 'wrote it'));
+      client.emit(_textPart(sessionId, 'prt_1', 'Done.'));
+      client.emit(OpencodeSessionIdleEvent(sessionId));
+      await _letSendReachTheCompleter();
       await tester.pumpAndSettle();
 
       expect(find.text('Approve action'), findsNothing);
-      expect(await File('${root.path}/out.txt').readAsString(), 'hello');
       expect(find.text('Done.'), findsOneWidget);
     });
   });

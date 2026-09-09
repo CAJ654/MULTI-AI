@@ -1,23 +1,24 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:dart_agent_core/dart_agent_core.dart';
-
 import '../../chat_store.dart' show appDataFile;
 import 'code_agent_controller.dart';
 
-/// One Code tab conversation: its display transcript plus the underlying
-/// [AgentState] the model actually sees. Persisting [agentState] (not just
-/// the transcript) is what lets picking a past conversation back up actually
-/// continue it with full context, rather than just replaying a read-only log.
+/// One Code tab conversation: its display transcript plus the id of the
+/// underlying opencode session the model actually sees. Persisting
+/// [opencodeSessionId] (not just the transcript) is what lets picking a past
+/// conversation back up actually continue it with full context, rather than
+/// just replaying a read-only log — see `CodeAgentController.send()`. A null
+/// id (a fresh session, or one loaded from before this field existed) isn't
+/// a load failure: the cached transcript still displays, and sending into it
+/// starts a new opencode session rather than crashing.
 class CodeSession {
-  CodeSession({this.title, List<CodeTranscriptEntry>? transcript, AgentState? agentState})
-      : transcript = transcript ?? [],
-        agentState = agentState ?? AgentState.empty();
+  CodeSession({this.title, List<CodeTranscriptEntry>? transcript, this.opencodeSessionId})
+      : transcript = transcript ?? [];
 
   String? title;
   final List<CodeTranscriptEntry> transcript;
-  AgentState agentState;
+  String? opencodeSessionId;
 
   /// The project folder and model this conversation last ran against — shown
   /// in the sidebar, not used to auto-switch the live picker when a past
@@ -34,7 +35,7 @@ class CodeSession {
   Map<String, dynamic> toJson() => {
         if (title != null) 'title': title,
         'transcript': transcript.map((e) => e.toJson()).toList(),
-        'agentState': agentState.toJson(),
+        if (opencodeSessionId != null) 'opencodeSessionId': opencodeSessionId,
         if (projectRoot != null) 'projectRoot': projectRoot,
         if (modelId != null) 'modelId': modelId,
         if (modelName != null) 'modelName': modelName,
@@ -48,7 +49,7 @@ class CodeSession {
         for (final e in (json['transcript'] as List<dynamic>? ?? []))
           ?codeTranscriptEntryFromJson(e as Map<String, dynamic>),
       ],
-      agentState: AgentState.fromJson(json['agentState'] as Map<String, dynamic>),
+      opencodeSessionId: json['opencodeSessionId'] as String?,
     )
       ..projectRoot = json['projectRoot'] as String?
       ..modelId = json['modelId'] as String?
