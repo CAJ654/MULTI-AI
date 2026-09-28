@@ -171,7 +171,7 @@ def test_chat_template_flow_generates_a_reply(monkeypatch):
         monkeypatch,
         model_factory=lambda **kw: _FakeModel(_FakeConfig(max_position_embeddings=4096)),
     )
-    reply = server._chat_reply("gemma1", "Hello, how are you?")
+    reply = server._chat_reply("gemma_1_2b", "Hello, how are you?")
     assert reply == "reply:[7, 8, 9]"
 
 
@@ -202,7 +202,7 @@ def test_context_window_exhausted_returns_friendly_message(monkeypatch):
         monkeypatch,
         model_factory=lambda **kw: _FakeModel(_FakeConfig(max_position_embeddings=3)),
     )
-    reply = server._chat_reply("gemma1", "Hello, how are you?")
+    reply = server._chat_reply("gemma_1_2b", "Hello, how are you?")
     assert reply == "(your message is too long for this model's context window)"
 
 
@@ -213,7 +213,7 @@ def test_length_cap_notes_the_response_was_cut_off(monkeypatch):
             _FakeConfig(max_position_embeddings=15), hit_cap=True
         ),
     )
-    reply = server._chat_reply("gemma1", "Hello, how are you?")
+    reply = server._chat_reply("gemma_1_2b", "Hello, how are you?")
     assert reply.endswith("(response reached the length limit and was cut off)")
 
 
@@ -226,7 +226,7 @@ def test_reasoning_tags_are_stripped(monkeypatch):
         model_factory=lambda **kw: _FakeModel(_FakeConfig(max_position_embeddings=4096)),
         tokenizer_factory=lambda local_files_only: _FakeTokenizer(decode_fn=decode_fn),
     )
-    reply = server._chat_reply("gemma1", "Hi")
+    reply = server._chat_reply("gemma_1_2b", "Hi")
     assert reply == "Hello!"
 
 
@@ -271,7 +271,7 @@ def test_local_cache_miss_falls_back_to_network_load(monkeypatch):
         return _FakeModel(_FakeConfig(max_position_embeddings=4096))
 
     server = _install_fakes(monkeypatch, model_factory=model_factory)
-    reply = server._chat_reply("gemma1", "Hello")
+    reply = server._chat_reply("gemma_1_2b", "Hello")
     assert reply == "reply:[7, 8, 9]"
 
 
@@ -285,8 +285,8 @@ def test_cuda_error_during_generation_adds_restart_warning(monkeypatch):
             raise_exc=RuntimeError("CUDA error: device-side assert triggered"),
         ),
     )
-    reply = server._chat_reply("gemma1", "Hello")
-    assert reply.startswith("[gemma1] failed to generate:")
+    reply = server._chat_reply("gemma_1_2b", "Hello")
+    assert reply.startswith("[gemma_1_2b] failed to generate:")
     assert "restart the server" in reply
 
 
@@ -302,8 +302,8 @@ def test_unreachable_repo_gives_actionable_error(monkeypatch):
         model_factory=lambda **kw: _FakeModel(_FakeConfig(max_position_embeddings=4096)),
         tokenizer_factory=tokenizer_factory,
     )
-    reply = server._chat_reply("gemma1", "Hello")
-    assert reply.startswith("[gemma1] failed to generate: could not load")
+    reply = server._chat_reply("gemma_1_2b", "Hello")
+    assert reply.startswith("[gemma_1_2b] failed to generate: could not load")
     assert "Hugging Face access token" in reply
 
 
@@ -321,7 +321,7 @@ def test_history_reaches_the_model(monkeypatch):
         tokenizer_factory=lambda local_files_only: tokenizer,
     )
     server._chat_reply(
-        "gemma1",
+        "gemma_1_2b",
         "What is my name?",
         history=[
             {"role": "user", "content": "My name is Alex."},
@@ -342,7 +342,7 @@ def test_history_without_turns_is_unchanged(monkeypatch):
         model_factory=lambda **kw: _FakeModel(_FakeConfig(max_position_embeddings=4096)),
         tokenizer_factory=lambda local_files_only: tokenizer,
     )
-    server._chat_reply("gemma1", "Hello")
+    server._chat_reply("gemma_1_2b", "Hello")
     assert tokenizer.last_messages == [{"role": "user", "content": "Hello"}]
 
 
@@ -454,7 +454,7 @@ def test_pad_token_id_of_zero_is_not_swapped_for_eos(monkeypatch):
     end-of-turn as soon as batching exists."""
     model = _FakeModel(_FakeConfig(max_position_embeddings=4096))
     server = _install_fakes(monkeypatch, model_factory=lambda **kw: model)
-    server._chat_reply("gemma1", "Hello")
+    server._chat_reply("gemma_1_2b", "Hello")
     assert model.last_kwargs["pad_token_id"] == 0
 
     # With no pad token at all, falling back to eos is still correct.
@@ -470,7 +470,7 @@ def test_pad_token_id_of_zero_is_not_swapped_for_eos(monkeypatch):
         model_factory=lambda **kw: model2,
         tokenizer_factory=_no_pad,
     )
-    server._chat_reply("gemma1", "Hello")
+    server._chat_reply("gemma_1_2b", "Hello")
     assert model2.last_kwargs["pad_token_id"] == 2
 
 

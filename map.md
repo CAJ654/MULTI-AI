@@ -78,13 +78,14 @@ sibling (`_GGUF_SOURCE`) for the same weights.
 
 | Family | Files |
 |---|---|
-| **Llama** | `llama3`, `llama3_1`(+`_on_device`), `llama3_2`, `llama3_on_device`, `llama_3_2_1b`(+`_on_device`), `llama_3_2_3b`(+`_on_device`) |
-| **Gemma** | `gemma1`(+`_on_device`), `gemma2`(+`_on_device`), `gemma3`(+`_on_device`), `gemma3n`(+`_on_device`), `gemma_3_4b`(+`_on_device`, vision), `gemma_3n`, `gemma4_e2b_on_device`, `gemma4_e4b_on_device` |
-| **Falcon** | `falcon_7b`(+`_on_device`), `falcon2_11b`(+`_on_device`), `falcon3`(+`_on_device`), `falcon_h1`(+`_on_device`), `falcon_mamba_7b`(+`_on_device`) |
+| **Llama** | `llama_3_8b`, `llama_3_1_8b`(+`_on_device`), `llama_3_2_3b`, `llama_3_8b_on_device`, `llama_3_2_1b`(+`_on_device`), `llama_3_2_3b`(+`_on_device`) |
+| **Gemma** | `gemma_1_2b`, `gemma_1_7b`, `gemma_2_2b`, `gemma_2_9b`, `gemma_2_27b`, `gemma_3_270m`, `gemma_3_1b`, `gemma_3_4b`, `gemma_3_12b`, `gemma_3_27b` (4B+ vision), `gemma_3n_e2b`, `gemma_3n_e4b`, `gemma_4_e2b`, `gemma_4_e4b`, `gemma_4_12b`, `gemma_4_26b_a4b`, `gemma_4_31b` — each with an `_on_device` sibling |
+| **Gemma variants** | `codegemma_7b`, `medgemma_4b`, `medgemma_1_5_4b`, `medgemma_27b`, `medgemma_27b_text`, `txgemma_9b`, `txgemma_27b` (each +`_on_device`); `recurrentgemma_2b`, `recurrentgemma_9b` — server-only, llama.cpp has no Griffin support |
+| **Falcon** | `falcon_7b`(+`_on_device`), `falcon2_11b`(+`_on_device`), `falcon_3_3b`(+`_on_device`), `falcon_h1_1_5b`(+`_on_device`), `falcon_mamba_7b`(+`_on_device`) |
 | **Mistral / Ministral** | `mistral_7b`(+`_on_device`), `mistral_nemo_12b`(+`_on_device`), `ministral_3_3b`(+`_on_device`, vision), `ministral_3_8b`(+`_on_device`, vision), `ministral_3_14b`(+`_on_device`, vision) |
 | **Qwen** | `qwen3_8b`(+`_on_device`), `qwen2_5_coder_7b`(+`_on_device`), `qwen2_5_coder_3b_on_device`, `qwen2_5_coder_1_5b_on_device` |
 | **DeepSeek** | `deepseek_r1_distill_1_5b`(+`_on_device`), `deepseek_v4_flash_colibri` |
-| **GPT-OSS** | `gptOSS` — GGUF-only (transformers path won't fit in RAM) |
+| **GPT-OSS** | `gpt_oss_20b` — GGUF-only (transformers path won't fit in RAM) |
 | **Colibri MoE** (external `coli serve`) | `glm_5_2_colibri`, `inkling_colibri`, `kimi_k3_colibri`, `deepseek_v4_flash_colibri`, `olmoe_colibri` |
 | **Framework stubs** (not chat models) | `pytorch.pyx`, `TensorFlow.pyx` — legacy dev stubs that just report a version |
 | | `models/__init__.pyx` — package init |

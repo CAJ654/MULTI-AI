@@ -66,7 +66,7 @@ _RAM_USABLE = 0.7
 
 # Above this, a model that spills out of VRAM onto the CPU stops being merely
 # slow and becomes unusable. Calibrated on the README's Wave 0 benchmark:
-# gptOSS (12.11GB) rescued onto the CPU by the GPU-layer ladder managed
+# gpt_oss_20b (12.11GB) rescued onto the CPU by the GPU-layer ladder managed
 # 0.1 tok/s — 40.9s to first token, 198.5s for one short reply — while
 # falcon2_11b (6.85GB) full-offloaded at a usable 4.3 tok/s. "It runs" and
 # "you'd wait three minutes for a sentence" deserve different colours.

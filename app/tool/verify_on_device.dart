@@ -583,41 +583,63 @@ List<_RosterEntry> _parseRoster(String repoRoot) {
 const Map<int, List<String>> _waves = {
   0: [
     '_builtin_qwen2_5_0_5b',
-    'gemma3n_on_device',
-    'gptOSS',
+    'gemma_3n_e2b_on_device',
+    'gpt_oss_20b',
     'falcon2_11b_on_device',
   ],
   1: [
     // Gemma 4 E2B leads: it is the only entry that exercises audio at all, and
     // at 3.11GB + 0.99GB projector it is the cheapest way to find out whether
     // the whole multimodal path works before larger models depend on it.
-    'gemma4_e2b_on_device',
+    'gemma_4_e2b_on_device',
     'gemma_3_4b_on_device',
     'deepseek_r1_distill_1_5b_on_device',
-    'gemma1_on_device',
-    'gemma4_e4b_on_device',
+    'gemma_1_2b_on_device',
+    'gemma_4_e4b_on_device',
   ],
   2: [
-    'gemma3_on_device',
+    'gemma_3_1b_on_device',
     'llama_3_2_1b_on_device',
-    'falcon_h1_on_device',
-    'gemma2_on_device',
+    'falcon_h1_1_5b_on_device',
+    'gemma_2_2b_on_device',
     'llama_3_2_3b_on_device',
-    'falcon3_on_device',
+    'falcon_3_3b_on_device',
     'ministral_3_3b_on_device',
+    'gemma_3_270m_on_device',
+    'medgemma_4b_on_device',
+    'medgemma_1_5_4b_on_device',
   ],
   3: [
     'mistral_7b_on_device',
     'falcon_mamba_7b_on_device',
     'falcon_7b_on_device',
     'qwen3_8b_on_device',
-    'llama3_on_device',
-    'llama3_1_on_device',
+    'llama_3_8b_on_device',
+    'llama_3_1_8b_on_device',
     'ministral_3_8b_on_device',
+    'gemma_3n_e4b_on_device',
+    'gemma_1_7b_on_device',
+    'codegemma_7b_on_device',
+    'gemma_2_9b_on_device',
+    'txgemma_9b_on_device',
   ],
   4: [
     'mistral_nemo_12b_on_device',
     'ministral_3_14b_on_device',
+    'gemma_4_12b_on_device',
+    'gemma_3_12b_on_device',
+  ],
+  // 16-18GB of weights: more than a 12GB card holds, so these all exercise the
+  // GPU-offload backoff ladder. Gemma 4 26B A4B first — MoE, so it should stay
+  // usable once partially on the CPU.
+  5: [
+    'gemma_4_26b_a4b_on_device',
+    'gemma_3_27b_on_device',
+    'medgemma_27b_on_device',
+    'medgemma_27b_text_on_device',
+    'gemma_2_27b_on_device',
+    'txgemma_27b_on_device',
+    'gemma_4_31b_on_device',
   ],
 };
 
@@ -975,7 +997,7 @@ const String _usage = '''
 Usage: dart run tool/verify_on_device.dart [flags]   (run from app/)
 
   --preflight         Report cache status only; downloads nothing.
-  --wave <0-4>        Run a predefined derisking wave (0 = cached only).
+  --wave <0-5>        Run a predefined derisking wave (0 = cached only).
   --only <id,id>      Restrict to named models.
   --max-size-gb <n>   Skip anything larger.
   --download-only     Fetch weights, skip load/generate.

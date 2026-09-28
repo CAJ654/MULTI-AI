@@ -1,6 +1,23 @@
 {
   "models": [
     {
+      "id": "codegemma_7b_on_device",
+      "name": "CodeGemma 7B (On-Device)",
+      "available": true,
+      "gguf": "hf://bartowski/codegemma-7b-it-GGUF/codegemma-7b-it-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "7B",
+      "size_gb": 5.33,
+      "modality": "Text",
+      "context_tokens": 8192,
+      "license": "Gemma Terms of Use",
+      "strengths": "Gemma 1 7B further trained on code — instruction-tuned for code generation, explanation and chat about programming. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Moderate speed, good at code"
+    },
+    {
       "id": "deepseek_r1_distill_1_5b_on_device",
       "name": "DeepSeek-R1-Distill-Qwen-1.5B (On-Device)",
       "available": true,
@@ -35,7 +52,7 @@
       "speed_profile": "Moderate speed, solid general intelligence"
     },
     {
-      "id": "falcon3_on_device",
+      "id": "falcon_3_3b_on_device",
       "name": "Falcon3 3B (On-Device)",
       "available": true,
       "gguf": "hf://tiiuae/Falcon3-3B-Instruct-GGUF/Falcon3-3B-Instruct-q4_k_m.gguf",
@@ -69,7 +86,7 @@
       "speed_profile": "Moderate speed, dated but competent"
     },
     {
-      "id": "falcon_h1_on_device",
+      "id": "falcon_h1_1_5b_on_device",
       "name": "Falcon-H1 1.5B (On-Device)",
       "available": true,
       "gguf": "hf://tiiuae/Falcon-H1-1.5B-Instruct-GGUF/Falcon-H1-1.5B-Instruct-Q4_K_M.gguf",
@@ -103,7 +120,7 @@
       "speed_profile": "Fast at long context, moderate raw intelligence"
     },
     {
-      "id": "gemma1_on_device",
+      "id": "gemma_1_2b_on_device",
       "name": "Gemma 2B (On-Device)",
       "available": true,
       "gguf": "hf://second-state/gemma-2b-it-GGUF/gemma-2b-it-Q4_K_M.gguf",
@@ -120,7 +137,41 @@
       "speed_profile": "Fast, modest intelligence"
     },
     {
-      "id": "gemma2_on_device",
+      "id": "gemma_1_7b_on_device",
+      "name": "Gemma 7B (On-Device)",
+      "available": true,
+      "gguf": "hf://second-state/Gemma-7b-it-GGUF/gemma-7b-it-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "7B",
+      "size_gb": 5.13,
+      "modality": "Text",
+      "context_tokens": 8192,
+      "license": "Gemma Terms of Use",
+      "strengths": "The larger first-generation Gemma — clearly stronger than Gemma 1 2B, but superseded by Gemma 2 9B at a similar size. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Moderate speed, solid general intelligence"
+    },
+    {
+      "id": "gemma_2_27b_on_device",
+      "name": "Gemma 2 27B (On-Device)",
+      "available": true,
+      "gguf": "hf://bartowski/gemma-2-27b-it-GGUF/gemma-2-27b-it-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "27B",
+      "size_gb": 16.65,
+      "modality": "Text",
+      "context_tokens": 8192,
+      "license": "Gemma Terms of Use",
+      "strengths": "Gemma 2's flagship — near the top of open models of its generation. Too big for a 12GB card even at 4-bit, so expect partial CPU offload. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Slow on consumer GPUs, very strong general intelligence"
+    },
+    {
+      "id": "gemma_2_2b_on_device",
       "name": "Gemma 2 2B (On-Device)",
       "available": true,
       "gguf": "hf://bartowski/gemma-2-2b-it-GGUF/gemma-2-2b-it-Q4_K_M.gguf",
@@ -137,7 +188,43 @@
       "speed_profile": "Fast, good intelligence for 2B"
     },
     {
-      "id": "gemma3_on_device",
+      "id": "gemma_2_9b_on_device",
+      "name": "Gemma 2 9B (On-Device)",
+      "available": true,
+      "gguf": "hf://bartowski/gemma-2-9b-it-GGUF/gemma-2-9b-it-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "9B",
+      "size_gb": 5.76,
+      "modality": "Text",
+      "context_tokens": 8192,
+      "license": "Gemma Terms of Use",
+      "strengths": "Gemma 2's mid size — a big step over the 2B on reasoning and writing, and among the strongest dense models that still fit a 12GB card at 4-bit. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Moderate speed, strong general intelligence"
+    },
+    {
+      "id": "gemma_3_12b_on_device",
+      "name": "Gemma 3 12B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/gemma-3-12b-it-GGUF/gemma-3-12b-it-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/gemma-3-12b-it-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "params": "12B",
+      "size_gb": 7.3,
+      "modality": "Text + Image",
+      "context_tokens": 131072,
+      "license": "Gemma Terms of Use",
+      "strengths": "Vision-language Gemma 3 at the mid size — the strongest Gemma 3 that fits fully on a 12GB card at 4-bit, with a 128K context window. Q4_K_M GGUF build runs fully on-device. Add ~0.85GB for its vision projector.",
+      "speed_profile": "Moderate speed, strong multimodal intelligence"
+    },
+    {
+      "id": "gemma_3_1b_on_device",
       "name": "Gemma 3 1B (On-Device)",
       "available": true,
       "gguf": "hf://unsloth/gemma-3-1b-it-GGUF/gemma-3-1b-it-Q4_K_M.gguf",
@@ -154,61 +241,40 @@
       "speed_profile": "Very fast, lighter intelligence"
     },
     {
-      "id": "gemma3n_on_device",
-      "name": "Gemma 3n E2B (On-Device)",
+      "id": "gemma_3_270m_on_device",
+      "name": "Gemma 3 270M (On-Device)",
       "available": true,
-      "gguf": "hf://unsloth/gemma-3n-E2B-it-GGUF/gemma-3n-E2B-it-Q4_K_M.gguf",
+      "gguf": "hf://unsloth/gemma-3-270m-it-GGUF/gemma-3-270m-it-Q4_K_M.gguf",
       "has_server_weights": false,
       "input_modalities": [
         "text"
       ],
-      "params": "E2B",
-      "size_gb": 3.03,
+      "params": "270M",
+      "size_gb": 0.25,
       "modality": "Text",
       "context_tokens": 32768,
       "license": "Gemma Terms of Use",
-      "strengths": "Designed to run efficiently on-device — 'E2B' denotes ~2B effective inference cost despite more raw parameters. Q4_K_M GGUF build runs fully on-device. Text only here: the checkpoint is natively multimodal, but llama.cpp runs just its text path — pick the server-backed 'Gemma 3n E2B' entry for image and audio input.",
-      "speed_profile": "Fast for a multimodal model, good general intelligence"
+      "strengths": "Tiny Gemma 3 built as a base for task-specific fine-tunes — handy for quick classification or extraction, weak at open-ended chat. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Very fast, limited intelligence"
     },
     {
-      "id": "gemma4_e2b_on_device",
-      "name": "Gemma 4 E2B (On-Device)",
+      "id": "gemma_3_27b_on_device",
+      "name": "Gemma 3 27B (On-Device)",
       "available": true,
-      "gguf": "hf://unsloth/gemma-4-E2B-it-GGUF/gemma-4-E2B-it-Q4_K_M.gguf",
-      "mmproj": "hf://unsloth/gemma-4-E2B-it-GGUF/mmproj-F16.gguf",
+      "gguf": "hf://unsloth/gemma-3-27b-it-GGUF/gemma-3-27b-it-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/gemma-3-27b-it-GGUF/mmproj-F16.gguf",
       "has_server_weights": false,
       "input_modalities": [
         "text",
-        "image",
-        "audio"
+        "image"
       ],
-      "params": "E2B",
-      "size_gb": 3.11,
-      "modality": "Text + Image + Audio",
+      "params": "27B",
+      "size_gb": 16.55,
+      "modality": "Text + Image",
       "context_tokens": 131072,
-      "license": "Apache 2.0",
-      "strengths": "The roster's only fully multimodal on-device model — image and audio input both run through llama.cpp with no server and no network after the first download. 'E2B' denotes ~2B effective inference cost via Per-Layer Embeddings, so it stays phone-viable despite more raw parameters. Add ~0.99GB for its projector.",
-      "speed_profile": "Fast for a multimodal model, phone-viable"
-    },
-    {
-      "id": "gemma4_e4b_on_device",
-      "name": "Gemma 4 E4B (On-Device)",
-      "available": true,
-      "gguf": "hf://unsloth/gemma-4-E4B-it-GGUF/gemma-4-E4B-it-Q4_K_M.gguf",
-      "mmproj": "hf://unsloth/gemma-4-E4B-it-GGUF/mmproj-F16.gguf",
-      "has_server_weights": false,
-      "input_modalities": [
-        "text",
-        "image",
-        "audio"
-      ],
-      "params": "E4B",
-      "size_gb": 4.98,
-      "modality": "Text + Image + Audio",
-      "context_tokens": 131072,
-      "license": "Apache 2.0",
-      "strengths": "Fully multimodal on-device — image and audio input both run through llama.cpp with no server. 'E4B' denotes ~4B effective inference cost via Per-Layer Embeddings; stronger than the E2B build at roughly 1.9GB more weights, and better suited to desktop than to a phone. Add ~0.99GB for its projector.",
-      "speed_profile": "Moderate speed, strong multimodal intelligence"
+      "license": "Gemma Terms of Use",
+      "strengths": "Gemma 3's flagship vision-language model. Too big for a 12GB card even at 4-bit, so expect partial CPU offload. Q4_K_M GGUF build runs fully on-device. Add ~0.86GB for its vision projector.",
+      "speed_profile": "Slow on consumer GPUs, very strong multimodal intelligence"
     },
     {
       "id": "gemma_3_4b_on_device",
@@ -230,7 +296,138 @@
       "speed_profile": "Moderate speed, strong multimodal intelligence"
     },
     {
-      "id": "gptOSS",
+      "id": "gemma_3n_e2b_on_device",
+      "name": "Gemma 3n E2B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/gemma-3n-E2B-it-GGUF/gemma-3n-E2B-it-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "E2B",
+      "size_gb": 3.03,
+      "modality": "Text",
+      "context_tokens": 32768,
+      "license": "Gemma Terms of Use",
+      "strengths": "Designed to run efficiently on-device — 'E2B' denotes ~2B effective inference cost despite more raw parameters. Q4_K_M GGUF build runs fully on-device. Text only here: the checkpoint is natively multimodal, but llama.cpp runs just its text path — pick the server-backed 'Gemma 3n E2B' entry for image and audio input.",
+      "speed_profile": "Fast for a multimodal model, good general intelligence"
+    },
+    {
+      "id": "gemma_3n_e4b_on_device",
+      "name": "Gemma 3n E4B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/gemma-3n-E4B-it-GGUF/gemma-3n-E4B-it-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "E4B",
+      "size_gb": 4.54,
+      "modality": "Text",
+      "context_tokens": 32768,
+      "license": "Gemma Terms of Use",
+      "strengths": "The larger Gemma 3n — natively multimodal (text, image, audio) with ~4B effective inference cost despite more raw parameters. Stronger than E2B. Q4_K_M GGUF build runs fully on-device. Text only here: llama.cpp has no projector for Gemma 3n's vision/audio towers — use the server entry for image and audio input.",
+      "speed_profile": "Moderate speed, good multimodal intelligence"
+    },
+    {
+      "id": "gemma_4_12b_on_device",
+      "name": "Gemma 4 12B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/gemma-4-12b-it-GGUF/gemma-4-12b-it-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/gemma-4-12b-it-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "params": "12B",
+      "size_gb": 7.12,
+      "modality": "Text + Image",
+      "context_tokens": 262144,
+      "license": "Apache 2.0",
+      "strengths": "Dense mid-size Gemma 4 with text, image and audio input and a 256K context window. Fits a 12GB card at 4-bit. Q4_K_M GGUF build runs fully on-device. Add ~0.18GB for its vision projector. Image only on-device: audio input through this projector is unverified, so use the server entry for audio.",
+      "speed_profile": "Moderate speed, strong multimodal intelligence"
+    },
+    {
+      "id": "gemma_4_26b_a4b_on_device",
+      "name": "Gemma 4 26B A4B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/gemma-4-26B-A4B-it-GGUF/gemma-4-26B-A4B-it-UD-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/gemma-4-26B-A4B-it-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "params": "26B",
+      "size_gb": 16.95,
+      "modality": "Text + Image",
+      "context_tokens": 262144,
+      "license": "Apache 2.0",
+      "strengths": "Mixture-of-experts Gemma 4 — 26B total but only ~4B active per token, so it runs far faster than its size suggests once offloaded. Text + image, 256K context. Q4_K_M GGUF build runs fully on-device. Add ~1.19GB for its vision projector.",
+      "speed_profile": "Moderate speed with offload, very strong multimodal intelligence"
+    },
+    {
+      "id": "gemma_4_31b_on_device",
+      "name": "Gemma 4 31B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/gemma-4-31B-it-GGUF/gemma-4-31B-it-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/gemma-4-31B-it-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "params": "31B",
+      "size_gb": 18.32,
+      "modality": "Text + Image",
+      "context_tokens": 262144,
+      "license": "Apache 2.0",
+      "strengths": "Gemma 4's dense flagship — the most capable Gemma. Text + image, 256K context. Far beyond a 12GB card, so expect heavy CPU offload. Q4_K_M GGUF build runs fully on-device. Add ~1.2GB for its vision projector.",
+      "speed_profile": "Slow on consumer GPUs, frontier-class open intelligence"
+    },
+    {
+      "id": "gemma_4_e2b_on_device",
+      "name": "Gemma 4 E2B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/gemma-4-E2B-it-GGUF/gemma-4-E2B-it-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/gemma-4-E2B-it-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image",
+        "audio"
+      ],
+      "params": "E2B",
+      "size_gb": 3.11,
+      "modality": "Text + Image + Audio",
+      "context_tokens": 131072,
+      "license": "Apache 2.0",
+      "strengths": "The roster's only fully multimodal on-device model — image and audio input both run through llama.cpp with no server and no network after the first download. 'E2B' denotes ~2B effective inference cost via Per-Layer Embeddings, so it stays phone-viable despite more raw parameters. Add ~0.99GB for its projector.",
+      "speed_profile": "Fast for a multimodal model, phone-viable"
+    },
+    {
+      "id": "gemma_4_e4b_on_device",
+      "name": "Gemma 4 E4B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/gemma-4-E4B-it-GGUF/gemma-4-E4B-it-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/gemma-4-E4B-it-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image",
+        "audio"
+      ],
+      "params": "E4B",
+      "size_gb": 4.98,
+      "modality": "Text + Image + Audio",
+      "context_tokens": 131072,
+      "license": "Apache 2.0",
+      "strengths": "Fully multimodal on-device — image and audio input both run through llama.cpp with no server. 'E4B' denotes ~4B effective inference cost via Per-Layer Embeddings; stronger than the E2B build at roughly 1.9GB more weights, and better suited to desktop than to a phone. Add ~0.99GB for its projector.",
+      "speed_profile": "Moderate speed, strong multimodal intelligence"
+    },
+    {
+      "id": "gpt_oss_20b",
       "name": "GPT-OSS 20B",
       "available": true,
       "gguf": "hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf",
@@ -247,7 +444,7 @@
       "speed_profile": "Fast for its reasoning quality (sparse MoE), large download"
     },
     {
-      "id": "llama3_1_on_device",
+      "id": "llama_3_1_8b_on_device",
       "name": "Llama 3.1 8B Instruct (On-Device)",
       "available": true,
       "gguf": "hf://bartowski/Meta-Llama-3.1-8B-Instruct-GGUF/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf",
@@ -262,23 +459,6 @@
       "license": "Meta Llama 3.1 Community License",
       "strengths": "Extends Llama 3 with a 128K context window and better multilingual and tool-use performance. Q4_K_M GGUF build runs fully on-device.",
       "speed_profile": "Moderate speed, strong general intelligence"
-    },
-    {
-      "id": "llama3_on_device",
-      "name": "Llama 3 8B Instruct (On-Device)",
-      "available": true,
-      "gguf": "hf://bartowski/Meta-Llama-3-8B-Instruct-GGUF/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
-      "has_server_weights": false,
-      "input_modalities": [
-        "text"
-      ],
-      "params": "8B",
-      "size_gb": 4.92,
-      "modality": "Text",
-      "context_tokens": 8192,
-      "license": "Meta Llama 3 Community License",
-      "strengths": "Meta's original Llama 3 — strong general chat and instruction-following, the baseline the later 3.1/3.2 releases improved on. Q4_K_M GGUF build runs fully on-device.",
-      "speed_profile": "Moderate speed, solid general intelligence"
     },
     {
       "id": "llama_3_2_1b_on_device",
@@ -313,6 +493,97 @@
       "license": "Meta Llama 3.2 Community License",
       "strengths": "Compact Llama 3.2 tuned for edge/on-device deployment — good instruction-following for its size. Q4_K_M GGUF build runs fully on-device.",
       "speed_profile": "Fast, good intelligence for 3B"
+    },
+    {
+      "id": "llama_3_8b_on_device",
+      "name": "Llama 3 8B Instruct (On-Device)",
+      "available": true,
+      "gguf": "hf://bartowski/Meta-Llama-3-8B-Instruct-GGUF/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "8B",
+      "size_gb": 4.92,
+      "modality": "Text",
+      "context_tokens": 8192,
+      "license": "Meta Llama 3 Community License",
+      "strengths": "Meta's original Llama 3 — strong general chat and instruction-following, the baseline the later 3.1/3.2 releases improved on. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Moderate speed, solid general intelligence"
+    },
+    {
+      "id": "medgemma_1_5_4b_on_device",
+      "name": "MedGemma 1.5 4B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/medgemma-1.5-4b-it-GGUF/medgemma-1.5-4b-it-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/medgemma-1.5-4b-it-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "params": "4B",
+      "size_gb": 2.49,
+      "modality": "Text + Image",
+      "context_tokens": 131072,
+      "license": "Health AI Developer Foundations Terms of Use",
+      "strengths": "Updated MedGemma 4B with improved medical image and text understanding. A research tool, not medical advice. Q4_K_M GGUF build runs fully on-device. Add ~0.85GB for its vision projector.",
+      "speed_profile": "Moderate speed, specialized medical knowledge"
+    },
+    {
+      "id": "medgemma_27b_on_device",
+      "name": "MedGemma 27B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/medgemma-27b-it-GGUF/medgemma-27b-it-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/medgemma-27b-it-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "params": "27B",
+      "size_gb": 16.55,
+      "modality": "Text + Image",
+      "context_tokens": 131072,
+      "license": "Health AI Developer Foundations Terms of Use",
+      "strengths": "Multimodal MedGemma at the 27B size — strongest MedGemma for medical images and clinical reasoning. Needs CPU offload on a 12GB card. Not medical advice. Q4_K_M GGUF build runs fully on-device. Add ~0.86GB for its vision projector.",
+      "speed_profile": "Slow on consumer GPUs, strong specialized medical knowledge"
+    },
+    {
+      "id": "medgemma_27b_text_on_device",
+      "name": "MedGemma 27B Text (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/medgemma-27b-text-it-GGUF/medgemma-27b-text-it-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "27B",
+      "size_gb": 16.55,
+      "modality": "Text",
+      "context_tokens": 131072,
+      "license": "Health AI Developer Foundations Terms of Use",
+      "strengths": "Text-only MedGemma 27B, tuned for clinical text reasoning (EHRs, medical QA). Needs CPU offload on a 12GB card. Not medical advice. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Slow on consumer GPUs, strong specialized medical knowledge"
+    },
+    {
+      "id": "medgemma_4b_on_device",
+      "name": "MedGemma 4B (On-Device)",
+      "available": true,
+      "gguf": "hf://unsloth/medgemma-4b-it-GGUF/medgemma-4b-it-Q4_K_M.gguf",
+      "mmproj": "hf://unsloth/medgemma-4b-it-GGUF/mmproj-F16.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "params": "4B",
+      "size_gb": 2.49,
+      "modality": "Text + Image",
+      "context_tokens": 131072,
+      "license": "Health AI Developer Foundations Terms of Use",
+      "strengths": "Gemma 3 4B adapted for medicine — reads medical images (radiology, dermatology, pathology) and answers clinical text questions. A research tool, not medical advice. Q4_K_M GGUF build runs fully on-device. Add ~0.85GB for its vision projector.",
+      "speed_profile": "Moderate speed, specialized medical knowledge"
     },
     {
       "id": "ministral_3_14b_on_device",
@@ -472,6 +743,40 @@
       "license": "Apache 2.0",
       "strengths": "Hybrid thinking/non-thinking model — can switch on step-by-step reasoning for hard problems or answer directly for quick ones. Q4_K_M GGUF build runs fully on-device.",
       "speed_profile": "Moderate speed, strong reasoning (hybrid think mode)"
+    },
+    {
+      "id": "txgemma_27b_on_device",
+      "name": "TxGemma 27B Chat (On-Device)",
+      "available": true,
+      "gguf": "hf://bartowski/google_txgemma-27b-chat-GGUF/google_txgemma-27b-chat-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "27B",
+      "size_gb": 16.65,
+      "modality": "Text",
+      "context_tokens": 8192,
+      "license": "Health AI Developer Foundations Terms of Use",
+      "strengths": "Gemma 2 27B tuned for therapeutics, conversational variant. Needs CPU offload on a 12GB card. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Slow on consumer GPUs, specialized drug-discovery knowledge"
+    },
+    {
+      "id": "txgemma_9b_on_device",
+      "name": "TxGemma 9B Chat (On-Device)",
+      "available": true,
+      "gguf": "hf://bartowski/google_txgemma-9b-chat-GGUF/google_txgemma-9b-chat-Q4_K_M.gguf",
+      "has_server_weights": false,
+      "input_modalities": [
+        "text"
+      ],
+      "params": "9B",
+      "size_gb": 5.76,
+      "modality": "Text",
+      "context_tokens": 8192,
+      "license": "Health AI Developer Foundations Terms of Use",
+      "strengths": "Gemma 2 9B tuned for therapeutics — drug properties, toxicity, molecule and target questions — with the ability to explain its reasoning in conversation. Q4_K_M GGUF build runs fully on-device.",
+      "speed_profile": "Moderate speed, specialized drug-discovery knowledge"
     }
   ]
 }

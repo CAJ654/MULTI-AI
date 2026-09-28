@@ -77,7 +77,7 @@ def test_on_device_model_that_full_offloads_is_optimal():
 
 
 def test_oversized_on_device_model_is_not_recommended_despite_running():
-    """README Wave 0: gptOSS (12.11GB) technically passes on this machine —
+    """README Wave 0: gpt_oss_20b (12.11GB) technically passes on this machine —
     the GPU-layer ladder rescues it onto the CPU — but at 0.1 tok/s and 198s
     per reply. "Runs" must not be shown to the user as green."""
     hardware = _load("hardware")

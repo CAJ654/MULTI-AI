@@ -161,7 +161,7 @@ void main() {
 
     final fake = _FakeApiClient(const [
       ModelInfo(id: 'test_model', name: 'Test Model'),
-      ModelInfo(id: 'gptOSS', name: 'GPT-OSS 20B', gguf: 'hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf'),
+      ModelInfo(id: 'gpt_oss_20b', name: 'GPT-OSS 20B', gguf: 'hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf'),
     ]);
 
     await tester.pumpWidget(MaterialApp(home: ChatScreen(
@@ -368,7 +368,7 @@ void main() {
     const missingGguf = 'hf://ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf';
     final fake = _FakeApiClient(const [
       ModelInfo(id: 'test_model', name: 'Test Model'),
-      ModelInfo(id: 'gptOSS', name: 'GPT-OSS 20B', gguf: missingGguf),
+      ModelInfo(id: 'gpt_oss_20b', name: 'GPT-OSS 20B', gguf: missingGguf),
     ]);
     final missingCacheKey = ModelSource.parse(missingGguf).cacheKey;
     final downloads = _FakeDownloadManager(isCached: (key) => key != missingCacheKey);
@@ -399,7 +399,7 @@ void main() {
       'checkpoint could', (tester) async {
     _useDesktopSurface(tester);
 
-    // The data shape of gemma3n_on_device: a sibling of a natively multimodal
+    // The data shape of gemma_3n_e2b_on_device: a sibling of a natively multimodal
     // checkpoint, whose prose modality inherits "Text + Image + Audio" while
     // the backend reports text-only (llama.cpp runs just the text path). The
     // detail page must follow the latter — advertising image input that the
@@ -410,7 +410,7 @@ void main() {
     // and hangs under test. The derivation being asserted is independent of it.
     final fake = _FakeApiClient(const [
       ModelInfo(
-        id: 'gemma3n_on_device',
+        id: 'gemma_3n_e2b_on_device',
         name: 'Gemma 3n E2B (On-Device)',
         modality: 'Text + Image + Audio',
         inputModalities: ['text'],
@@ -685,7 +685,7 @@ void main() {
       tester,
       const [
         ModelInfo(
-          id: 'gemma3n',
+          id: 'gemma_3n_e2b',
           name: 'Gemma 3n E2B',
           inputModalities: ['text', 'image', 'audio'],
         ),
@@ -739,7 +739,7 @@ void main() {
       tester,
       const [
         ModelInfo(
-          id: 'gemma3n',
+          id: 'gemma_3n_e2b',
           name: 'Gemma 3n E2B',
           inputModalities: ['text', 'image', 'audio'],
         ),
@@ -768,7 +768,7 @@ void main() {
       tester,
       const [
         ModelInfo(
-          id: 'gemma3n',
+          id: 'gemma_3n_e2b',
           name: 'Gemma 3n E2B',
           inputModalities: ['text', 'image', 'audio'],
         ),

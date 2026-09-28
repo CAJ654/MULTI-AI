@@ -226,14 +226,14 @@ The `build-android` job decodes the first secret back into `upload-keystore.jks`
 
 ## TODO: Extend on-device (GGUF/llama.cpp) model support
 
-Mobile can't run the `transformers`/`torch`/`bitsandbytes` server backend (no CUDA, no mobile builds of those libs) — the on-device path is GGUF weights run through `llamadart`/llama.cpp, already proven with the built-in Qwen2.5 0.5B (`app/lib/on_device_engine.dart`). The `_GGUF_SOURCE` → `"gguf"` JSON field → `ModelInfo.gguf` routing in `chat_screen.dart` is already generic (any model with a `gguf` field auto-routes through `OnDeviceEngine`, no Dart changes needed) — only one model (`gptOSS.pyx`) currently uses it.
+Mobile can't run the `transformers`/`torch`/`bitsandbytes` server backend (no CUDA, no mobile builds of those libs) — the on-device path is GGUF weights run through `llamadart`/llama.cpp, already proven with the built-in Qwen2.5 0.5B (`app/lib/on_device_engine.dart`). The `_GGUF_SOURCE` → `"gguf"` JSON field → `ModelInfo.gguf` routing in `chat_screen.dart` is already generic (any model with a `gguf` field auto-routes through `OnDeviceEngine`, no Dart changes needed) — only one model (`gpt_oss_20b.pyx`) currently uses it.
 
-- [x] Add on-device sibling model files (declare `_GGUF_SOURCE` only, mirror `Multi-AI/multi_ai/models/gptOSS.pyx`'s shape) for verified-available GGUF quantizations, alongside their existing `_REPO_ID` file rather than replacing it (same pattern as the existing `llama3_2.pyx`/`llama_3_2_3b.pyx` duplication):
+- [x] Add on-device sibling model files (declare `_GGUF_SOURCE` only, mirror `Multi-AI/multi_ai/models/gpt_oss_20b.pyx`'s shape) for verified-available GGUF quantizations, alongside their existing `_REPO_ID` file rather than replacing it (one server file plus one `_on_device` sibling per model):
   - [x] `llama_3_2_1b_on_device.pyx` — `unsloth/Llama-3.2-1B-Instruct-GGUF`
   - [x] `llama_3_2_3b_on_device.pyx` — `unsloth/Llama-3.2-3B-Instruct-GGUF`
   - [x] `gemma_3_4b_on_device.pyx` — `unsloth/gemma-3-4b-it-GGUF`
   - [x] `deepseek_r1_distill_1_5b_on_device.pyx` — `unsloth/DeepSeek-R1-Distill-Qwen-1.5B-GGUF`
-  - [x] `falcon3_on_device.pyx` — `tiiuae/Falcon3-3B-Instruct-GGUF`
+  - [x] `falcon_3_3b_on_device.pyx` — `tiiuae/Falcon3-3B-Instruct-GGUF`
   - [x] `ministral_3_3b_on_device.pyx` — `mistralai/Ministral-3-3B-Instruct-2512-GGUF`
   - (all use the `Q4_K_M` quant, confirmed against each repo's file listing; note Falcon3's file is lowercase `q4_k_m`)
 - [ ] Android: add `<uses-permission android:name="android.permission.INTERNET"/>` to `app/android/app/src/main/AndroidManifest.xml` (currently missing — needed for on-device GGUF downloads to work on a real device)
@@ -442,7 +442,7 @@ dense models (`falcon2_11b`, `mistral_nemo_12b`, `ministral_3_14b`) have no
 experts to stream in the first place. Their slowness is a separate,
 still-open problem:
 
-- `gptOSS` on-device: **0.1 tok/s**, 198s for one short reply once it spills
+- `gpt_oss_20b` on-device: **0.1 tok/s**, 198s for one short reply once it spills
   onto the CPU (see the Wave 0 benchmarks above) — technically works, not
   practically usable.
 - `falcon2_11b`, `mistral_nemo_12b`, `ministral_3_14b`: server-side (`_REPO_ID`)
@@ -461,7 +461,7 @@ Possible directions, none investigated yet:
       calibrated on Vulkan against this machine's 11.7GB VRAM; revisit once
       Wave 3/4 (the 7–14B on-device entries) actually run.
 - [ ] Whether `_CPU_FALLBACK_LIMIT_GB` in `hardware.pyx` (currently 10.0GB,
-      calibrated on the single `gptOSS` data point) should apply more
+      calibrated on the single `gpt_oss_20b` data point) should apply more
       granularly once more large-model benchmarks exist.
 
 ## File Architecture
@@ -577,7 +577,7 @@ multi-ai-server
 
 > The `multi-ai-server` console script is created by the editable install. If its directory isn't on your PATH, use `python -c "from multi_ai.server import run; run()"` instead. A compiled extension module can't be launched as a script the way `python server.pyx` could, which is why there's a dedicated entry point.
 
-Every model under `models/` points at a real Hugging Face checkpoint: 23 declare a `_REPO_ID` and the server loads/generates with `transformers`, while 22 declare a `_GGUF_SOURCE` and run on-device in the app via llama.cpp instead. Most GGUF entries are `_on_device` siblings of a server model; `gptOSS` is the exception, GGUF-only, because the transformers path won't fit in RAM. Selecting a model in the chat UI downloads its weights on first use (a minute or two for the 1–3B models, much longer for multi-billion-parameter ones) and keeps it cached in memory afterward.
+Every model under `models/` points at a real Hugging Face checkpoint: 23 declare a `_REPO_ID` and the server loads/generates with `transformers`, while 22 declare a `_GGUF_SOURCE` and run on-device in the app via llama.cpp instead. Most GGUF entries are `_on_device` siblings of a server model; `gpt_oss_20b` is the exception, GGUF-only, because the transformers path won't fit in RAM. Selecting a model in the chat UI downloads its weights on first use (a minute or two for the 1–3B models, much longer for multi-billion-parameter ones) and keeps it cached in memory afterward.
 
 Gated model families (Llama, Gemma) need a Hugging Face access token: run `huggingface-cli login`, or set `HF_TOKEN` in the environment, before chatting with one.
 
@@ -598,27 +598,33 @@ Error rows and "(response stopped)" placeholders are UI state and are excluded f
 
 ### Image and audio input (multimodal models)
 
-Five models accept more than text, declared per-model via `_INPUT_MODALITIES` and surfaced as `input_modalities` on `/api/models`:
+These models accept more than text, declared per-model via `_INPUT_MODALITIES` and surfaced as `input_modalities` on `/api/models`:
 
 | Model | Accepts |
 |---|---|
-| `gemma3n` / `gemma_3n` (Gemma 3n E2B) | text, image, **audio** |
-| `gemma_3_4b` (Gemma 3 4B) | text, image |
+| `gemma_3n_e2b` / `gemma_3n_e4b` (Gemma 3n) | text, image, **audio** |
+| `gemma_4_e2b` / `gemma_4_e4b` / `gemma_4_12b` (Gemma 4) | text, image, **audio** |
+| `gemma_4_26b_a4b` / `gemma_4_31b` (Gemma 4) | text, image |
+| `gemma_3_4b` / `gemma_3_12b` / `gemma_3_27b` (Gemma 3) | text, image |
+| `medgemma_4b` / `medgemma_1_5_4b` / `medgemma_27b` (MedGemma) | text, image |
 | `ministral_3_3b` / `_8b` / `_14b` | text, image |
 
 The app gates its input buttons on that field: a **+** button left of the text box appears only for image-capable models, and a **microphone** button between the text box and Send appears only for audio-capable ones. A text-only model shows neither. Switching to a model that can't take what's staged drops those attachments and says so, rather than silently discarding them at send time.
 
 Attachments ride along on `POST /api/chat` as base64 (`attachments: [{kind, mime_type, name, data}]`, 32MB each), get written to temp files, and go through the model's `AutoProcessor` chat template — the text-only tokenizer path is untouched. A model that doesn't declare a modality rejects it server-side, so the gate holds even if a client ignores it.
 
-**On-device image input works too, via a second GGUF.** llama.cpp encodes images through a separate *multimodal projector* file (`libmtmd`), so a vision GGUF needs both the text weights and an `mmproj-*.gguf`. A model file declares that companion with `_GGUF_MMPROJ_SOURCE`, surfaced as `mmproj` on `/api/models`; `OnDeviceEngine` downloads it and calls `loadMultimodalProjector()` before generating. Four on-device entries have one:
+**On-device image input works too, via a second GGUF.** llama.cpp encodes images through a separate *multimodal projector* file (`libmtmd`), so a vision GGUF needs both the text weights and an `mmproj-*.gguf`. A model file declares that companion with `_GGUF_MMPROJ_SOURCE`, surfaced as `mmproj` on `/api/models`; `OnDeviceEngine` downloads it and calls `loadMultimodalProjector()` before generating. These on-device entries have one:
 
 | On-device entry | Projector |
 |---|---|
-| `gemma_3_4b_on_device` | `mmproj-F16.gguf` |
+| `gemma_3_4b_on_device` / `gemma_3_12b_on_device` / `gemma_3_27b_on_device` | `mmproj-F16.gguf` |
+| `gemma_4_e2b_on_device` / `gemma_4_e4b_on_device` | `mmproj-F16.gguf` (omni: image + audio) |
+| `gemma_4_12b_on_device` / `gemma_4_26b_a4b_on_device` / `gemma_4_31b_on_device` | `mmproj-F16.gguf` (image only here — see note below) |
+| `medgemma_4b_on_device` / `medgemma_1_5_4b_on_device` / `medgemma_27b_on_device` | `mmproj-F16.gguf` |
 | `ministral_3_8b_on_device` / `_14b_on_device` | `mmproj-F16.gguf` |
 | `ministral_3_3b_on_device` | `…-BF16-mmproj.gguf` (mistralai's repo ships only BF16) |
 
-A GGUF entry earns a non-text modality **only** by declaring a projector — text weights alone load and chat but silently can't see. `gemma3n_on_device` is the one multimodal checkpoint with no projector published anywhere (llama.cpp doesn't implement Gemma 3n's vision/audio towers), so it stays text-only; use the server-backed `gemma3n` for its image and audio input.
+A GGUF entry earns a non-text modality **only** by declaring a projector — text weights alone load and chat but silently can't see. `gemma_3n_e2b_on_device` is the one multimodal checkpoint with no projector published anywhere (llama.cpp doesn't implement Gemma 3n's vision/audio towers), so it and `gemma_3n_e4b_on_device` stay text-only; use the server-backed `gemma_3n_e2b` / `gemma_3n_e4b` for image and audio input. `gemma_4_12b` has an audio tower, but whether its GGUF projector carries audio is unverified, so its on-device entry declares image only.
 
 Downloading a vision model fetches both files, and neither the Models tab nor the chat picker counts it as downloaded until both are cached — otherwise the + button would appear against a model that can't actually see. Deleting removes both.
 
@@ -634,7 +640,7 @@ pip install timm                        # Gemma 3n specifically — its vision t
 
 When a model fails to load, the reply names the specific missing dependency. (It used to append "gated repos need HF_TOKEN" to *every* load failure, which sent you hunting for an auth problem when the real cause was a missing package.)
 
-Verified against real weights (2026-07-19): `ministral_3_3b` and `gemma3n` both read a generated test image correctly, and `gemma3n` processed a WAV without error. The audio check used a synthesized 440Hz tone rather than speech — that exercises decode → feature extraction → audio encoder end-to-end, but says nothing about transcription quality on real speech, which is still untested. On-device (mmproj) image input is also untested against real weights: the plumbing and gating have unit coverage, but no projector has actually been downloaded and run.
+Verified against real weights (2026-07-19): `ministral_3_3b` and `gemma_3n_e2b` both read a generated test image correctly, and `gemma_3n_e2b` processed a WAV without error. The audio check used a synthesized 440Hz tone rather than speech — that exercises decode → feature extraction → audio encoder end-to-end, but says nothing about transcription quality on real speech, which is still untested. On-device (mmproj) image input is also untested against real weights: the plumbing and gating have unit coverage, but no projector has actually been downloaded and run.
 
 `torchvision` must match your torch build — on CUDA 12.8, `pip install torchvision --index-url https://download.pytorch.org/whl/cu128`. Without it, image sends fail with "PixtralProcessor requires the Torchvision library".
 
@@ -662,7 +668,7 @@ The two run paths get **different formulas**, because `size_gb` means different 
 - **`_REPO_ID` (server)** — `size_gb` is the fp16 checkpoint, but transformers loads it 4-bit, so the estimate is `size/4 × 1.15 + 1.2GB` workspace and compares against **VRAM only**. Rating a 7B on its 14.5GB fp16 size would wrongly condemn most of the roster.
 - **`_GGUF_SOURCE` (on-device)** — `size_gb` is already the quantized file, so `size × 1.1 + 0.8GB`. Three regimes: fits VRAM with headroom (full offload), fits but tight (llama.cpp drops layers), or spills to CPU.
 
-The CPU-spill cutoff is calibrated on the Wave 0 benchmarks above rather than guessed: `gptOSS` (12.11GB) technically *passes* on this machine — the GPU-layer ladder rescues it — at **0.1 tok/s**, 198s for one short reply, while `falcon2_11b_on_device` (6.85GB) full-offloads at a usable 4.3 tok/s. So a GGUF that overflows VRAM and exceeds ~10GB rates red, not yellow: **"it runs" and "you'd wait three minutes for a sentence" are different claims**, and only one of them should be green.
+The CPU-spill cutoff is calibrated on the Wave 0 benchmarks above rather than guessed: `gpt_oss_20b` (12.11GB) technically *passes* on this machine — the GPU-layer ladder rescues it — at **0.1 tok/s**, 198s for one short reply, while `falcon2_11b_on_device` (6.85GB) full-offloads at a usable 4.3 tok/s. So a GGUF that overflows VRAM and exceeds ~10GB rates red, not yellow: **"it runs" and "you'd wait three minutes for a sentence" are different claims**, and only one of them should be green.
 
 Colour is never the only signal — every badge carries its text label and a one-line explanation in this machine's actual numbers ("Needs about 5.4 GB of your 11.9 GB VRAM — comfortable fit"), so the verdict is auditable rather than a mystery traffic light.
 
@@ -765,7 +771,7 @@ layout.
       `model_pool.dart` (`!kIsWeb && isAndroidHost`), not `defaultTargetPlatform`.
 - [ ] **Device-side fit ratings** — currently `fit` comes from the backend and
       is null with no server, so every badge vanishes on the platform that needs
-      it most: the roster carries `gptOSS` at 12.11GB and several 7–14B entries,
+      it most: the roster carries `gpt_oss_20b` at 12.11GB and several 7–14B entries,
       and a phone will happily start a download that can never load. Simpler than
       the server version — only the GGUF formula applies (`size × 1.1 + 0.8GB`),
       against total RAM rather than VRAM. Realistically only the ≤2–3GB Q4
@@ -897,19 +903,19 @@ Verified working (each answered a test question correctly):
 
 - [x] Qwen2.5 0.5B (on-device) — user-confirmed
 - [x] `deepseek_r1_distill_1_5b` — fixed by chat template + `<think>` stripping (19s)
-- [x] `falcon_h1` — fixed by chat template (6s)
-- [x] `falcon3` — fixed by load fixes (10s)
+- [x] `falcon_h1_1_5b` — fixed by chat template (6s)
+- [x] `falcon_3_3b` — fixed by load fixes (10s)
 - [x] `falcon2_11b` — fixed: a server bug was masking its real load error (47s)
 - [x] `falcon_mamba_7b` — fixed; base model, replies truncated at invented turns (43s)
 - [x] `ministral_3_3b` — fixed by swapping to the bf16 `unsloth` mirror (official FP8 weights need Triton kernels that don't work on Windows)
 - [x] `llama_3_2_1b` — fixed by swapping to ungated `unsloth` mirror (4s)
 - [x] `qwen3_8b` — regression-checked (17s)
-(`"hi"` → `"hi"`, `"What color is the sky"` → `"What color is the moon?"`) and otherwise rambled. Nothing to fix — it was mostly a source of output that looked like a bug. Both `gpt2.pyx` and `gpt2_on_device.pyx` deleted; `gptOSS` (GPT-OSS 20B) is unrelated and stays.
-- [x] `gemma1` — ungated `unsloth` mirror works (8s)
-- [x] `gemma3n` / `gemma_3n` — all three modalities confirmed (2026-07-19): text (14s), image (5s, correctly read a red circle), audio (3s). Needed `pip install timm` — its vision tower is a `TimmWrapperModel`, and without it the load failed with an error the server then mislabeled as a gating problem.
+(`"hi"` → `"hi"`, `"What color is the sky"` → `"What color is the moon?"`) and otherwise rambled. Nothing to fix — it was mostly a source of output that looked like a bug. Both `gpt2.pyx` and `gpt2_on_device.pyx` deleted; `gpt_oss_20b` (GPT-OSS 20B) is unrelated and stays.
+- [x] `gemma_1_2b` — ungated `unsloth` mirror works (8s)
+- [x] `gemma_3n_e2b` / `gemma_3n_e2b` — all three modalities confirmed (2026-07-19): text (14s), image (5s, correctly read a red circle), audio (3s). Needed `pip install timm` — its vision tower is a `TimmWrapperModel`, and without it the load failed with an error the server then mislabeled as a gating problem.
 - [x] `gemma_3_4b` — text (13s) and image (4s, correctly read the same test circle). Its first run returned "(model returned an empty response)": the weights were chatted with before the download finished, so `local_files_only=True` loaded a vocabulary-less tokenizer that encoded the whole prompt to one `<unk>`. See the partial-download guard below.
-- [x] `gemma2` / `gemma3` — ungated `unsloth` mirrors, same mechanism as the `gemma1`/`gemma3n`/`gemma_3_4b` set now verified above; these two just aren't downloaded yet
-- [x] `gptOSS` (GPT-OSS 20B) — rerouted to run **on-device** via llama.cpp GGUF (native MXFP4, 12.11GB download on first chat); via transformers it
+- [x] `gemma_2_2b` / `gemma_3_1b` — ungated `unsloth` mirrors, same mechanism as the `gemma_1_2b`/`gemma_3n_e2b`/`gemma_3_4b` set now verified above; these two just aren't downloaded yet
+- [x] `gpt_oss_20b` (GPT-OSS 20B) — rerouted to run **on-device** via llama.cpp GGUF (native MXFP4, 12.11GB download on first chat); via transformers it
 - [x] `falcon_7b` — swapped to `falcon-7b-instruct` (base variant couldn't chat)
 
 2026-07-17: "only the on-device Qwen works" root-caused — gpt2 generated past
@@ -917,13 +923,13 @@ its 1024-token position-embedding table (`max_new_tokens=1024` regardless of
 context size), firing a CUDA device-side assert that corrupts the process's
 GPU state and makes **every** server model fail until restart. The server now
 clamps generation to each model's `max_position_embeddings` and flags
-CUDA-poisoned state in error replies. Verified: gpt2 → falcon3 →
+CUDA-poisoned state in error replies. Verified: gpt2 → falcon_3_3b →
 deepseek_r1_distill_1_5b all answer correctly in one server run.
 
 Fix applied, not yet run (weights download on first use):
 
 
-- [ ] `llama3` / `llama3_1` / `llama3_2` / `llama_3_2_3b` — ungated mirrors
+- [ ] `llama_3_8b` / `llama_3_1_8b` / `llama_3_2_3b` / `llama_3_2_3b` — ungated mirrors
 - [ ] `ministral_3_8b` / `ministral_3_14b` — bf16 mirrors (3B variant verified)
  dequantizes to ~40GB, more than this machine's RAM. Duplicate `GPTOSSS20b.pyx` removed (2026-07-18: its orphaned `__pycache__/GPTOSSS20b.cpython-314.pyc` was still tracked in git; untracked and deleted). Server side verified 2026-07-18: roster lists it as available with `gguf` set and no `_REPO_ID`, `/api/chat` correctly defers to the app, and `ggml-org/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf` resolves and is **ungated** (no `HF_TOKEN` needed). **On-device generation verified 2026-07-19** — first attempt failed with `Failed to create context`: llamadart defaults to `gpuLayers: 999`, so all layers went to the GPU, the 11.28GB of weights fit inside 11.66GB of free VRAM, and nothing was left for the KV cache or compute buffers. llama.cpp reports that as a context-creation failure *after* a successful model load, which reads like a corrupt download. Fixed with a GPU-offload backoff ladder in `OnDeviceEngine._ensureLoaded` (`app/lib/on_device_engine.dart`) — it retries with progressively fewer offloaded layers, and small models still succeed on the first (full-offload) attempt unchanged.
 
@@ -964,14 +970,14 @@ non-gating.
 
 | Model | GB | GPU layers | First token | Gen | tok/s | Verdict | Reply |
 |---|---|---|---|---|---|---|---|
-| `gptOSS` | 12.11 | **12** | 40.9s | 198.5s | **0.1** | pass | `<\|channel\|>analysis<\|message\|>The user asks…` |
+| `gpt_oss_20b` | 12.11 | **12** | 40.9s | 198.5s | **0.1** | pass | `<\|channel\|>analysis<\|message\|>The user asks…` |
 | `falcon2_11b_on_device` | 6.85 | 999 | 10.8s | 11.5s | 4.3 | pass | The capital city of France is Paris. |
-| `gemma4_e2b_on_device` | 3.11 | 999 | 7.2s | 7.9s | 25.1 | pass | The capital of France is Paris. |
-| `gemma3n_on_device` | 3.03 | 999 | 7.3s | 8.3s | 2.9 | pass | The capital of France is Paris. |
+| `gemma_4_e2b_on_device` | 3.11 | 999 | 7.2s | 7.9s | 25.1 | pass | The capital of France is Paris. |
+| `gemma_3n_e2b_on_device` | 3.03 | 999 | 7.3s | 8.3s | 2.9 | pass | The capital of France is Paris. |
 | Qwen2.5 0.5B (built-in) | 0.49 | 999 | 5.8s | 6.3s | 6.3 | pass | Paris is the capital city of France. |
 
-(`gemma4_e2b` and the pre-0.8.16 numbers aren't directly comparable — everything
-above `gemma4_e2b` was measured on llamadart 0.8.11 and would likely be faster
+(`gemma_4_e2b` and the pre-0.8.16 numbers aren't directly comparable — everything
+above `gemma_4_e2b` was measured on llamadart 0.8.11 and would likely be faster
 re-run today. Only Gemma 4 has been measured on `b9982`.)
 
 The **GPU layers** column is the practical output of the exercise — it records
@@ -981,7 +987,7 @@ which rung of the `_gpuLayerLadder` each model needed. Three findings:
   runtime allocations in ~11.7GB, at a usable 4.3 tok/s. Since every remaining
   7–9B entry is 4.4–5.2GB at Q4_K_M, they should all full-offload too — this one
   zero-download data point de-risks that whole wave.
-- **`gptOSS` passes but is not practically usable.** The ladder rescues it from
+- **`gpt_oss_20b` passes but is not practically usable.** The ladder rescues it from
   the `Failed to create context` crash by dropping to 12 layers, but that means
   most of a 20B MoE runs on CPU: **0.1 tok/s**, 40.9s to first token, 198.5s for
   one short reply. "Working" and "usable" are different claims and this is the
@@ -992,7 +998,7 @@ which rung of the `_gpuLayerLadder` each model needed. Three findings:
   unchanged, but the ladder is backing off *Vulkan* offload, and its allocator
   behaves differently under pressure than CUDA's.
 
-**`gptOSS` leaks its harmony format into the reply.** The raw output begins
+**`gpt_oss_20b` leaks its harmony format into the reply.** The raw output begins
 `<|channel|>analysis<|message|>…` — the app has no parser for GPT-OSS's channel
 scaffolding, so a user would see that reasoning-channel markup verbatim in the
 chat bubble. The harness strips `<|…|>` before judging, which is why it still
@@ -1045,11 +1051,11 @@ confabulated — but the prompting stack is correct. Note this is the on-device
 path only; the server/`transformers` `falcon_7b` entry above is unaffected.
 
 **Gemma 3n on-device is text-only, and now says so (2026-07-19).**
-`gemma3n_on_device.pyx` advertised `"modality": "Text + Image + Audio"` while
+`gemma_3n_e2b_on_device.pyx` advertised `"modality": "Text + Image + Audio"` while
 having no `_GGUF_MMPROJ_SOURCE`, so the Models tab promised image and audio that
 the attachment buttons correctly refused to offer — the file contradicted its own
 `strengths` text. Corrected to `"Text"`. The model *is* multimodal and the
-server-backed `gemma3n` entry still delivers all three modalities; it's llama.cpp
+server-backed `gemma_3n_e2b` entry still delivers all three modalities; it's llama.cpp
 that can't:
 
 - No projector exists in any repo. `unsloth/gemma-3n-E2B-it-GGUF` ships 24 text
@@ -1061,7 +1067,7 @@ that can't:
 **Gemma 4 E2B/E4B added as the on-device multimodal path.** Both are in
 llama.cpp's vision *and* mixed-modality lists and ship "omni" GGUFs where one
 projector covers image and audio. GGUF-only, no `_REPO_ID` sibling (same shape as
-`gptOSS`). `gemma4_e2b_on_device` text verified: full offload, **25.1 tok/s**.
+`gpt_oss_20b`). `gemma_4_e2b_on_device` text verified: full offload, **25.1 tok/s**.
 
 **llamadart 0.8.11 → 0.8.16.** Lockfile-only bump (the existing `^0.8.11`
 constraint already allowed it). Native runtime `b9829` → `b9982`. Text throughput
@@ -1093,7 +1099,7 @@ message is misleading; the chain is:
 the real app. That is a hypothesis, not a result: it has not been tested, and
 confirming it needs the GUI path this harness exists to avoid.** Until someone
 checks, treat on-device image/audio as unverified for all four projector-bearing
-entries (`gemma4_e2b`, `gemma4_e4b`, `gemma_3_4b`, and the Ministrals), not as
+entries (`gemma_4_e2b`, `gemma_4_e4b`, `gemma_3_4b`, and the Ministrals), not as
 broken.
 
 `OnDeviceEngine._buildMessage` previously dropped audio attachments silently —
@@ -1105,13 +1111,13 @@ Not yet run — waves 1-4, ~65GB of downloads (`--preflight` reports 5 of 25
 cached):
 
 - [ ] Wave 1 (~4GB, resumes existing `.part` files) — `gemma_3_4b` (also the
-      first test of the mmproj/vision path), `deepseek_r1_distill_1_5b`, `gemma1`
+      first test of the mmproj/vision path), `deepseek_r1_distill_1_5b`, `gemma_1_2b`
 - [ ] Wave 2 (~15GB, ≤4GB models) — includes `ministral_3_3b`, whose BF16
       projector comes from `mistralai`'s own repo rather than the `unsloth`
       mirror the other three use
 - [ ] Wave 3 (~30GB, 7-9B) — expected to full-offload per the `falcon2_11b` result
 - [ ] Wave 4 (~17GB, 12-14B) — `mistral_nemo_12b`, `ministral_3_14b`; the
-      partial-offload candidates, expect `gptOSS`-like speeds
+      partial-offload candidates, expect `gpt_oss_20b`-like speeds
 
 Removed (2026-07-17: all models previously marked "unavailable" were deleted from the project):
 
@@ -1131,7 +1137,7 @@ Removed (2026-07-17: all models previously marked "unavailable" were deleted fro
 - [x] Configurable "thinking" status text (word/phrase groups inspired by other AI products' loaders — Classic, Dev Tools, Quirky, and a Transparency Log group), with a settings dialog to enable/disable each group or individual phrases — see `app/lib/thinking_words.dart`, `thinking_settings.dart`, `thinking_settings_dialog.dart`, `thinking_indicator.dart`, and the gear icon in the chat top bar
   - The Transparency Log phrases are templated (`{query}`/`{model}` placeholders filled via `fillThinkingTemplate()`) so they narrate the actual in-flight request — e.g. `Searching for "what's the capital of..."…` / `Assembling Qwen2.5 0.5B's response…` — instead of generic text; the settings dialog shows a generic filled-in preview since it has no live request to reference
   - Regression-tested: `late` fields whose initializer reads themselves (as the original phrase-picker did, to avoid repeating a phrase) don't throw — they silently corrupt the value — so `app/test/chat_screen_test.dart`'s "sending a message shows the thinking row without crashing" test drives an actual send to catch that class of bug
-- [x] Expand on-device support to more/larger models with GGUF builds (mirroring the server's `_REPO_ID` roster) — 22 of the 24 server models now have an on-device `_GGUF_SOURCE` sibling (Q4_K_M). Skipped only where no clean llama.cpp GGUF exists: `gemma_3n`/`llama3_2` are duplicate stems already covered by `gemma3n`/`llama_3_2_3b`; every other model has a sibling.
+- [x] Expand on-device support to more/larger models with GGUF builds (mirroring the server's `_REPO_ID` roster) — 22 of the 24 server models now have an on-device `_GGUF_SOURCE` sibling (Q4_K_M). Skipped only where no clean llama.cpp GGUF exists: `gemma_3n_e2b`/`llama_3_2_3b` are duplicate stems already covered by `gemma_3n_e2b`/`llama_3_2_3b`; every other model has a sibling.
 - [x] Surface **device fit** before download — every model card and detail page now carries a green/yellow/red badge saying whether this machine can run it, so an 8–14B entry can't quietly cost a multi-gigabyte download that ends in an OOM. See "Hardware fit ratings" above (`multi_ai/hardware.pyx`, `GET /api/device`, `app/lib/model_fit_badge.dart`)
 - [ ] Add a model-download **progress** indicator to go with it — the size is now shown up front, but a first-time download still gives no feedback while it runs
 - [ ] Decide if/how `multi_ai.server`'s model roster and the on-device roster should be unified (e.g. one config listing both a `_REPO_ID` for the server and a GGUF source for on-device, per model)
@@ -1245,8 +1251,8 @@ ship.
 
 ### Partially complete
 
-- [ ] **Model catalog audit** (spec #4/#8) — param counts and sizes are resolved for all 47 entries via `get_info()`, including the previously ambiguous ones (`gemma1`→2B, `gemma2`→2B, `falcon3`→3B, `gptOSS`→20B, `llama3`/`llama3_1`→8B). Still missing as *structured* fields: `quant_level` (only implicit in the GGUF filename/prose) and `architecture_type` (dense vs. MoE vs. Mamba-hybrid — matters because `falcon_mamba_7b`/`falcon_h1` have different compute characteristics than a standard transformer).
-- [ ] **Naming convention fix** (spec action item #2) — filenames still encode no size: `gemma1.pyx`, `gemma2.pyx`, `falcon3.pyx`, `llama3.pyx`. Rename to `gemma2_2b`-style so the variant can't go ambiguous again as the catalog grows.
+- [ ] **Model catalog audit** (spec #4/#8) — param counts and sizes are resolved for all 47 entries via `get_info()`, including the previously ambiguous ones (`gemma_1_2b`→2B, `gemma_2_2b`→2B, `falcon_3_3b`→3B, `gpt_oss_20b`→20B, `llama_3_8b`/`llama_3_1_8b`→8B). Still missing as *structured* fields: `quant_level` (only implicit in the GGUF filename/prose) and `architecture_type` (dense vs. MoE vs. Mamba-hybrid — matters because `falcon_mamba_7b`/`falcon_h1_1_5b` have different compute characteristics than a standard transformer).
+- [x] **Naming convention fix** (spec action item #2) — done 2026-09-27: every stem now encodes family, version and size (`gemma_1_2b`, `gemma_2_2b`, `gemma_3_1b`, `gemma_3n_e2b`, `falcon_3_3b`, `falcon_h1_1_5b`, `llama_3_8b`, `llama_3_1_8b`, `gpt_oss_20b`).
 - [ ] **Resource management** — `OnDeviceEngine._ensureLoaded` (`app/lib/on_device_engine.dart`) enforces one resident model and evicts on switch, which covers "which model is loaded". There is no RAM/VRAM *budget* — just single-tenancy.
 - [ ] **Desktop vs. mobile catalog split** — models split by `_REPO_ID` (server, 4-bit GPU) vs. `_GGUF_SOURCE` (in-app), but that's a *where it runs* distinction, not the hardware-aware gating layer the spec describes. No `platform_support` field, no per-device labelling.
 - [x] **Orchestration tab** — a working Model Council, see "Orchestration" above. Only the manifest-preset and multi-round pieces remain.
@@ -1258,7 +1264,7 @@ ship.
 - [ ] **`model_registry` SQLite table** (spec #5) — no SQLite anywhere in the project; model metadata lives in per-file `.pyx` dicts. Missing every gating column: `quant_level`, `architecture_type`, `min_ram_mb`, `recommended_ram_mb`, `platform_support`, `role_tags`. Since `get_info()` already holds most of the descriptive fields, populating it is largely a migration script.
 - [ ] **Memory layer** (spec #2) — the four-table model (`raw_items`, `wiki_entries`, `outputs`, `memory_index`) doesn't exist. `app/lib/chat_store.dart` is a flat JSON file of chat sessions, not a queryable memory tier.
 - [ ] **Device × model compatibility estimator** (spec #6) — no device-spec probing, no predicted tokens/sec, no thermal/battery estimate. Ship the heuristic v1 but keep the input/output contract swappable for a trained regression later.
-- [ ] **Recommended / Possible but not ideal / Not Supported tiering** (spec #7) — every model appears in the dropdown regardless of device; a phone can currently select the 20B `gptOSS`. Overlaps with the existing "surface size/device-fit before download" TODO above — same problem, and the tiering layer is the real fix for it.
+- [ ] **Recommended / Possible but not ideal / Not Supported tiering** (spec #7) — every model appears in the dropdown regardless of device; a phone can currently select the 20B `gpt_oss_20b`. Overlaps with the existing "surface size/device-fit before download" TODO above — same problem, and the tiering layer is the real fix for it.
 - [ ] **Skill manifest format** (spec #1) — no `skill.json`/JSON Schema, no paired `skill.md` front matter, no MD↔JSON sync, no drag-and-drop editor.
 - [ ] **Agentic OS add-on** (all four levels) — no skill registry, no review/retry loop engine, no memory browser, no task view, no tab.
 - [ ] **Orchestration routing logic** — model choice is a manual dropdown. Routing must consume the Core tiering so it never picks a model flagged Not Supported on the device.
@@ -1266,8 +1272,8 @@ ship.
 
 ### Catalog cleanup surfaced while auditing
 
-- [ ] Duplicate/inconsistent stems: both `gemma3n` and `gemma_3n` exist, as do `llama3_2` alongside `llama_3_2_1b`/`llama_3_2_3b`. Some are stale duplicates (already noted as skipped for on-device siblings above). Resolve as part of the rename pass rather than after.
-- [ ] `gemma3n`'s `params` is `"E2B"` (effective-params notation) — won't parse into `model_registry.param_count INTEGER`, and it's the architecture case (MatFormer) the estimator most needs a real number for.
+- [x] Duplicate stems removed in the rename pass: `gemma_3n` (identical to `gemma3n`, now `gemma_3n_e2b`) and `llama3_2` (identical to `llama_3_2_3b`).
+- [ ] `gemma_3n_e2b`'s `params` is `"E2B"` (effective-params notation) — won't parse into `model_registry.param_count INTEGER`, and it's the architecture case (MatFormer) the estimator most needs a real number for.
 
 ### Unresolved: two competing architecture plans
 
