@@ -24,4 +24,11 @@ if ($conns) {
 
 Write-Host "Starting backend (multi-ai-server)..."
 Set-Location (Join-Path $PSScriptRoot "..\Multi-AI")
-python -c "from multi_ai.server import run; run()"
+
+# Pinned to 3.14, not bare `python`: the compiled extensions are built per
+# interpreter, and only the 3.14 environment on this machine has the full
+# chat-time dependency set (torch+CUDA, transformers, bitsandbytes, ...)
+# installed. A bare `python` call resolves to whatever's first on PATH,
+# which silently gives you a working-but-GPU-blind or non-importable server
+# depending on what else happens to be installed there.
+py -3.14 -c "from multi_ai.server import run; run()"
