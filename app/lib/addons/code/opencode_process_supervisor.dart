@@ -115,6 +115,12 @@ class OpencodeProcessSupervisor {
       'opencode',
       ['serve', '--port', '$port', '--hostname', '127.0.0.1'],
       environment: {'OPENCODE_CONFIG': configFile.path},
+      // On Windows, npm installs `opencode` as a `.cmd` shim (plus an
+      // extensionless shell script) rather than a `.exe`. `where` resolves
+      // that via PATHEXT (see `_onPath` above), but `Process.start` calls
+      // CreateProcess directly and skips PATHEXT resolution, so it can't
+      // find a bare `opencode` command without going through the shell.
+      runInShell: Platform.isWindows,
     );
 
     final log = StringBuffer();
