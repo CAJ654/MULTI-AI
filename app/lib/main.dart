@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:velopack_flutter/velopack_flutter.dart';
 
@@ -35,10 +36,15 @@ Future<void> main(List<String> args) async {
   // Guarded anyway because this is on the launch path: it loads the Velopack
   // native library, and if that ever fails to load there is no version of
   // "cannot check for updates" that justifies refusing to start the app.
-  try {
-    await initializeVelopack(url: UpdateService.feedUrl);
-  } catch (_) {
-    // Updates are unavailable this session. Nothing else depends on it.
+  // Skipped on web: the Velopack web bridge needs a wasm-bindgen module
+  // (pkg/velopack_flutter.js) that the web build doesn't ship, and the await
+  // never returns, so runApp is never reached and the page stays blank.
+  if (!kIsWeb) {
+    try {
+      await initializeVelopack(url: UpdateService.feedUrl);
+    } catch (_) {
+      // Updates are unavailable this session. Nothing else depends on it.
+    }
   }
 
   runApp(const App());

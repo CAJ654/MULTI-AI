@@ -24,6 +24,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
 /// Where the packaged interpreter, the compiled backend, and the
@@ -40,8 +41,10 @@ class BackendRuntime {
 
   /// True when running from a packaged build, i.e. when there is a backend to
   /// supervise. False under `flutter run`, where the developer runs their own.
+  // kIsWeb goes first: `Platform` throws on web, and this getter is read on
+  // the launch path, so the throw would leave StartupGate stuck on "Starting up".
   static bool get isBundled =>
-      Platform.isWindows && File('${backendDir.path}\\bootstrap.py').existsSync();
+      !kIsWeb && Platform.isWindows && File('${backendDir.path}\\bootstrap.py').existsSync();
 
   static File get pythonExe => File('${backendDir.path}\\python\\python.exe');
   static File get pipPyz => File('${backendDir.path}\\pip.pyz');
