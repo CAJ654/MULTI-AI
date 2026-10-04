@@ -13,6 +13,8 @@ import '../../thinking_indicator.dart';
 import '../../thinking_settings_dialog.dart';
 import '../addon.dart';
 import '../components/component_manager.dart';
+import 'artifacts.dart';
+import 'workbench_panel.dart';
 import 'chat_controller.dart';
 import 'web_access_explainer_dialog.dart';
 import 'web_source.dart';
@@ -314,6 +316,7 @@ class _ChatPaneState extends State<ChatPane> {
   bool _showScrollToBottom = false;
   StreamSubscription<String>? _errorSub;
   int _lastScrollRevision = 0;
+  final _workbench = WorkbenchController();
 
   ChatController get _c => widget.controller;
 
@@ -332,6 +335,7 @@ class _ChatPaneState extends State<ChatPane> {
     _c.removeListener(_onControllerChanged);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _workbench.dispose();
     super.dispose();
   }
 
@@ -393,17 +397,57 @@ class _ChatPaneState extends State<ChatPane> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: _c,
+      listenable: Listenable.merge([_c, _workbench]),
       builder: (context, _) {
         final pool = _c.pool;
         final ready = !pool.loading && !pool.checkingDownloads;
-        return Column(
+        final chat = Column(
           children: [
             Expanded(child: _buildBody()),
             if (ready && pool.downloaded.isNotEmpty) _buildInputArea(),
           ],
         );
+        final artifact = _workbench.artifact;
+        if (artifact == null) return chat;
+        final panel = WorkbenchPanel(artifact: artifact, onClose: _workbench.close);
+        // Wide windows get the workbench beside the chat; narrow ones cover it.
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth >= 900) {
+              return Row(
+                children: [
+                  Expanded(child: chat),
+                  const VerticalDivider(width: 1, color: Colors.white12),
+                  SizedBox(width: 420, child: panel),
+                ],
+              );
+            }
+            return Stack(children: [chat, Positioned.fill(child: panel)]);
+          },
+        );
       },
+    );
+  }
+
+  /// "Open in workbench" chips for each code block in an assistant reply. Empty
+  /// when the reply has no fenced code, so plain-text replies look unchanged.
+  Widget _buildArtifactChips(String text) {
+    final artifacts = extractArtifacts(text);
+    if (artifacts.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          for (final a in artifacts)
+            ActionChip(
+              avatar: const Icon(Icons.dashboard_customize_outlined, size: 16),
+              label: Text('Open ${a.label}', style: const TextStyle(fontSize: 12)),
+              onPressed: () => _workbench.open(a),
+            ),
+        ],
+      ),
     );
   }
 
@@ -637,6 +681,7 @@ class _ChatPaneState extends State<ChatPane> {
                     alignment: Alignment.centerLeft,
                     child: CopyButton(message.text),
                   ),
+                  if (!message.isError) _buildArtifactChips(message.text),
                 ],
                 if (message.sources.isNotEmpty) ...[
                   const SizedBox(height: 8),

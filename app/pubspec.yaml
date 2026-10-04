@@ -60,6 +60,8 @@ dependencies:
   # resolved transitively before this, pinned explicitly now that lib/ calls
   # into it directly instead of only depending on it through other packages.
   ffi: ^2.1.0
+  webview_windows: ^0.4.0
+  webview_flutter: ^4.14.1
 
 dev_dependencies:
   flutter_test:
