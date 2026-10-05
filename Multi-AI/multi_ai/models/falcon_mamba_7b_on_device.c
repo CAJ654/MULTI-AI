@@ -2453,11 +2453,11 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_kp_u_0_1_0 __pyx_string_tab[0]
 #define __pyx_kp_u_7B __pyx_string_tab[1]
 #define __pyx_kp_u_ __pyx_string_tab[2]
-#define __pyx_kp_u_FalconMamba_7B_On_Device __pyx_string_tab[3]
-#define __pyx_kp_u_Fast_at_long_context_moderate_ra __pyx_string_tab[4]
-#define __pyx_kp_u_Multi_AI_multi_ai_models_falcon __pyx_string_tab[5]
-#define __pyx_kp_u_Pure_state_space_Mamba_model_not __pyx_string_tab[6]
-#define __pyx_kp_u_TII_Falcon_License_2_0 __pyx_string_tab[7]
+#define __pyx_kp_u_Falcon_Mamba_7B_TII_License_Vers __pyx_string_tab[3]
+#define __pyx_kp_u_FalconMamba_7B_On_Device __pyx_string_tab[4]
+#define __pyx_kp_u_Fast_at_long_context_moderate_ra __pyx_string_tab[5]
+#define __pyx_kp_u_Multi_AI_multi_ai_models_falcon __pyx_string_tab[6]
+#define __pyx_kp_u_Pure_state_space_Mamba_model_not __pyx_string_tab[7]
 #define __pyx_kp_u_hf_tiiuae_falcon_mamba_7b_instru __pyx_string_tab[8]
 #define __pyx_n_u_Text __pyx_string_tab[9]
 #define __pyx_n_u_GGUF_SOURCE __pyx_string_tab[10]
@@ -2607,7 +2607,7 @@ static PyObject *__pyx_pf_8multi_ai_6models_25falcon_mamba_7b_on_device_get_info
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_float_4_2) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_modality, __pyx_mstate_global->__pyx_n_u_Text) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_context_tokens, __pyx_mstate_global->__pyx_int_8192) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_TII_Falcon_License_2_0) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_Falcon_Mamba_7B_TII_License_Vers) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_strengths, __pyx_mstate_global->__pyx_kp_u_Pure_state_space_Mamba_model_not) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_speed_profile, __pyx_mstate_global->__pyx_kp_u_Fast_at_long_context_moderate_ra) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   {
@@ -3146,22 +3146,22 @@ static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   int __pyx_clineno = 0;
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 9; } str_length_index[] = {{5},{2},{1},{26},{47},{54},{368},{22},{85},{4},{12},{20},{12},{8},{8},{10},{8},{12},{8},{13},{18},{18},{14},{8},{5},{7},{8},{41},{4},{6},{5},{7},{10},{7},{13},{9},{6},{7}};
+    const struct { const unsigned int length: 9; } str_length_index[] = {{5},{2},{1},{39},{26},{47},{54},{368},{85},{4},{12},{20},{12},{8},{8},{10},{8},{12},{8},{13},{18},{18},{14},{8},{5},{7},{8},{41},{4},{6},{5},{7},{10},{7},{13},{9},{6},{7}};
     const struct { const unsigned int length: 6; } bytes_length_index[] = {{55}};
     #ifndef CYTHON_COMPRESS_STRINGS
       #define CYTHON_COMPRESS_STRINGS 0
     #endif
-    #if (CYTHON_COMPRESS_STRINGS) == 1 /* compression: zlib (604 bytes) */
-static const char cstring[] = "x\332uSMo\324@\014U%\220\366\310\347\001N\346D+5\331\266BZ\350\005\265\224V\025\364\223\366<r\022\047;\352d&\035\317\224.\247\376\204=p\350O\3333\277\004Ov\027P%\"%\236\330\216\337\263\237\263\221o\346\033\243\335\217\373hJg\217\260-\020F\273\260zb\263=\272\321%\255\355#\007\300\000\306\331\006$\047\320mX\207\326U\3441\020x\374\016Z\234\306\350\206lIG\321\004\235\355\034\016\333tP\250\207)\325\360\260\356\021T\233 \324\250Pr\256z\204\274\233\334\236FO\300A\nf\334aI\260\332SY\353q\314:X\047\034\340\302\243\345\332\371\226<\374\272\373\t\301\243\266T%vh\341\375\346\207\255,\270+\262\300t\035\023\0310d\2330\206\"\n\345h\215\276\"I\016d\203vv^\233\327a\214,\000b|\265l\020J\354\266\323\213p\262\001Zj\235\237@\047\270s\200\226\204\t\204\261w\261\031w1@\345\210\355[\261\324x\254\010\244|\032\230|\240\255\3049\207\263w\352\213:\202\203\203\313}\341\243M\005>J\215:\0323\221\364l1\0148v\201\266\2454\375u.\3625\367n-\244|,C\026bj\376_\345VS\234\311\337\010.\353\302h\221\254GI\376\002\231\346=\257\345\027\207\207\213\017\341\253\000X\211l\345\033\343z{8\014ZG\244\205\\Y/W6*\262?\250\363>\262\324\307\203\244\335\207Iy\323\304\372B\306\251R\266\372vry\376\351\263R\247\223[\271\367t\031\324\261\004\317\251V\n\255H,\362+\271\352h\313d[Q\267\267\256\212\246\217Xl{{\035\321,\317\2018\210\321\254J\047r\004\331\010\344\211-\265\313\3778\270\224Q\220\222r\2622%\025X^-\204V\275\236\334P\220h\355t\240\226\315|\"\002\213F\207\311r\221\363\371\276\344\377]\344\304\250C\217-w^~\tO\235S\272b\n\025\325(EX\377 \325\024\334\021U\252\363\256\326F\270\373~E\371\006M$\026\341XV\363ne\366\350\361l\360d\2722\033<\237n.\036\317\246o\026\247\027\323\235\331\340\365\375\362\365\345\364l6xu\377\3647\214\034g\315";
-    PyObject *data = __Pyx_DecompressString(cstring, 604, 1);
+    #if (CYTHON_COMPRESS_STRINGS) == 1 /* compression: zlib (610 bytes) */
+static const char cstring[] = "x\332uSMo\0231\020U%\220r\344\363\000\247\341D+u7-B\n\364\202\372A\253\n\372I\313\325\362\356\316n\254z\355\255=\016\r\247\376\204\0348\364\247\345\314/a\354M\n\252D\244d\2743/\363\336\370\315n\344\233\371\306h\347\323\276\324\2455p$\333B\302h\007.\016\017\341\253*\321x\204\357\350\274\342\"#{\330=j\365\304d{8a\334\332\276\364\004\222@[\323\000c\010oh\035Z[\241\223\204\340\344\017P\234\324Z5hJ<\n\232T\266}8l\343AH5\214P\355\207ub\020m\244\020\243B\360\271J\014y7\2759\r\016\301\0237\314|\047K\204\325$e-\361\350u0\2265\300\205\223\306\327\326\265\350\340\367\355/ \047\225\301*\252\223\006>l~|\227\221\275B\003\036\257C\024\003\032MCc(\002K\016F\253+d0\241\2418v/l\035\306\3223\001\007W-\007\204Rv[\361\2015\031\202\026[\353\246\3201oO\320\"+\001\032;\033\232q\027\010*\213\336\274\345\210\215\223\025\002\267\217\027\306\177P\206\353>\207\263\367\342\2138\202\203\203\313}\326\243t\005.p\217:h=ex\266\270\0148\266\204[\334\032\377&\027x\345SZ\261(\027J\312(\304\341\377un5\326=\272\t\363zUh\305\226%\226\230/$[\236f^\313\307\365\326pHJ\005\211\013c\262dL6*\262\373\376\275\342,*~\000\332y\010\312\233&\324\027|q\"\242\305\267\223\313\363\335\317B\234No\370\273\247J\022\307\\<\307Z\010i\330L6Z\360\247\016\246\214\261e\037S\264U\320\251bd\233\342u\220zy&\364\304AyQZ\276xb\357\245\237\232R\331\374>\341K\036\032\005\267\343\345(\261\220\345\325\302R\221\234\363\r\022Wk\253\010[\257\373\027\201i\245V4]\256l\336oF\376\337\225\215\212:\351d\353;\307\313\357\260\263BU\036\251\302Zr\023\257~\242h\n\337!V\242s\266V\232\265\273\264\214~\"u@?\351\337\275\333\225\371\243\307\363\301\223\331\312|\360|\266\271\370y6{\2638\275\230m\317\007\257\357\226\217/gg\363\301\253\273\247\177\000\377\233mi";
+    PyObject *data = __Pyx_DecompressString(cstring, 610, 1);
     #define __Pyx_DecompressString_LZSS_UNUSED
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (973 bytes) */
-static const char bytes[] = "0.1.07B?FalconMamba 7B (On-Device)Fast at long context, moderate raw intelligenceMulti-AI/multi_ai/models/falcon_mamba_7b_on_device.pyxPure state-space (Mamba) model, not a Transformer \342\200\224 trained at an 8192-token sequence length but, unlike attention models, has no hard context cap: constant memory per token means throughput doesn\047t degrade on longer inputs. Q4_K_M GGUF build runs fully on-device. Note: the on-device build is the instruct-tuned FalconMamba (the server sibling runs the base model).TII Falcon License 2.0hf://tiiuae/falcon-mamba-7b-instruct-Q4_K_M-GGUF/falcon-mamba-7B-instruct-Q4_K_M.ggufText_GGUF_SOURCE__Pyx_PyDict_NextRef__annotate____func____main____module____name____qualname____test___is_coroutineasyncio.coroutinescline_in_tracebackcontext_tokensget_infoitemslicensemodalitymulti_ai.models.falcon_mamba_7b_on_devicenameparamsprintrepo_idsetdefaultsize_gbspeed_profilestrengthsvaluesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\330\010\031\230\021";
+    #else /* compression: none (990 bytes) */
+static const char bytes[] = "0.1.07B?Falcon Mamba 7B TII License Version 1.0FalconMamba 7B (On-Device)Fast at long context, moderate raw intelligenceMulti-AI/multi_ai/models/falcon_mamba_7b_on_device.pyxPure state-space (Mamba) model, not a Transformer \342\200\224 trained at an 8192-token sequence length but, unlike attention models, has no hard context cap: constant memory per token means throughput doesn\047t degrade on longer inputs. Q4_K_M GGUF build runs fully on-device. Note: the on-device build is the instruct-tuned FalconMamba (the server sibling runs the base model).hf://tiiuae/falcon-mamba-7b-instruct-Q4_K_M-GGUF/falcon-mamba-7B-instruct-Q4_K_M.ggufText_GGUF_SOURCE__Pyx_PyDict_NextRef__annotate____func____main____module____name____qualname____test___is_coroutineasyncio.coroutinescline_in_tracebackcontext_tokensget_infoitemslicensemodalitymulti_ai.models.falcon_mamba_7b_on_devicenameparamsprintrepo_idsetdefaultsize_gbspeed_profilestrengthsvaluesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\330\010\031\230\021";
     PyObject *data = NULL;
     #define __Pyx_DecompressString_UNUSED
     #define __Pyx_DecompressString_LZSS_UNUSED

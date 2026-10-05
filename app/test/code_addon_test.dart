@@ -26,15 +26,19 @@ class _FakeApi extends ApiClient {
   Future<DeviceSpecs> fetchDeviceSpecs() async => const DeviceSpecs();
 
   @override
-  Future<ServerModelCacheStatus> getServerModelCacheStatus(String modelId) async =>
-      const ServerModelCacheStatus(cached: true);
+  Future<ServerModelCacheStatus> getServerModelCacheStatus(
+    String modelId,
+  ) async => const ServerModelCacheStatus(cached: true);
 }
 
 class _NoDownloads extends ThrowingModelDownloadManager {
   const _NoDownloads();
 
   @override
-  Future<ModelCacheEntry?> get(String cacheKey, {String? cacheDirectory}) async => null;
+  Future<ModelCacheEntry?> get(
+    String cacheKey, {
+    String? cacheDirectory,
+  }) async => null;
 }
 
 /// Fake picker — no real dialog blocks under `flutter test`, matching how
@@ -82,7 +86,10 @@ class _FakeOpencodeClient implements OpencodeClient {
   }) async {}
 
   @override
-  Future<void> abort({required String projectRoot, required String sessionId}) async {}
+  Future<void> abort({
+    required String projectRoot,
+    required String sessionId,
+  }) async {}
 
   @override
   Stream<OpencodeEvent> events(String projectRoot) => _events.stream;
@@ -115,20 +122,15 @@ OpencodePartEvent _toolPart(
   required String status,
   Map<String, dynamic> input = const {},
   String? output,
-}) =>
-    OpencodePartEvent(sessionId, {
-      'id': 'prt_$callId',
-      'sessionID': sessionId,
-      'messageID': 'msg_1',
-      'type': 'tool',
-      'callID': callId,
-      'tool': tool,
-      'state': {
-        'status': status,
-        'input': input,
-        if (output != null) 'output': output,
-      },
-    });
+}) => OpencodePartEvent(sessionId, {
+  'id': 'prt_$callId',
+  'sessionID': sessionId,
+  'messageID': 'msg_1',
+  'type': 'tool',
+  'callID': callId,
+  'tool': tool,
+  'state': {'status': status, 'input': input, 'output': ?output},
+});
 
 OpencodePartEvent _textPart(String sessionId, String partId, String text) =>
     OpencodePartEvent(sessionId, {
@@ -160,9 +162,11 @@ Future<(CodeAgentController, _FakeOpencodeClient, Directory)> _buildReady(
   await controller.pickProjectRoot();
   controller.selectModel('alpha');
 
-  await tester.pumpWidget(MaterialApp(
-    home: Scaffold(body: CodeAgentPane(controller: controller)),
-  ));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(body: CodeAgentPane(controller: controller)),
+    ),
+  );
   await tester.pump();
 
   return (controller, client, root);
@@ -175,88 +179,114 @@ void main() {
   // resolve — see https://api.flutter.dev/flutter/flutter_test/WidgetTester/runAsync.html.
   // pumpWidget/pump/tap all still work as normal from inside that callback.
 
-  testWidgets('a completed tool-call turn renders a collapsed row and the final answer',
-      (tester) async {
-    await tester.runAsync(() async {
-      final (controller, client, root) = await _buildReady(tester);
-      addTearDown(() => root.delete(recursive: true));
+  testWidgets(
+    'a completed tool-call turn renders a collapsed row and the final answer',
+    (tester) async {
+      await tester.runAsync(() async {
+        final (controller, client, root) = await _buildReady(tester);
+        addTearDown(() => root.delete(recursive: true));
 
-      final run = controller.send('list the files');
-      await _letSendReachTheCompleter();
-      final sessionId = client.lastCreatedSessionId!;
-      client.emit(_toolPart(sessionId, 'call_1', 'list', status: 'completed', output: 'a.txt'));
-      client.emit(_textPart(sessionId, 'prt_1', 'Found some files.'));
-      client.emit(OpencodeSessionIdleEvent(sessionId));
-      await run;
-      await tester.pumpAndSettle();
+        final run = controller.send('list the files');
+        await _letSendReachTheCompleter();
+        final sessionId = client.lastCreatedSessionId!;
+        client.emit(
+          _toolPart(
+            sessionId,
+            'call_1',
+            'list',
+            status: 'completed',
+            output: 'a.txt',
+          ),
+        );
+        client.emit(_textPart(sessionId, 'prt_1', 'Found some files.'));
+        client.emit(OpencodeSessionIdleEvent(sessionId));
+        await run;
+        await tester.pumpAndSettle();
 
-      // Collapsed by default: the tool name is visible, the JSON arguments
-      // and result are not until it's expanded.
-      expect(find.textContaining('list'), findsWidgets);
-      expect(find.text('Found some files.'), findsOneWidget);
-      expect(find.text('Done', skipOffstage: false), findsOneWidget); // status chip
+        // Collapsed by default: the tool name is visible, the JSON arguments
+        // and result are not until it's expanded.
+        expect(find.textContaining('list'), findsWidgets);
+        expect(find.text('Found some files.'), findsOneWidget);
+        expect(
+          find.text('Done', skipOffstage: false),
+          findsOneWidget,
+        ); // status chip
 
-      await tester.tap(find.textContaining('list('));
-      await tester.pumpAndSettle();
+        await tester.tap(find.textContaining('list('));
+        await tester.pumpAndSettle();
 
-      expect(find.textContaining('a.txt'), findsWidgets);
-    });
-  });
+        expect(find.textContaining('a.txt'), findsWidgets);
+      });
+    },
+  );
 
-  testWidgets('a gated tool call shows the approval dialog, and Deny refuses it', (tester) async {
-    await tester.runAsync(() async {
-      final (controller, client, root) = await _buildReady(tester);
-      addTearDown(() => root.delete(recursive: true));
+  testWidgets(
+    'a gated tool call shows the approval dialog, and Deny refuses it',
+    (tester) async {
+      await tester.runAsync(() async {
+        final (controller, client, root) = await _buildReady(tester);
+        addTearDown(() => root.delete(recursive: true));
 
-      unawaited(controller.send('write a file'));
-      await _letSendReachTheCompleter();
-      final sessionId = client.lastCreatedSessionId!;
-      client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'pending'));
-      client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
-      await _letSendReachTheCompleter();
-      await tester.pumpAndSettle();
+        unawaited(controller.send('write a file'));
+        await _letSendReachTheCompleter();
+        final sessionId = client.lastCreatedSessionId!;
+        client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'pending'));
+        client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
+        await _letSendReachTheCompleter();
+        await tester.pumpAndSettle();
 
-      expect(find.text('Approve action'), findsOneWidget);
-      expect(find.textContaining('write'), findsWidgets);
+        expect(find.text('Approve action'), findsOneWidget);
+        expect(find.textContaining('write'), findsWidgets);
 
-      await tester.tap(find.text('Deny'));
-      await _letSendReachTheCompleter();
-      client.emit(_textPart(sessionId, 'prt_1', 'Okay, skipping that.'));
-      client.emit(OpencodeSessionIdleEvent(sessionId));
-      await _letSendReachTheCompleter();
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Deny'));
+        await _letSendReachTheCompleter();
+        client.emit(_textPart(sessionId, 'prt_1', 'Okay, skipping that.'));
+        client.emit(OpencodeSessionIdleEvent(sessionId));
+        await _letSendReachTheCompleter();
+        await tester.pumpAndSettle();
 
-      expect(find.text('Approve action'), findsNothing);
-      expect(find.text('Okay, skipping that.'), findsOneWidget);
-    });
-  });
+        expect(find.text('Approve action'), findsNothing);
+        expect(find.text('Okay, skipping that.'), findsOneWidget);
+      });
+    },
+  );
 
-  testWidgets('Allow once on a gated call closes the dialog and lets the turn finish',
-      (tester) async {
-    await tester.runAsync(() async {
-      final (controller, client, root) = await _buildReady(tester);
-      addTearDown(() => root.delete(recursive: true));
+  testWidgets(
+    'Allow once on a gated call closes the dialog and lets the turn finish',
+    (tester) async {
+      await tester.runAsync(() async {
+        final (controller, client, root) = await _buildReady(tester);
+        addTearDown(() => root.delete(recursive: true));
 
-      unawaited(controller.send('write a file'));
-      await _letSendReachTheCompleter();
-      final sessionId = client.lastCreatedSessionId!;
-      client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'pending'));
-      client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
-      await _letSendReachTheCompleter();
-      await tester.pumpAndSettle();
+        unawaited(controller.send('write a file'));
+        await _letSendReachTheCompleter();
+        final sessionId = client.lastCreatedSessionId!;
+        client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'pending'));
+        client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
+        await _letSendReachTheCompleter();
+        await tester.pumpAndSettle();
 
-      expect(find.text('Approve action'), findsOneWidget);
+        expect(find.text('Approve action'), findsOneWidget);
 
-      await tester.tap(find.text('Allow once'));
-      await _letSendReachTheCompleter();
-      client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'completed', output: 'wrote it'));
-      client.emit(_textPart(sessionId, 'prt_1', 'Done.'));
-      client.emit(OpencodeSessionIdleEvent(sessionId));
-      await _letSendReachTheCompleter();
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Allow once'));
+        await _letSendReachTheCompleter();
+        client.emit(
+          _toolPart(
+            sessionId,
+            'call_1',
+            'write',
+            status: 'completed',
+            output: 'wrote it',
+          ),
+        );
+        client.emit(_textPart(sessionId, 'prt_1', 'Done.'));
+        client.emit(OpencodeSessionIdleEvent(sessionId));
+        await _letSendReachTheCompleter();
+        await tester.pumpAndSettle();
 
-      expect(find.text('Approve action'), findsNothing);
-      expect(find.text('Done.'), findsOneWidget);
-    });
-  });
+        expect(find.text('Approve action'), findsNothing);
+        expect(find.text('Done.'), findsOneWidget);
+      });
+    },
+  );
 }

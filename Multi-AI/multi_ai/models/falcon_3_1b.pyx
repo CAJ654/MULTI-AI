@@ -13,7 +13,7 @@ def get_info():
         "size_gb": 2.15,
         "modality": "Text",
         "context_tokens": 32768,
-        "license": "TII Falcon License 2.0",
+        "license": "TII Falcon License (December 2024)",
         "strengths": "The smallest Falcon 3 size — instruction-following and basic reasoning "
         "tuned into a footprint light enough for constrained hardware.",
         "speed_profile": "Very fast, modest intelligence for its tiny size",

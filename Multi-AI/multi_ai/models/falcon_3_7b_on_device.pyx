@@ -18,7 +18,7 @@ def get_info():
         "size_gb": 4.69,
         "modality": "Text",
         "context_tokens": 32768,
-        "license": "TII Falcon License 2.0",
+        "license": "TII Falcon License (December 2024)",
         "strengths": "Mid-size Falcon 3 — stronger reasoning, coding, and instruction-following "
         "than the 3B. q4_k_m GGUF build runs fully on-device.",
         "speed_profile": "Fast, good general intelligence",

@@ -18,7 +18,7 @@ def get_info():
         "size_gb": 1.88,
         "modality": "Text",
         "context_tokens": 131072,
-        "license": "TII Falcon License 2.0",
+        "license": "TII Falcon License (December 2024)",
         "strengths": "Hybrid Transformer+Mamba architecture — combines attention quality with "
         "state-space efficiency, so it handles very long context cheaply. Q4_K_M GGUF build "
         "runs fully on-device.",

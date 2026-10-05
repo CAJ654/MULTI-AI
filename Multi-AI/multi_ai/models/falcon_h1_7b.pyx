@@ -13,7 +13,7 @@ def get_info():
         "size_gb": 14.49,
         "modality": "Text",
         "context_tokens": 131072,
-        "license": "TII Falcon License 2.0",
+        "license": "TII Falcon License (December 2024)",
         "strengths": "Hybrid Transformer+Mamba architecture — combines attention quality with "
         "state-space efficiency, so long-context handling stays cheap even at 7B.",
         "speed_profile": "Fast, efficient long-context handling",

@@ -2453,11 +2453,11 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_kp_u_0_1_0 __pyx_string_tab[0]
 #define __pyx_kp_u_7B __pyx_string_tab[1]
 #define __pyx_kp_u_ __pyx_string_tab[2]
-#define __pyx_kp_u_FalconMamba_7B __pyx_string_tab[3]
-#define __pyx_kp_u_Fast_at_long_context_moderate_ra __pyx_string_tab[4]
-#define __pyx_kp_u_Multi_AI_multi_ai_models_falcon __pyx_string_tab[5]
-#define __pyx_kp_u_Pure_state_space_Mamba_model_not __pyx_string_tab[6]
-#define __pyx_kp_u_TII_Falcon_License_2_0 __pyx_string_tab[7]
+#define __pyx_kp_u_Falcon_Mamba_7B_TII_License_Vers __pyx_string_tab[3]
+#define __pyx_kp_u_FalconMamba_7B __pyx_string_tab[4]
+#define __pyx_kp_u_Fast_at_long_context_moderate_ra __pyx_string_tab[5]
+#define __pyx_kp_u_Multi_AI_multi_ai_models_falcon __pyx_string_tab[6]
+#define __pyx_kp_u_Pure_state_space_Mamba_model_not __pyx_string_tab[7]
 #define __pyx_kp_u_tiiuae_falcon_mamba_7b __pyx_string_tab[8]
 #define __pyx_n_u_Text __pyx_string_tab[9]
 #define __pyx_n_u_REPO_ID __pyx_string_tab[10]
@@ -2611,7 +2611,7 @@ static PyObject *__pyx_pf_8multi_ai_6models_15falcon_mamba_7b_get_info(CYTHON_UN
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_float_14_55) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_modality, __pyx_mstate_global->__pyx_n_u_Text) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_context_tokens, __pyx_mstate_global->__pyx_int_8192) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_TII_Falcon_License_2_0) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_Falcon_Mamba_7B_TII_License_Vers) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_strengths, __pyx_mstate_global->__pyx_kp_u_Pure_state_space_Mamba_model_not) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_speed_profile, __pyx_mstate_global->__pyx_kp_u_Fast_at_long_context_moderate_ra) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
   {
@@ -3151,22 +3151,22 @@ static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   int __pyx_clineno = 0;
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 8; } str_length_index[] = {{5},{2},{1},{14},{47},{44},{226},{22},{22},{4},{8},{20},{12},{8},{8},{10},{8},{12},{8},{13},{18},{18},{14},{8},{5},{7},{8},{31},{4},{6},{5},{7},{10},{7},{13},{9},{6},{7}};
+    const struct { const unsigned int length: 8; } str_length_index[] = {{5},{2},{1},{39},{14},{47},{44},{226},{22},{4},{8},{20},{12},{8},{8},{10},{8},{12},{8},{13},{18},{18},{14},{8},{5},{7},{8},{31},{4},{6},{5},{7},{10},{7},{13},{9},{6},{7}};
     const struct { const unsigned int length: 6; } bytes_length_index[] = {{57}};
     #ifndef CYTHON_COMPRESS_STRINGS
       #define CYTHON_COMPRESS_STRINGS 0
     #endif
-    #if (CYTHON_COMPRESS_STRINGS) == 1 /* compression: zlib (495 bytes) */
-static const char cstring[] = "x\332]R\315n\0231\020\246\022\240p\343\367\322\323p\002\244d\223\364\022\340\202Z\225J\221(\204*wk\342\235\335X\365\317\326c\227\204S\037!\007\016}\264\234y\002\036\201\331M\302\201\225\3263\236\261\277\371\346\033\217\212q1\232\234}\272@\253\203\277D\267@\230\234] \047\300\0046\370\032$\236h\225\372\340BI\021\023A\304\037`$h\255\251\311k\272\3146\231\301\351t\350ZG\241\031\266G-\017\253\016U\271\026VM\026E\263^\315r$\340$0\003nP\023\274\355\212\276\353\320m\037|\220\3120\217\350\271\n\321Q\204\337w\277 E4\236\312\226\023zx?\376p2H\341\232<0\335\344\226\002X\362uZ\302\"\013\321\354\255\271&9\234\310\047\023\374\016\233\373\260D\226\002bbyh\01346\037\333\215p\362\t\034\271\020\327\320H\335]\001G\302\004\3222\206\\/\233\234\240\014\304\376\215X\252#\226\004\002\337\312$\027\214\227<\027\363\351\024vr\302\027\243\3113\301I1J\306d\244\275\"\203N\221\301d1\027\006\352\352\363\354\233\232\236+5[\257\344?7:\251\257\222\270\242J)\364\242\210\250\245\344\253\262\327\255u\"FgC\231m\227\361\350:{\223\321\036\374D\234\304\030V:\010\373$\002\"\257\2756\241\370\027`meU\002\047\nkZ\240\276\336\353\242\272\366\271\246$\331*\230D\216\355\256\035)\213\326\244\365a\332\305N\336\342\277i\267<\032\214\350\270\211\362Z\"5A\231\222)\225T\241\\e\363\223T\275\340\206\250TM\014\225\261\3028vs\344[\264\231\370\226\"\313\374\356\216\266\017\037m{O7G\333\336\213\315x\277<\337\274\336{/7\247\333\336\361\375a\373j\363\375\317\343\007O\216\357\237\375\005}\330\023\227";
-    PyObject *data = __Pyx_DecompressString(cstring, 495, 1);
+    #if (CYTHON_COMPRESS_STRINGS) == 1 /* compression: zlib (500 bytes) */
+static const char cstring[] = "x\332]R\275n\023A\020&\022 \323\361\333\244\032*@\262\3171\215\201\006%\n\221,\0210\221E\273\232\273\233;\257\274?\227\335\331`S\345\021\\P\344\321\\\363\004<\002sw6\005\047\335\316\354\314\354|\3377\273\047\331$;\231\236}\274@Sx\007\227hs\204\351\031,f3\370\254\013r\221\340;\205\250%)\225}\331\241\352\002#\0032\030\357j\2208\323\232\207`}I\001\231 \340\017\320\0224F\327\344\n\272L\206\365\350t6\266\255\243P\217\333R\023\307U\327U\331\266\255\232\346Y\263Y\317S \210,mF\261\301\202\340u\007\372\246\353n\206\340\274 \303\"\240\213\225\017\226\002\374\276\375\005\034P;*[N\350\340\335\344\375\333\021\373\0259\210t\235Z\n`\310\325\274\204<\t\321\344\214^\221\02439n\005\366t\206\260\304(\000bBy\220\005\0056\037\332\215pr\014\226\254\017\033h\004\267\007\260$L\200\227\301\247z\331$\206\322St\257\304R\035\260$\220\366\355\230\344\200v\222\217\031k\235\220\366\332G\235\366\3214_\010\226\272\3724\377\252f\347J\3157k\371\317u\301\352\213$\256\250R\n\235h\227\271(\371\252\344\212\326Z\221\335Y_&\323e\034\332\316^\0474\007\237)\262\030\035U\341\205\047\313\2500n\\\241}\366/\020\013#\253\222v2\313\202r,V\373\t\250Nh\254\211%[y\315d\243\351_\210\300\242\321\2749\334k\326\0172\373\357^[\036\r\006\264\261\t\362.\0025^\3512\022\227T\241\034\215\372\047\251:\217\rQ\251\232\340+m\204q\350n,\336\240I\024o\372\247x{\264\273\377`7x\274=\332\r\236m\047\373\345\351\366\345\336{\276=\335\r\216\357\016\333\027\333o\177\036\336{t|\367\344/:\017\0313";
+    PyObject *data = __Pyx_DecompressString(cstring, 500, 1);
     #define __Pyx_DecompressString_LZSS_UNUSED
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (734 bytes) */
-static const char bytes[] = "0.1.07B?FalconMamba 7BFast at long context, moderate raw intelligenceMulti-AI/multi_ai/models/falcon_mamba_7b.pyxPure state-space (Mamba) model, not a Transformer \342\200\224 trained at an 8192-token sequence length but, unlike attention models, has no hard context cap: constant memory per token means throughput doesn\047t degrade on longer inputs.TII Falcon License 2.0tiiuae/falcon-mamba-7bText_REPO_ID__Pyx_PyDict_NextRef__annotate____func____main____module____name____qualname____test___is_coroutineasyncio.coroutinescline_in_tracebackcontext_tokensget_infoitemslicensemodalitymulti_ai.models.falcon_mamba_7bnameparamsprintrepo_idsetdefaultsize_gbspeed_profilestrengthsvaluesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\360\006\000\t\032\230\021";
+    #else /* compression: none (751 bytes) */
+static const char bytes[] = "0.1.07B?Falcon Mamba 7B TII License Version 1.0FalconMamba 7BFast at long context, moderate raw intelligenceMulti-AI/multi_ai/models/falcon_mamba_7b.pyxPure state-space (Mamba) model, not a Transformer \342\200\224 trained at an 8192-token sequence length but, unlike attention models, has no hard context cap: constant memory per token means throughput doesn\047t degrade on longer inputs.tiiuae/falcon-mamba-7bText_REPO_ID__Pyx_PyDict_NextRef__annotate____func____main____module____name____qualname____test___is_coroutineasyncio.coroutinescline_in_tracebackcontext_tokensget_infoitemslicensemodalitymulti_ai.models.falcon_mamba_7bnameparamsprintrepo_idsetdefaultsize_gbspeed_profilestrengthsvaluesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\360\006\000\t\032\230\021";
     PyObject *data = NULL;
     #define __Pyx_DecompressString_UNUSED
     #define __Pyx_DecompressString_LZSS_UNUSED

@@ -18,7 +18,7 @@ def get_info():
         "size_gb": 4.2,
         "modality": "Text",
         "context_tokens": 8192,
-        "license": "TII Falcon License 2.0",
+        "license": "Falcon Mamba 7B TII License Version 1.0",
         "strengths": "Pure state-space (Mamba) model, not a Transformer — trained at an 8192-token sequence length but, unlike attention models, has no hard context cap: constant memory per token means throughput doesn't degrade on longer inputs. Q4_K_M GGUF build runs fully on-device. Note: the on-device build is the instruct-tuned FalconMamba (the server sibling runs the base model).",
         "speed_profile": "Fast at long context, moderate raw intelligence",
     }

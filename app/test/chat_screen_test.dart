@@ -328,7 +328,7 @@ void main() {
     expect(find.text('Very fast, minimal intelligence'), findsOneWidget);
     expect(find.text('Context Window'), findsOneWidget);
     expect(find.textContaining('1K tokens'), findsWidgets);
-    expect(find.text('Open Source License'), findsOneWidget);
+    expect(find.text('License'), findsOneWidget);
     expect(find.text('MIT'), findsOneWidget);
     expect(find.text('124M'), findsOneWidget);
   });

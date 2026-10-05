@@ -60,7 +60,11 @@ class AddOnManifest {
 /// only for the active add-on.
 @immutable
 class AddOnSurface {
-  const AddOnSurface({required this.mainPane, this.sidebarPanel, this.topBarSlot});
+  const AddOnSurface({
+    required this.mainPane,
+    this.sidebarPanel,
+    this.topBarSlot,
+  });
 
   /// The main area, right of the sidebar. Owns everything below the top bar,
   /// including a bottom input bar if the add-on wants one.
@@ -108,13 +112,8 @@ abstract class AddOn {
 /// than injected wholesale, so an undeclared use fails loudly at the point of
 /// the mistake instead of silently working.
 class AddOnContext {
-  AddOnContext({
-    required AddOnManifest manifest,
-    ModelPool? modelPool,
-    void Function(String addOnId)? showTab,
-  })  : _manifest = manifest,
-        _modelPool = modelPool,
-        _showTab = showTab;
+  AddOnContext({required this._manifest, ModelPool? modelPool, this._showTab})
+    : _modelPool = modelPool;
 
   final AddOnManifest _manifest;
   final ModelPool? _modelPool;

@@ -18,7 +18,7 @@ def get_info():
         "size_gb": 21.32,
         "modality": "Text",
         "context_tokens": 131072,
-        "license": "TII Falcon License 2.0",
+        "license": "TII Falcon License (December 2024)",
         "strengths": "Falcon-H1's flagship — hybrid Transformer+Mamba quality at frontier-ish "
         "scale, with the family's cheap long-context handling. Q4_K_M GGUF build runs fully "
         "on-device, though still a heavy download.",

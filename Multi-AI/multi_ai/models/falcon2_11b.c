@@ -2450,10 +2450,10 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_kp_u_0_1_0 __pyx_string_tab[0]
 #define __pyx_kp_u_11B __pyx_string_tab[1]
 #define __pyx_kp_u_ __pyx_string_tab[2]
-#define __pyx_kp_u_Falcon2_11B __pyx_string_tab[3]
-#define __pyx_kp_u_Moderate_speed_solid_general_int __pyx_string_tab[4]
-#define __pyx_kp_u_Multi_AI_multi_ai_models_falcon2 __pyx_string_tab[5]
-#define __pyx_kp_u_TII_Falcon_License_2_0 __pyx_string_tab[6]
+#define __pyx_kp_u_Falcon_2_11B_TII_License_Version __pyx_string_tab[3]
+#define __pyx_kp_u_Falcon2_11B __pyx_string_tab[4]
+#define __pyx_kp_u_Moderate_speed_solid_general_int __pyx_string_tab[5]
+#define __pyx_kp_u_Multi_AI_multi_ai_models_falcon2 __pyx_string_tab[6]
 #define __pyx_kp_u_TII_s_multilingual_generalist_de __pyx_string_tab[7]
 #define __pyx_kp_u_tiiuae_falcon_11B __pyx_string_tab[8]
 #define __pyx_n_u_Text __pyx_string_tab[9]
@@ -2608,7 +2608,7 @@ static PyObject *__pyx_pf_8multi_ai_6models_11falcon2_11b_get_info(CYTHON_UNUSED
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_float_22_21) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_modality, __pyx_mstate_global->__pyx_n_u_Text) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_context_tokens, __pyx_mstate_global->__pyx_int_8192) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_TII_Falcon_License_2_0) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_Falcon_2_11B_TII_License_Version) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_strengths, __pyx_mstate_global->__pyx_kp_u_TII_s_multilingual_generalist_de) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_speed_profile, __pyx_mstate_global->__pyx_kp_u_Moderate_speed_solid_general_int) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
   {
@@ -3148,10 +3148,10 @@ static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   int __pyx_clineno = 0;
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 7; } str_length_index[] = {{5},{3},{1},{11},{42},{40},{22},{93},{17},{4},{8},{20},{12},{8},{8},{10},{8},{12},{8},{13},{18},{18},{14},{8},{5},{7},{8},{27},{4},{6},{5},{7},{10},{7},{13},{9},{6},{7}};
+    const struct { const unsigned int length: 7; } str_length_index[] = {{5},{3},{1},{36},{11},{42},{40},{93},{17},{4},{8},{20},{12},{8},{8},{10},{8},{12},{8},{13},{18},{18},{14},{8},{5},{7},{8},{27},{4},{6},{5},{7},{10},{7},{13},{9},{6},{7}};
     const struct { const unsigned int length: 6; } bytes_length_index[] = {{55}};
-    /* compression: none (579 bytes) */
-static const char bytes[] = "0.1.011B?Falcon2 11BModerate speed, solid general intelligenceMulti-AI/multi_ai/models/falcon2_11b.pyxTII Falcon License 2.0TII\047s multilingual generalist \342\200\224 decent breadth across languages for a mid-size dense model.tiiuae/falcon-11BText_REPO_ID__Pyx_PyDict_NextRef__annotate____func____main____module____name____qualname____test___is_coroutineasyncio.coroutinescline_in_tracebackcontext_tokensget_infoitemslicensemodalitymulti_ai.models.falcon2_11bnameparamsprintrepo_idsetdefaultsize_gbspeed_profilestrengthsvaluesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\340\010\031\230\021";
+    /* compression: none (593 bytes) */
+static const char bytes[] = "0.1.011B?Falcon 2 11B TII License Version 1.0Falcon2 11BModerate speed, solid general intelligenceMulti-AI/multi_ai/models/falcon2_11b.pyxTII\047s multilingual generalist \342\200\224 decent breadth across languages for a mid-size dense model.tiiuae/falcon-11BText_REPO_ID__Pyx_PyDict_NextRef__annotate____func____main____module____name____qualname____test___is_coroutineasyncio.coroutinescline_in_tracebackcontext_tokensget_infoitemslicensemodalitymulti_ai.models.falcon2_11bnameparamsprintrepo_idsetdefaultsize_gbspeed_profilestrengthsvaluesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\340\010\031\230\021";
     PyObject *data = NULL;
     PyObject **stringtab = __pyx_mstate->__pyx_string_tab;
     Py_ssize_t pos = 0;

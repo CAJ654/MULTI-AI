@@ -69,6 +69,17 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
+  // Flutter's build already bundles every pub package's license; this adds the
+  // app's own Apache-2.0 notice on the same page. Python packages are listed in
+  // NOTICE-python.txt, shipped with the installer.
+  void _openLicenses() {
+    showLicensePage(
+      context: context,
+      applicationName: 'Multi-AI',
+      applicationLegalese: 'Copyright 2026 Christian A.J. Diaz. Licensed under the Apache License, Version 2.0.',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pool = _host.modelPool;
@@ -262,6 +273,11 @@ class _AppShellState extends State<AppShell> {
                             color: Colors.white)),
                   )
                 : slot(context),
+          ),
+          IconButton(
+            tooltip: 'Open-source licenses',
+            icon: const Icon(Icons.article_outlined, size: 20, color: Colors.white54),
+            onPressed: _openLicenses,
           ),
           // Only in a packaged build. Everything it controls is about the
           // downloaded runtime and what uninstalling does to it, neither of

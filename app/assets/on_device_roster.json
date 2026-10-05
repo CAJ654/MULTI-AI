@@ -47,7 +47,7 @@
       "size_gb": 6.85,
       "modality": "Text",
       "context_tokens": 8192,
-      "license": "TII Falcon License 2.0",
+      "license": "Falcon 2 11B TII License Version 1.0",
       "strengths": "TII's multilingual generalist — decent breadth across languages for a mid-size dense model. Q4_K_M GGUF build runs fully on-device.",
       "speed_profile": "Moderate speed, solid general intelligence"
     },
@@ -64,7 +64,7 @@
       "size_gb": 2.01,
       "modality": "Text",
       "context_tokens": 32768,
-      "license": "TII Falcon License 2.0",
+      "license": "TII Falcon License (December 2024)",
       "strengths": "Efficient small model tuned for reasoning, coding, and instruction-following at an edge-friendly size. q4_k_m GGUF build runs fully on-device.",
       "speed_profile": "Fast, good intelligence for its size"
     },
@@ -98,7 +98,7 @@
       "size_gb": 0.94,
       "modality": "Text",
       "context_tokens": 131072,
-      "license": "TII Falcon License 2.0",
+      "license": "TII Falcon License (December 2024)",
       "strengths": "Hybrid Transformer+Mamba architecture — combines attention quality with state-space efficiency, so it handles very long context cheaply. Q4_K_M GGUF build runs fully on-device.",
       "speed_profile": "Fast, efficient long-context handling"
     },
@@ -115,7 +115,7 @@
       "size_gb": 4.2,
       "modality": "Text",
       "context_tokens": 8192,
-      "license": "TII Falcon License 2.0",
+      "license": "Falcon Mamba 7B TII License Version 1.0",
       "strengths": "Pure state-space (Mamba) model, not a Transformer — trained at an 8192-token sequence length but, unlike attention models, has no hard context cap: constant memory per token means throughput doesn't degrade on longer inputs. Q4_K_M GGUF build runs fully on-device. Note: the on-device build is the instruct-tuned FalconMamba (the server sibling runs the base model).",
       "speed_profile": "Fast at long context, moderate raw intelligence"
     },

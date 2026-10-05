@@ -2455,7 +2455,7 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_kp_u_ __pyx_string_tab[2]
 #define __pyx_kp_u_Falcon3_1B_On_Device __pyx_string_tab[3]
 #define __pyx_kp_u_Multi_AI_multi_ai_models_falcon __pyx_string_tab[4]
-#define __pyx_kp_u_TII_Falcon_License_2_0 __pyx_string_tab[5]
+#define __pyx_kp_u_TII_Falcon_License_December_2024 __pyx_string_tab[5]
 #define __pyx_kp_u_The_smallest_Falcon_3_size_instr __pyx_string_tab[6]
 #define __pyx_kp_u_Very_fast_modest_intelligence_fo __pyx_string_tab[7]
 #define __pyx_kp_u_hf_tiiuae_Falcon3_1B_Instruct_GG __pyx_string_tab[8]
@@ -2607,7 +2607,7 @@ static PyObject *__pyx_pf_8multi_ai_6models_21falcon_3_1b_on_device_get_info(CYT
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_size_gb, __pyx_mstate_global->__pyx_float_0_67) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_modality, __pyx_mstate_global->__pyx_n_u_Text) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_context_tokens, __pyx_mstate_global->__pyx_int_32768) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_TII_Falcon_License_2_0) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_license, __pyx_mstate_global->__pyx_kp_u_TII_Falcon_License_December_2024) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_strengths, __pyx_mstate_global->__pyx_kp_u_The_smallest_Falcon_3_size_instr) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_speed_profile, __pyx_mstate_global->__pyx_kp_u_Very_fast_modest_intelligence_fo) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
   {
@@ -3146,22 +3146,22 @@ static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   int __pyx_clineno = 0;
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 8; } str_length_index[] = {{5},{2},{1},{22},{50},{22},{174},{48},{68},{4},{12},{20},{12},{8},{8},{10},{8},{12},{8},{13},{18},{18},{14},{8},{5},{7},{8},{37},{4},{6},{5},{7},{10},{7},{13},{9},{6},{7}};
+    const struct { const unsigned int length: 8; } str_length_index[] = {{5},{2},{1},{22},{50},{34},{174},{48},{68},{4},{12},{20},{12},{8},{8},{10},{8},{12},{8},{13},{18},{18},{14},{8},{5},{7},{8},{37},{4},{6},{5},{7},{10},{7},{13},{9},{6},{7}};
     const struct { const unsigned int length: 6; } bytes_length_index[] = {{57}};
     #ifndef CYTHON_COMPRESS_STRINGS
       #define CYTHON_COMPRESS_STRINGS 0
     #endif
-    #if (CYTHON_COMPRESS_STRINGS) == 1 /* compression: zlib (499 bytes) */
-static const char cstring[] = "x\332mR\315n\323@\020\246\022\240p\343\367\322\323p\003\t\3331\341\304\005\265\224V\221\200BI\271\2566\366\254\275\312z\327\335\235McN}\204\0348\364\321r\346\tx\004\306N\302\251\226\2743;3\232\357\373fg\234\346\3518?\376p*M\341\354\004\362cxun\223\023\\\352\002_\177\211\206tr4\315\232\336\021Rg\215+\321\204L\r\345b\"\362\271`[\016\345i\333\255f\323)l{\301g\016\331\200\3606\035\317j\204\320Hc0\320>=\201\240\177!\374\271\371\r\332\006\362\261 \355l\242\2341\356Z\333\n\244-a.\203.\300\243\014\316\3661\212\026K\256\047\007\022\224s\324z\276\200\321UM\200\326\305\252\346\260\007\006\340\226R\367\325\265\364\345\265\364\230\302\325;\261\020\r\234\235]\236\302<jS\202\2176\200\212\306t\300\330;\031?\321w\240d\2407\320\313e\312\214\201\206A\320\0268\364\327\024\200\264\355\006\r\265z\237e\244u\224\230\355\346\230\344\307\311t\247*\351\361\356Ll\371\244U\025\325\014W$\372B\361\343\374\362\342\343\047!\276u+\376OtA\342+\047/P\t!\255u$\t\005\177*\332\242\267\r\253\034\254+\243\0312V6\203\275\212\322\354}b\031lt\020\205\363.2w\236ig\013\355\322\377\201P\030>\005\267\343\321\0258\227\305\202)S\317\214\334\202\337\262B\342\254r\232\260\tf\373\274\014+\215\246n\277!\351vC\322;7\244g\323J/\2330\274\233\307\326\t]\006\244\022\225\344\006\3754E5\017-b)Z\357\224\3567\306\243\255\250\016Ki\"\206%\372\300{rs\260\271\377`3z\274>\330\214\236\255\363\335\361t\375r\347=_\037mF\207\267\373\353\213\365\367\277\017\357=:\274}\362\017\320^\030\335";
-    PyObject *data = __Pyx_DecompressString(cstring, 499, 1);
+    #if (CYTHON_COMPRESS_STRINGS) == 1 /* compression: zlib (509 bytes) */
+static const char cstring[] = "x\332mR\315n\323@\020\246\022\240p\343\367\322\323pk%\354\304MO\\PCh\025\t(\224\224\353j\275\236\265WY\357\272\373\223\306\234\372\0109p\350\243\345\314\023\360\010\214\235\204S-ygvf4\337\367\315\316(\315\322Q6\371p\316\265\260f\014\331\004\216.M2\305\245\022x\374%\352\240\222\263\331\260\356\034\306\325\260\266\005j?\224}9\033\263,gd\213\276<m\332\325|6\203m/\370L!\343\021\216\246(\260\316\321\301\311\350\344\364x^!\370\232k\215>\354K\307\340\325/\204?w\277A\031\037\\\024AY\223H\253\265\275U\246\004n\n\310\271W\002\034roM\027\013\321`A\365\301\002\007imh\034]@\253\262\n\200\306\306\262\242\260\003\002\240\226\\u\325\025w\305-w\230\302\315)[\260\032..\256\317!\217J\027\340\242\361 \243\326-\020\366N\322Ot-H\356\303;\350\244\023e\302@M h\004\366\375U\360\020\224i{\r\225|?\034\006\245\"\307\341n\246I6If;UI\207\367`b\313\047-\313(\347\270\n\254+d?.\257\257>~b\354[\273\242\177\252D`_)y\205\2221n\214\r< \243OF#:[\223\312\336\332\"\352>cx\335\333\233\310\365\336\017$\203\214\362LXg#q\247\231\266F(\233\376\017x\241\351d\324\216F\0470\347bA\224C\307,\330\005\275k\211\201\262\322\252\200\265\327\333\247&X\256Uh\367\333\222n\267%}p[:6\rw\274\366\375\2739l,S\205\307P\240\344\324\240\233&+s\337 \026\254qV\252nc\034\2322T~\311uD\277D\347iO\356\0166\217\237l\006\317\327\007\233\301\253u\266;^\256\337\356\274\327\353\263\315\340\360~\177}\263\376\376\367\351\243g\207\367/\376\001\020\227\034\235";
+    PyObject *data = __Pyx_DecompressString(cstring, 509, 1);
     #define __Pyx_DecompressString_LZSS_UNUSED
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (753 bytes) */
-static const char bytes[] = "0.1.01B?Falcon3 1B (On-Device)Multi-AI/multi_ai/models/falcon_3_1b_on_device.pyxTII Falcon License 2.0The smallest Falcon 3 size \342\200\224 instruction-following and basic reasoning tuned into a footprint light enough for constrained hardware. q4_k_m GGUF build runs fully on-device.Very fast, modest intelligence for its tiny sizehf://tiiuae/Falcon3-1B-Instruct-GGUF/Falcon3-1B-Instruct-q4_k_m.ggufText_GGUF_SOURCE__Pyx_PyDict_NextRef__annotate____func____main____module____name____qualname____test___is_coroutineasyncio.coroutinescline_in_tracebackcontext_tokensget_infoitemslicensemodalitymulti_ai.models.falcon_3_1b_on_devicenameparamsprintrepo_idsetdefaultsize_gbspeed_profilestrengthsvaluesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\360\006\000\t\032\230\021";
+    #else /* compression: none (765 bytes) */
+static const char bytes[] = "0.1.01B?Falcon3 1B (On-Device)Multi-AI/multi_ai/models/falcon_3_1b_on_device.pyxTII Falcon License (December 2024)The smallest Falcon 3 size \342\200\224 instruction-following and basic reasoning tuned into a footprint light enough for constrained hardware. q4_k_m GGUF build runs fully on-device.Very fast, modest intelligence for its tiny sizehf://tiiuae/Falcon3-1B-Instruct-GGUF/Falcon3-1B-Instruct-q4_k_m.ggufText_GGUF_SOURCE__Pyx_PyDict_NextRef__annotate____func____main____module____name____qualname____test___is_coroutineasyncio.coroutinescline_in_tracebackcontext_tokensget_infoitemslicensemodalitymulti_ai.models.falcon_3_1b_on_devicenameparamsprintrepo_idsetdefaultsize_gbspeed_profilestrengthsvaluesversion\200\001\330\004\005\330\010\020\220\001\330\010\023\2201\330\010\023\2201\330\010\022\220!\330\010\023\2201\330\010\024\220A\330\010\032\230!\330\010\023\2201\330\010\025\220Q\360\006\000\t\032\230\021";
     PyObject *data = NULL;
     #define __Pyx_DecompressString_UNUSED
     #define __Pyx_DecompressString_LZSS_UNUSED

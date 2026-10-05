@@ -18,14 +18,12 @@ import 'model_pool.dart';
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
     super.key,
-    ApiClient? apiClient,
+    this._apiClient,
     ModelDownloadManager? downloadManager,
-    AttachmentSource? attachmentSource,
+    this._attachmentSource,
     this.onMarkdownLinkTap,
     this.addOnStateStore,
-  })  : _apiClient = apiClient,
-        _downloadManager = downloadManager,
-        _attachmentSource = attachmentSource;
+  }) : _downloadManager = downloadManager;
 
   // Injectable so widget tests can supply a fake instead of hitting the
   // network; production code leaves this null and gets a real ApiClient.

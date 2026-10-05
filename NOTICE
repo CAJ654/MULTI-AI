@@ -1,0 +1,38 @@
+Multi-AI
+Copyright 2026 Christian A.J. Diaz
+
+This product includes software developed by third parties. Each component
+is licensed under its own terms.
+
+Flutter and Dart packages: full license texts are compiled into the app and
+shown under the "Open-source licenses" button in the top bar.
+
+Python dependencies installed at first launch: see NOTICE-python.txt, shipped
+with the backend. The LGPL text for soxr is in licenses/.
+
+Native libraries bundled with the Windows build:
+  llamadart (llamadart.dll, mtmd.dll, ggml-vulkan.dll)
+      MIT License, Copyright (c) 2024 Jhin Lee
+  llama.cpp and ggml (llama.dll, ggml*.dll, llama-common.dll)
+      MIT License, Copyright (c) the ggml authors
+  LiteRT-LM native runtime (LiteRtLm.dll, libLiteRt*.dll, libGemmaModelConstraintProvider.dll)
+      Packaged by litert-lm-native, MIT License, Copyright (c) 2026
+      litert-lm-native contributors. The runtime is Google's LiteRT-LM and
+      LiteRT, licensed under Apache-2.0 upstream.
+  Dawn / WebGPU (libwebgpu_dawn.dll)
+      BSD 3-Clause License, Copyright (c) The Dawn & Tint Authors
+  velopack_flutter (velopack_flutter.dll; Velopack Rust core)
+      MIT License, Copyright (c) 2018 Leon Kukuk
+  webview_windows (webview_windows_plugin.dll)
+      BSD 3-Clause License, Copyright (c) 2021 Niklas Schulze
+      Uses the Microsoft Edge WebView2 runtime (WebView2Loader.dll), governed by
+      Microsoft's terms.
+  vcomp140.dll
+      Microsoft Visual C++ OpenMP runtime, governed by Microsoft's redistribution terms.
+
+The release archive from litert-lm-native contains no license files of its own;
+the licenses above come from the upstream repositories.
+
+Model weights are not part of this distribution. Each model's license is
+shown in the app before use; several (Gemma, Llama, Falcon, MedGemma, and
+others) use their own terms rather than an open-source license.

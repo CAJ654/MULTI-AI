@@ -13,7 +13,7 @@ def get_info():
         "size_gb": 6.46,
         "modality": "Text",
         "context_tokens": 32768,
-        "license": "TII Falcon License 2.0",
+        "license": "TII Falcon License (December 2024)",
         "strengths": "Efficient small model tuned for reasoning, coding, and instruction-following "
         "at an edge-friendly size.",
         "speed_profile": "Fast, good intelligence for its size",

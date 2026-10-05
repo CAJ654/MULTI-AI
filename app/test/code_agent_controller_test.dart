@@ -24,15 +24,19 @@ class _FakeApi extends ApiClient {
   Future<DeviceSpecs> fetchDeviceSpecs() async => const DeviceSpecs();
 
   @override
-  Future<ServerModelCacheStatus> getServerModelCacheStatus(String modelId) async =>
-      const ServerModelCacheStatus(cached: true);
+  Future<ServerModelCacheStatus> getServerModelCacheStatus(
+    String modelId,
+  ) async => const ServerModelCacheStatus(cached: true);
 }
 
 class _NoDownloads extends ThrowingModelDownloadManager {
   const _NoDownloads();
 
   @override
-  Future<ModelCacheEntry?> get(String cacheKey, {String? cacheDirectory}) async => null;
+  Future<ModelCacheEntry?> get(
+    String cacheKey, {
+    String? cacheDirectory,
+  }) async => null;
 }
 
 /// Reports every on-device (GGUF) source as already cached — unlike
@@ -43,7 +47,10 @@ class _FakeDownloads extends ThrowingModelDownloadManager {
   const _FakeDownloads();
 
   @override
-  Future<ModelCacheEntry?> get(String cacheKey, {String? cacheDirectory}) async {
+  Future<ModelCacheEntry?> get(
+    String cacheKey, {
+    String? cacheDirectory,
+  }) async {
     final now = DateTime.now();
     return ModelCacheEntry(
       sourceCanonicalKey: cacheKey,
@@ -125,7 +132,10 @@ class _FakeOpencodeClient implements OpencodeClient {
   }
 
   @override
-  Future<void> abort({required String projectRoot, required String sessionId}) async {
+  Future<void> abort({
+    required String projectRoot,
+    required String sessionId,
+  }) async {
     abortCalls.add(sessionId);
   }
 
@@ -168,21 +178,20 @@ OpencodePartEvent _toolPart(
   Map<String, dynamic> input = const {},
   String? output,
   String? error,
-}) =>
-    OpencodePartEvent(sessionId, {
-      'id': 'prt_$callId',
-      'sessionID': sessionId,
-      'messageID': 'msg_1',
-      'type': 'tool',
-      'callID': callId,
-      'tool': tool,
-      'state': {
-        'status': status,
-        'input': input,
-        if (output != null) 'output': output,
-        if (error != null) 'error': error,
-      },
-    });
+}) => OpencodePartEvent(sessionId, {
+  'id': 'prt_$callId',
+  'sessionID': sessionId,
+  'messageID': 'msg_1',
+  'type': 'tool',
+  'callID': callId,
+  'tool': tool,
+  'state': {
+    'status': status,
+    'input': input,
+    'output': ?output,
+    'error': ?error,
+  },
+});
 
 OpencodePartEvent _textPart(String sessionId, String partId, String text) =>
     OpencodePartEvent(sessionId, {
@@ -195,13 +204,12 @@ OpencodePartEvent _textPart(String sessionId, String partId, String text) =>
 
 const _alpha = ModelInfo(id: 'alpha', name: 'Alpha');
 
-Future<
-    (
-      CodeAgentController,
-      _FakeOpencodeClient,
-      Directory,
-    )> _buildReady({String? root}) async {
-  final tempRoot = root == null ? await Directory.systemTemp.createTemp('code_agent_test') : null;
+Future<(CodeAgentController, _FakeOpencodeClient, Directory)> _buildReady({
+  String? root,
+}) async {
+  final tempRoot = root == null
+      ? await Directory.systemTemp.createTemp('code_agent_test')
+      : null;
   final api = _FakeApi([_alpha]);
   final pool = ModelPool(api: api, downloadManager: const _NoDownloads());
   await pool.refresh();
@@ -246,7 +254,11 @@ void main() {
   });
 
   test('availableModels only lists on-device (GGUF) models', () async {
-    const onDevice = ModelInfo(id: 'on-device', name: 'On-device', gguf: 'hf://x/y/z.gguf');
+    const onDevice = ModelInfo(
+      id: 'on-device',
+      name: 'On-device',
+      gguf: 'hf://x/y/z.gguf',
+    );
     const serverOnly = ModelInfo(id: 'server-only', name: 'Server-only');
     final api = _FakeApi([onDevice, serverOnly]);
     // Both need to report as downloaded for this to test the filter this
@@ -272,140 +284,204 @@ void main() {
     expect(ids, isNot(contains('server-only')));
   });
 
-  test('a tool-call turn followed by a final answer updates the transcript in order', () async {
-    final (controller, client, root) = await _buildReady();
-    addTearDown(() => root.delete(recursive: true));
+  test(
+    'a tool-call turn followed by a final answer updates the transcript in order',
+    () async {
+      final (controller, client, root) = await _buildReady();
+      addTearDown(() => root.delete(recursive: true));
 
-    final run = controller.send('list the files');
-    await _letSendReachTheCompleter();
-    final sessionId = client.lastCreatedSessionId!;
+      final run = controller.send('list the files');
+      await _letSendReachTheCompleter();
+      final sessionId = client.lastCreatedSessionId!;
 
-    client.emit(_toolPart(sessionId, 'call_1', 'list', status: 'completed', output: 'a.txt'));
-    client.emit(_textPart(sessionId, 'prt_1', 'Found some files.'));
-    client.emit(OpencodeSessionIdleEvent(sessionId));
-    await run;
+      client.emit(
+        _toolPart(
+          sessionId,
+          'call_1',
+          'list',
+          status: 'completed',
+          output: 'a.txt',
+        ),
+      );
+      client.emit(_textPart(sessionId, 'prt_1', 'Found some files.'));
+      client.emit(OpencodeSessionIdleEvent(sessionId));
+      await run;
 
-    expect(controller.running, isFalse);
-    expect(controller.error, isNull);
-    expect(controller.transcript, hasLength(3));
-    expect(controller.transcript[0], isA<UserTranscriptEntry>());
-    final toolEntry = controller.transcript[1] as ToolCallTranscriptEntry;
-    expect(toolEntry.name, 'list');
-    expect(toolEntry.status, ToolCallStatus.done);
-    expect(toolEntry.resultText, 'a.txt');
-    final answer = controller.transcript[2] as AssistantTextTranscriptEntry;
-    expect(answer.text, 'Found some files.');
-  });
+      expect(controller.running, isFalse);
+      expect(controller.error, isNull);
+      expect(controller.transcript, hasLength(3));
+      expect(controller.transcript[0], isA<UserTranscriptEntry>());
+      final toolEntry = controller.transcript[1] as ToolCallTranscriptEntry;
+      expect(toolEntry.name, 'list');
+      expect(toolEntry.status, ToolCallStatus.done);
+      expect(toolEntry.resultText, 'a.txt');
+      final answer = controller.transcript[2] as AssistantTextTranscriptEntry;
+      expect(answer.text, 'Found some files.');
+    },
+  );
 
-  test('a gated tool call waits for approval before opencode is told to proceed', () async {
-    final (controller, client, root) = await _buildReady();
-    addTearDown(() => root.delete(recursive: true));
+  test(
+    'a gated tool call waits for approval before opencode is told to proceed',
+    () async {
+      final (controller, client, root) = await _buildReady();
+      addTearDown(() => root.delete(recursive: true));
 
-    ToolApprovalRequest? request;
-    controller.approvalRequests.listen((r) => request = r);
+      ToolApprovalRequest? request;
+      controller.approvalRequests.listen((r) => request = r);
 
-    final run = controller.send('write a file');
-    await _letSendReachTheCompleter();
-    final sessionId = client.lastCreatedSessionId!;
+      final run = controller.send('write a file');
+      await _letSendReachTheCompleter();
+      final sessionId = client.lastCreatedSessionId!;
 
-    client.emit(_toolPart(sessionId, 'call_1', 'write',
-        status: 'pending', input: {'path': 'out.txt'}));
-    client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
-    await _letSendReachTheCompleter();
+      client.emit(
+        _toolPart(
+          sessionId,
+          'call_1',
+          'write',
+          status: 'pending',
+          input: {'path': 'out.txt'},
+        ),
+      );
+      client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
+      await _letSendReachTheCompleter();
 
-    expect(request, isNotNull);
-    expect(request!.toolName, 'write');
-    final toolEntry = controller.transcript.whereType<ToolCallTranscriptEntry>().single;
-    expect(toolEntry.status, ToolCallStatus.awaitingApproval);
+      expect(request, isNotNull);
+      expect(request!.toolName, 'write');
+      final toolEntry = controller.transcript
+          .whereType<ToolCallTranscriptEntry>()
+          .single;
+      expect(toolEntry.status, ToolCallStatus.awaitingApproval);
 
-    request!.completer.complete(ToolApprovalDecision.allowOnce);
-    await _letSendReachTheCompleter();
-    expect(client.respondCalls, [('per_1', ToolApprovalDecision.allowOnce)]);
+      request!.completer.complete(ToolApprovalDecision.allowOnce);
+      await _letSendReachTheCompleter();
+      expect(client.respondCalls, [('per_1', ToolApprovalDecision.allowOnce)]);
 
-    client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'completed', output: 'wrote it'));
-    client.emit(_textPart(sessionId, 'prt_2', 'Done.'));
-    client.emit(OpencodeSessionIdleEvent(sessionId));
-    await run;
+      client.emit(
+        _toolPart(
+          sessionId,
+          'call_1',
+          'write',
+          status: 'completed',
+          output: 'wrote it',
+        ),
+      );
+      client.emit(_textPart(sessionId, 'prt_2', 'Done.'));
+      client.emit(OpencodeSessionIdleEvent(sessionId));
+      await run;
 
-    expect(toolEntry.status, ToolCallStatus.done);
-  });
+      expect(toolEntry.status, ToolCallStatus.done);
+    },
+  );
 
-  test('denying a gated call marks it denied without waiting for opencode, and the model still '
-      'replies', () async {
-    final (controller, client, root) = await _buildReady();
-    addTearDown(() => root.delete(recursive: true));
+  test(
+    'denying a gated call marks it denied without waiting for opencode, and the model still '
+    'replies',
+    () async {
+      final (controller, client, root) = await _buildReady();
+      addTearDown(() => root.delete(recursive: true));
 
-    ToolApprovalRequest? request;
-    controller.approvalRequests.listen((r) => request = r);
+      ToolApprovalRequest? request;
+      controller.approvalRequests.listen((r) => request = r);
 
-    final run = controller.send('write a file');
-    await _letSendReachTheCompleter();
-    final sessionId = client.lastCreatedSessionId!;
+      final run = controller.send('write a file');
+      await _letSendReachTheCompleter();
+      final sessionId = client.lastCreatedSessionId!;
 
-    client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'pending'));
-    client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
-    await _letSendReachTheCompleter();
+      client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'pending'));
+      client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
+      await _letSendReachTheCompleter();
 
-    request!.completer.complete(ToolApprovalDecision.deny);
-    await _letSendReachTheCompleter();
+      request!.completer.complete(ToolApprovalDecision.deny);
+      await _letSendReachTheCompleter();
 
-    expect(client.respondCalls, [('per_1', ToolApprovalDecision.deny)]);
-    final toolEntry = controller.transcript.whereType<ToolCallTranscriptEntry>().single;
-    expect(toolEntry.status, ToolCallStatus.denied);
+      expect(client.respondCalls, [('per_1', ToolApprovalDecision.deny)]);
+      final toolEntry = controller.transcript
+          .whereType<ToolCallTranscriptEntry>()
+          .single;
+      expect(toolEntry.status, ToolCallStatus.denied);
 
-    client.emit(_textPart(sessionId, 'prt_2', 'Okay, skipping that.'));
-    client.emit(OpencodeSessionIdleEvent(sessionId));
-    await run;
+      client.emit(_textPart(sessionId, 'prt_2', 'Okay, skipping that.'));
+      client.emit(OpencodeSessionIdleEvent(sessionId));
+      await run;
 
-    final answer = controller.transcript.whereType<AssistantTextTranscriptEntry>().single;
-    expect(answer.text, 'Okay, skipping that.');
-  });
+      final answer = controller.transcript
+          .whereType<AssistantTextTranscriptEntry>()
+          .single;
+      expect(answer.text, 'Okay, skipping that.');
+    },
+  );
 
-  test('choosing "allow for session" sends opencode an "always" reply', () async {
-    final (controller, client, root) = await _buildReady();
-    addTearDown(() => root.delete(recursive: true));
+  test(
+    'choosing "allow for session" sends opencode an "always" reply',
+    () async {
+      final (controller, client, root) = await _buildReady();
+      addTearDown(() => root.delete(recursive: true));
 
-    ToolApprovalRequest? request;
-    controller.approvalRequests.listen((r) => request = r);
+      ToolApprovalRequest? request;
+      controller.approvalRequests.listen((r) => request = r);
 
-    final run = controller.send('write two files');
-    await _letSendReachTheCompleter();
-    final sessionId = client.lastCreatedSessionId!;
+      final run = controller.send('write two files');
+      await _letSendReachTheCompleter();
+      final sessionId = client.lastCreatedSessionId!;
 
-    client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'pending'));
-    client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
-    await _letSendReachTheCompleter();
-    request!.completer.complete(ToolApprovalDecision.allowForSession);
-    await _letSendReachTheCompleter();
+      client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'pending'));
+      client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
+      await _letSendReachTheCompleter();
+      request!.completer.complete(ToolApprovalDecision.allowForSession);
+      await _letSendReachTheCompleter();
 
-    expect(client.respondCalls, [('per_1', ToolApprovalDecision.allowForSession)]);
+      expect(client.respondCalls, [
+        ('per_1', ToolApprovalDecision.allowForSession),
+      ]);
 
-    client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'completed', output: 'ok'));
-    client.emit(OpencodeSessionIdleEvent(sessionId));
-    await run;
-  });
+      client.emit(
+        _toolPart(
+          sessionId,
+          'call_1',
+          'write',
+          status: 'completed',
+          output: 'ok',
+        ),
+      );
+      client.emit(OpencodeSessionIdleEvent(sessionId));
+      await run;
+    },
+  );
 
-  test('a failing tool does not sink the run — the model still gets a chance to answer',
-      () async {
-    final (controller, client, root) = await _buildReady();
-    addTearDown(() => root.delete(recursive: true));
+  test(
+    'a failing tool does not sink the run — the model still gets a chance to answer',
+    () async {
+      final (controller, client, root) = await _buildReady();
+      addTearDown(() => root.delete(recursive: true));
 
-    final run = controller.send('read missing.txt');
-    await _letSendReachTheCompleter();
-    final sessionId = client.lastCreatedSessionId!;
+      final run = controller.send('read missing.txt');
+      await _letSendReachTheCompleter();
+      final sessionId = client.lastCreatedSessionId!;
 
-    client.emit(_toolPart(sessionId, 'call_1', 'read',
-        status: 'error', error: 'File not found: missing.txt'));
-    client.emit(_textPart(sessionId, 'prt_1', 'That file does not exist.'));
-    client.emit(OpencodeSessionIdleEvent(sessionId));
-    await run;
+      client.emit(
+        _toolPart(
+          sessionId,
+          'call_1',
+          'read',
+          status: 'error',
+          error: 'File not found: missing.txt',
+        ),
+      );
+      client.emit(_textPart(sessionId, 'prt_1', 'That file does not exist.'));
+      client.emit(OpencodeSessionIdleEvent(sessionId));
+      await run;
 
-    expect(controller.error, isNull);
-    final toolEntry = controller.transcript.whereType<ToolCallTranscriptEntry>().single;
-    expect(toolEntry.status, ToolCallStatus.error);
-    final answer = controller.transcript.whereType<AssistantTextTranscriptEntry>().single;
-    expect(answer.text, 'That file does not exist.');
-  });
+      expect(controller.error, isNull);
+      final toolEntry = controller.transcript
+          .whereType<ToolCallTranscriptEntry>()
+          .single;
+      expect(toolEntry.status, ToolCallStatus.error);
+      final answer = controller.transcript
+          .whereType<AssistantTextTranscriptEntry>()
+          .single;
+      expect(answer.text, 'That file does not exist.');
+    },
+  );
 
   test('a session.error event ends the run with that message', () async {
     final (controller, client, root) = await _buildReady();
@@ -422,114 +498,144 @@ void main() {
     expect(controller.error, 'Cannot connect to API');
   });
 
-  test('stop() ends the run, aborts the opencode session, and discards a late-arriving reply',
-      () async {
-    final (controller, client, root) = await _buildReady();
-    addTearDown(() => root.delete(recursive: true));
-
-    final run = controller.send('hang on');
-    await _letSendReachTheCompleter();
-    final sessionId = client.lastCreatedSessionId!;
-    expect(controller.running, isTrue);
-
-    controller.stop();
-    expect(controller.running, isFalse);
-    expect(client.abortCalls, [sessionId]);
-    await run;
-
-    // Even if the session keeps streaming for a moment after abort, it must
-    // not land in the transcript.
-    client.emit(_textPart(sessionId, 'prt_1', 'too late'));
-    client.emit(OpencodeSessionIdleEvent(sessionId));
-    await _letSendReachTheCompleter();
-
-    expect(controller.transcript.whereType<AssistantTextTranscriptEntry>(), isEmpty);
-  });
-
-  test('stop() denies a pending approval so the wait does not hang forever', () async {
-    final (controller, client, root) = await _buildReady();
-    addTearDown(() => root.delete(recursive: true));
-
-    final run = controller.send('write a file');
-    await _letSendReachTheCompleter();
-    final sessionId = client.lastCreatedSessionId!;
-
-    client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'pending'));
-    client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
-    await _letSendReachTheCompleter();
-    expect(controller.running, isTrue);
-
-    controller.stop();
-    // The run's own future must complete promptly rather than hang on the
-    // approval it will now never receive an answer for from a UI.
-    await run.timeout(const Duration(seconds: 5));
-
-    expect(client.respondCalls, [('per_1', ToolApprovalDecision.deny)]);
-    final toolEntry = controller.transcript.whereType<ToolCallTranscriptEntry>().single;
-    expect(toolEntry.status, ToolCallStatus.denied);
-  });
-
-  group('history', () {
-    test('a second send continues the same opencode session — one conversation, not two',
-        () async {
+  test(
+    'stop() ends the run, aborts the opencode session, and discards a late-arriving reply',
+    () async {
       final (controller, client, root) = await _buildReady();
       addTearDown(() => root.delete(recursive: true));
 
-      final run1 = controller.send('hello');
+      final run = controller.send('hang on');
       await _letSendReachTheCompleter();
       final sessionId = client.lastCreatedSessionId!;
-      client.emit(_textPart(sessionId, 'prt_1', 'first reply'));
+      expect(controller.running, isTrue);
+
+      controller.stop();
+      expect(controller.running, isFalse);
+      expect(client.abortCalls, [sessionId]);
+      await run;
+
+      // Even if the session keeps streaming for a moment after abort, it must
+      // not land in the transcript.
+      client.emit(_textPart(sessionId, 'prt_1', 'too late'));
       client.emit(OpencodeSessionIdleEvent(sessionId));
-      await run1;
-
-      final run2 = controller.send('again');
       await _letSendReachTheCompleter();
-      client.emit(_textPart(sessionId, 'prt_2', 'second reply'));
-      client.emit(OpencodeSessionIdleEvent(sessionId));
-      await run2;
 
-      expect(client.createSessionCalls, hasLength(1), reason: 'only one opencode session created');
-      expect(controller.sessions.where((s) => s.transcript.isNotEmpty), hasLength(1));
-      expect(controller.transcript, hasLength(4)); // user, assistant, user, assistant
-    });
+      expect(
+        controller.transcript.whereType<AssistantTextTranscriptEntry>(),
+        isEmpty,
+      );
+    },
+  );
 
-    test('picking a new project root starts a fresh session, keeping the old one in history',
-        () async {
-      final api = _FakeApi([_alpha]);
-      final pool = ModelPool(api: api, downloadManager: const _NoDownloads());
-      await pool.refresh();
-      final rootA = await Directory.systemTemp.createTemp('code_agent_test_a');
-      final rootB = await Directory.systemTemp.createTemp('code_agent_test_b');
-      addTearDown(() => rootA.delete(recursive: true));
-      addTearDown(() => rootB.delete(recursive: true));
-      final client = _FakeOpencodeClient();
+  test(
+    'stop() denies a pending approval so the wait does not hang forever',
+    () async {
+      final (controller, client, root) = await _buildReady();
+      addTearDown(() => root.delete(recursive: true));
 
-      final controller = CodeAgentController(
-        pool: pool,
-        projectRootSource: _SequentialRootSource([rootA.path, rootB.path]),
-        engine: _FakeCodeEngine(client),
-      )..start();
-      await controller.pickProjectRoot();
-      controller.selectModel('alpha');
-
-      final runA = controller.send('in project A');
+      final run = controller.send('write a file');
       await _letSendReachTheCompleter();
-      var sid = client.lastCreatedSessionId!;
-      client.emit(OpencodeSessionIdleEvent(sid));
-      await runA;
+      final sessionId = client.lastCreatedSessionId!;
 
-      await controller.pickProjectRoot(); // now lands on rootB
-      expect(controller.transcript, isEmpty);
-      final runB = controller.send('in project B');
+      client.emit(_toolPart(sessionId, 'call_1', 'write', status: 'pending'));
+      client.emit(OpencodePermissionEvent(sessionId, 'per_1', 'call_1'));
       await _letSendReachTheCompleter();
-      sid = client.lastCreatedSessionId!;
-      client.emit(OpencodeSessionIdleEvent(sid));
-      await runB;
+      expect(controller.running, isTrue);
 
-      final answered = controller.sessions.where((s) => s.transcript.isNotEmpty).toList();
-      expect(answered, hasLength(2));
-      expect(answered.map((s) => s.projectRoot), [rootB.path, rootA.path]);
-    });
+      controller.stop();
+      // The run's own future must complete promptly rather than hang on the
+      // approval it will now never receive an answer for from a UI.
+      await run.timeout(const Duration(seconds: 5));
+
+      expect(client.respondCalls, [('per_1', ToolApprovalDecision.deny)]);
+      final toolEntry = controller.transcript
+          .whereType<ToolCallTranscriptEntry>()
+          .single;
+      expect(toolEntry.status, ToolCallStatus.denied);
+    },
+  );
+
+  group('history', () {
+    test(
+      'a second send continues the same opencode session — one conversation, not two',
+      () async {
+        final (controller, client, root) = await _buildReady();
+        addTearDown(() => root.delete(recursive: true));
+
+        final run1 = controller.send('hello');
+        await _letSendReachTheCompleter();
+        final sessionId = client.lastCreatedSessionId!;
+        client.emit(_textPart(sessionId, 'prt_1', 'first reply'));
+        client.emit(OpencodeSessionIdleEvent(sessionId));
+        await run1;
+
+        final run2 = controller.send('again');
+        await _letSendReachTheCompleter();
+        client.emit(_textPart(sessionId, 'prt_2', 'second reply'));
+        client.emit(OpencodeSessionIdleEvent(sessionId));
+        await run2;
+
+        expect(
+          client.createSessionCalls,
+          hasLength(1),
+          reason: 'only one opencode session created',
+        );
+        expect(
+          controller.sessions.where((s) => s.transcript.isNotEmpty),
+          hasLength(1),
+        );
+        expect(
+          controller.transcript,
+          hasLength(4),
+        ); // user, assistant, user, assistant
+      },
+    );
+
+    test(
+      'picking a new project root starts a fresh session, keeping the old one in history',
+      () async {
+        final api = _FakeApi([_alpha]);
+        final pool = ModelPool(api: api, downloadManager: const _NoDownloads());
+        await pool.refresh();
+        final rootA = await Directory.systemTemp.createTemp(
+          'code_agent_test_a',
+        );
+        final rootB = await Directory.systemTemp.createTemp(
+          'code_agent_test_b',
+        );
+        addTearDown(() => rootA.delete(recursive: true));
+        addTearDown(() => rootB.delete(recursive: true));
+        final client = _FakeOpencodeClient();
+
+        final controller = CodeAgentController(
+          pool: pool,
+          projectRootSource: _SequentialRootSource([rootA.path, rootB.path]),
+          engine: _FakeCodeEngine(client),
+        )..start();
+        await controller.pickProjectRoot();
+        controller.selectModel('alpha');
+
+        final runA = controller.send('in project A');
+        await _letSendReachTheCompleter();
+        var sid = client.lastCreatedSessionId!;
+        client.emit(OpencodeSessionIdleEvent(sid));
+        await runA;
+
+        await controller.pickProjectRoot(); // now lands on rootB
+        expect(controller.transcript, isEmpty);
+        final runB = controller.send('in project B');
+        await _letSendReachTheCompleter();
+        sid = client.lastCreatedSessionId!;
+        client.emit(OpencodeSessionIdleEvent(sid));
+        await runB;
+
+        final answered = controller.sessions
+            .where((s) => s.transcript.isNotEmpty)
+            .toList();
+        expect(answered, hasLength(2));
+        expect(answered.map((s) => s.projectRoot), [rootB.path, rootA.path]);
+      },
+    );
 
     test('selecting a different model starts a fresh session', () async {
       final api = _FakeApi([_alpha, const ModelInfo(id: 'beta', name: 'Beta')]);
@@ -559,96 +665,124 @@ void main() {
       client.emit(OpencodeSessionIdleEvent(client.lastCreatedSessionId!));
       await runBeta;
 
-      expect(controller.sessions.where((s) => s.transcript.isNotEmpty), hasLength(2));
-    });
-
-    test('newSession reuses the empty slot instead of piling up duplicates', () async {
-      final (controller, _, root) = await _buildReady();
-      addTearDown(() => root.delete(recursive: true));
-      final before = controller.sessions.length;
-
-      controller.newSession();
-      controller.newSession();
-
-      expect(controller.sessions.length, before);
-      expect(controller.transcript, isEmpty);
-    });
-
-    test('deleteSession removes a conversation and falls back to another one', () async {
-      final (controller, client, root) = await _buildReady();
-      addTearDown(() => root.delete(recursive: true));
-
-      final run1 = controller.send('hello');
-      await _letSendReachTheCompleter();
-      client.emit(OpencodeSessionIdleEvent(client.lastCreatedSessionId!));
-      await run1;
-
-      controller.newSession();
-      final run2 = controller.send('a different conversation');
-      await _letSendReachTheCompleter();
-      client.emit(OpencodeSessionIdleEvent(client.lastCreatedSessionId!));
-      await run2;
-
-      controller.deleteSession(0); // the active ("a different conversation") one
-      final remaining = controller.sessions.where((s) => s.transcript.isNotEmpty).toList();
-      expect(remaining, hasLength(1));
-      expect((remaining.single.transcript.first as UserTranscriptEntry).text, 'hello');
+      expect(
+        controller.sessions.where((s) => s.transcript.isNotEmpty),
+        hasLength(2),
+      );
     });
 
     test(
-        'a conversation persists through InMemoryCodeSessionStore and reloads into a fresh '
-        'controller, continuing the same opencode session rather than starting a new one',
-        () async {
-      final sharedStore = InMemoryCodeSessionStore();
-      final api = _FakeApi([_alpha]);
-      final pool = ModelPool(api: api, downloadManager: const _NoDownloads());
-      await pool.refresh();
-      final root = await Directory.systemTemp.createTemp('code_agent_test');
-      addTearDown(() => root.delete(recursive: true));
-      final client = _FakeOpencodeClient();
+      'newSession reuses the empty slot instead of piling up duplicates',
+      () async {
+        final (controller, _, root) = await _buildReady();
+        addTearDown(() => root.delete(recursive: true));
+        final before = controller.sessions.length;
 
-      final first = CodeAgentController(
-        pool: pool,
-        projectRootSource: _FakeRootSource(root.path),
-        store: sharedStore,
-        engine: _FakeCodeEngine(client),
-      )..start();
-      await first.pickProjectRoot();
-      first.selectModel('alpha');
-      final run1 = first.send('list the files');
-      await _letSendReachTheCompleter();
-      final sessionId = client.lastCreatedSessionId!;
-      client.emit(_textPart(sessionId, 'prt_1', 'Found some files.'));
-      client.emit(OpencodeSessionIdleEvent(sessionId));
-      await run1;
+        controller.newSession();
+        controller.newSession();
 
-      final second = CodeAgentController(
-        pool: pool,
-        projectRootSource: _FakeRootSource(root.path),
-        store: sharedStore,
-        engine: _FakeCodeEngine(client),
-      )..start();
-      await Future<void>.delayed(Duration.zero); // let the stored history load
+        expect(controller.sessions.length, before);
+        expect(controller.transcript, isEmpty);
+      },
+    );
 
-      final restored = second.sessions.firstWhere((s) => s.transcript.isNotEmpty);
-      expect(restored.title, 'list the files');
-      expect(restored.opencodeSessionId, sessionId);
+    test(
+      'deleteSession removes a conversation and falls back to another one',
+      () async {
+        final (controller, client, root) = await _buildReady();
+        addTearDown(() => root.delete(recursive: true));
 
-      await second.pickProjectRoot();
-      second.selectModel('alpha');
-      second.selectSession(second.sessions.indexOf(restored));
-      final run2 = second.send('and now?');
-      await _letSendReachTheCompleter();
-      client.emit(_textPart(sessionId, 'prt_2', 'A follow-up answer.'));
-      client.emit(OpencodeSessionIdleEvent(sessionId));
-      await run2;
+        final run1 = controller.send('hello');
+        await _letSendReachTheCompleter();
+        client.emit(OpencodeSessionIdleEvent(client.lastCreatedSessionId!));
+        await run1;
 
-      expect(client.createSessionCalls, hasLength(1), reason: 'reused the restored session');
-      expect(client.sendMessageCalls.last.$1, sessionId);
-      expect(
-        restored.transcript.whereType<AssistantTextTranscriptEntry>().last.text,
-        'A follow-up answer.',
-      );
-    });
+        controller.newSession();
+        final run2 = controller.send('a different conversation');
+        await _letSendReachTheCompleter();
+        client.emit(OpencodeSessionIdleEvent(client.lastCreatedSessionId!));
+        await run2;
+
+        controller.deleteSession(
+          0,
+        ); // the active ("a different conversation") one
+        final remaining = controller.sessions
+            .where((s) => s.transcript.isNotEmpty)
+            .toList();
+        expect(remaining, hasLength(1));
+        expect(
+          (remaining.single.transcript.first as UserTranscriptEntry).text,
+          'hello',
+        );
+      },
+    );
+
+    test(
+      'a conversation persists through InMemoryCodeSessionStore and reloads into a fresh '
+      'controller, continuing the same opencode session rather than starting a new one',
+      () async {
+        final sharedStore = InMemoryCodeSessionStore();
+        final api = _FakeApi([_alpha]);
+        final pool = ModelPool(api: api, downloadManager: const _NoDownloads());
+        await pool.refresh();
+        final root = await Directory.systemTemp.createTemp('code_agent_test');
+        addTearDown(() => root.delete(recursive: true));
+        final client = _FakeOpencodeClient();
+
+        final first = CodeAgentController(
+          pool: pool,
+          projectRootSource: _FakeRootSource(root.path),
+          store: sharedStore,
+          engine: _FakeCodeEngine(client),
+        )..start();
+        await first.pickProjectRoot();
+        first.selectModel('alpha');
+        final run1 = first.send('list the files');
+        await _letSendReachTheCompleter();
+        final sessionId = client.lastCreatedSessionId!;
+        client.emit(_textPart(sessionId, 'prt_1', 'Found some files.'));
+        client.emit(OpencodeSessionIdleEvent(sessionId));
+        await run1;
+
+        final second = CodeAgentController(
+          pool: pool,
+          projectRootSource: _FakeRootSource(root.path),
+          store: sharedStore,
+          engine: _FakeCodeEngine(client),
+        )..start();
+        await Future<void>.delayed(
+          Duration.zero,
+        ); // let the stored history load
+
+        final restored = second.sessions.firstWhere(
+          (s) => s.transcript.isNotEmpty,
+        );
+        expect(restored.title, 'list the files');
+        expect(restored.opencodeSessionId, sessionId);
+
+        await second.pickProjectRoot();
+        second.selectModel('alpha');
+        second.selectSession(second.sessions.indexOf(restored));
+        final run2 = second.send('and now?');
+        await _letSendReachTheCompleter();
+        client.emit(_textPart(sessionId, 'prt_2', 'A follow-up answer.'));
+        client.emit(OpencodeSessionIdleEvent(sessionId));
+        await run2;
+
+        expect(
+          client.createSessionCalls,
+          hasLength(1),
+          reason: 'reused the restored session',
+        );
+        expect(client.sendMessageCalls.last.$1, sessionId);
+        expect(
+          restored.transcript
+              .whereType<AssistantTextTranscriptEntry>()
+              .last
+              .text,
+          'A follow-up answer.',
+        );
+      },
+    );
   });
 }

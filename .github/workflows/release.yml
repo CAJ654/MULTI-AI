@@ -203,6 +203,9 @@ jobs:
           # exe + DLLs + data\. All of it is required; the exe alone will not
           # launch.
           Copy-Item -Recurse -Force app\build\windows\x64\runner\Release installer\staging\app
+          # Apache-2.0 requires the license and NOTICE to travel with the binaries.
+          Copy-Item -Force LICENSE, NOTICE installer\staging\app
+          Copy-Item -Recurse -Force licenses installer\staging\app
 
       - name: Fetch embeddable CPython and pip
         shell: pwsh
@@ -239,6 +242,7 @@ jobs:
 
           Copy-Item installer\runtime\bootstrap.py     installer\staging\app\backend\
           Copy-Item installer\runtime\requirements.txt installer\staging\app\backend\
+          Copy-Item NOTICE-python.txt installer\staging\app\backend\
 
           Write-Output "--- staged payload ---"
           $backend = Get-ChildItem installer\staging\app\backend -Recurse -File | Measure-Object Length -Sum

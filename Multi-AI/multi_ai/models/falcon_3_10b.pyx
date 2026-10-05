@@ -13,7 +13,7 @@ def get_info():
         "size_gb": 21.53,
         "modality": "Text",
         "context_tokens": 32768,
-        "license": "TII Falcon License 2.0",
+        "license": "TII Falcon License (December 2024)",
         "strengths": "Falcon 3's largest dense model — best reasoning and coding quality in the "
         "family, upscaled from the 7B via depth expansion and further training.",
         "speed_profile": "Moderate speed, strongest Falcon 3 intelligence",

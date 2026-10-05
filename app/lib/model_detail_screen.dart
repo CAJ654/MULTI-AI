@@ -181,6 +181,7 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
   }
 
   Future<void> _downloadServer() async {
+    if (!await _confirmLicense(widget.model)) return;
     setState(() {
       _serverBusy = true;
       _serverError = null;
@@ -241,9 +242,44 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
   /// widget.pool.downloadSnapshotFor; this only needs to kick it off and
   /// then refresh the on-disk cache status once it settles.
   Future<void> _download() async {
+    if (!await _confirmLicense(widget.model)) return;
     await widget.pool.ensureOnDeviceDownload(widget.model);
     if (!mounted) return;
     await _refreshCacheStatus();
+  }
+
+  /// Models already warned about this session, so the warning shows once per
+  /// model rather than on every download.
+  static final Set<String> _licenseWarnedIds = {};
+
+  /// Warns before a non-Apache model downloads. Continuing binds the user to
+  /// the model's license terms; this records nothing, it only informs.
+  Future<bool> _confirmLicense(ModelInfo model) async {
+    final license = model.license;
+    if (license == null || license.toLowerCase().contains('apache')) return true;
+    if (_licenseWarnedIds.contains(model.id)) return true;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: cardColor,
+        title: const Text('Model license', style: TextStyle(color: Colors.white)),
+        content: Text(
+          '${model.name} is licensed under $license.\n\n'
+          'Continuing binds you to these license terms.'
+          '${license.contains('Llama') ? '\n\nThese terms require "Built with Llama" to be displayed where the model is used.' : ''}',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) _licenseWarnedIds.add(model.id);
+    return confirmed ?? false;
   }
 
   void _cancelDownload() => widget.pool.cancelDownload(widget.model.id);
@@ -329,7 +365,7 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
                   'Context Window',
                   _formatContext(model.contextTokens),
                 ),
-                _buildSection(Icons.gavel_outlined, 'Open Source License', model.license ?? _unknown),
+                _buildSection(Icons.gavel_outlined, 'License', model.license ?? _unknown),
                 _buildSection(
                   widget.runsInApp ? Icons.smartphone_outlined : Icons.dns_outlined,
                   'Runs',

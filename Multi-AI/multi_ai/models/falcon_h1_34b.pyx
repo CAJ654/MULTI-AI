@@ -13,7 +13,7 @@ def get_info():
         "size_gb": 70.38,
         "modality": "Text",
         "context_tokens": 131072,
-        "license": "TII Falcon License 2.0",
+        "license": "TII Falcon License (December 2024)",
         "strengths": "Falcon-H1's flagship — hybrid Transformer+Mamba quality at frontier-ish "
         "scale, with the family's cheap long-context handling. Too big for a 12GB card even "
         "at 4-bit, so expect partial CPU offload.",

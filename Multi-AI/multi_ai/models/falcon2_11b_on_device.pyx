@@ -18,7 +18,7 @@ def get_info():
         "size_gb": 6.85,
         "modality": "Text",
         "context_tokens": 8192,
-        "license": "TII Falcon License 2.0",
+        "license": "Falcon 2 11B TII License Version 1.0",
         "strengths": "TII's multilingual generalist — decent breadth across languages for a mid-size dense model. Q4_K_M GGUF build runs fully on-device.",
         "speed_profile": "Moderate speed, solid general intelligence",
     }

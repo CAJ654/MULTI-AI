@@ -13,7 +13,7 @@ def get_info():
         "size_gb": 14.55,
         "modality": "Text",
         "context_tokens": 8192,
-        "license": "TII Falcon License 2.0",
+        "license": "Falcon Mamba 7B TII License Version 1.0",
         "strengths": "Pure state-space (Mamba) model, not a Transformer — trained at an "
         "8192-token sequence length but, unlike attention models, has no hard context cap: "
         "constant memory per token means throughput doesn't degrade on longer inputs.",

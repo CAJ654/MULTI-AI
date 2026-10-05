@@ -13,7 +13,7 @@ def get_info():
         "size_gb": 22.21,
         "modality": "Text",
         "context_tokens": 8192,
-        "license": "TII Falcon License 2.0",
+        "license": "Falcon 2 11B TII License Version 1.0",
         "strengths": "TII's multilingual generalist — decent breadth across languages for a "
         "mid-size dense model.",
         "speed_profile": "Moderate speed, solid general intelligence",
