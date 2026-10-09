@@ -385,14 +385,29 @@ jobs:
             echo "::error::ANDROID_KEYSTORE_BASE64 secret is not set - see the README's Shipping an Android release section"
             exit 1
           fi
-          # tr strips whitespace before decoding: GNU base64 -d (no
-          # --ignore-garbage) rejects any character outside the base64
-          # alphabet, including a stray \r - the usual result of the base64
-          # string picking up CRLF somewhere between PowerShell and the
-          # secret box. This tolerates that without masking a genuinely wrong
-          # or truncated secret, which still fails the "verify signing" step
-          # below with a clear error.
-          echo "$ANDROID_KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > upload-keystore.jks
+          # The secret's raw length is not sensitive (GitHub only masks the
+          # literal value, not a count of it) and is the one thing worth
+          # knowing when this step fails: a real upload-keystore.jks base64s
+          # to several KB, so a suspiciously short number here means the
+          # secret itself is truncated/wrong, not a decode-flag problem.
+          echo "ANDROID_KEYSTORE_BASE64 is ${#ANDROID_KEYSTORE_BASE64} characters"
+          # --ignore-garbage: a plain `base64 -d` rejects *any* character
+          # outside the base64 alphabet, including a stray \r from the string
+          # picking up CRLF somewhere between PowerShell and the secret box -
+          # that turned out not to be the whole story (still failed after
+          # stripping whitespace), so this now tolerates arbitrary embedded
+          # garbage too and relies on the size/signing checks below to catch
+          # a genuinely wrong secret instead of base64 itself.
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d --ignore-garbage > upload-keystore.jks
+          # A real keystore is several KB; --ignore-garbage above would
+          # otherwise let a mostly-garbage secret through as a near-empty
+          # file that fails confusingly much later, deep in Gradle.
+          jks_size=$(stat -c%s upload-keystore.jks)
+          echo "upload-keystore.jks is $jks_size bytes"
+          if [ "$jks_size" -lt 500 ]; then
+            echo "::error::Decoded upload-keystore.jks is only $jks_size bytes - ANDROID_KEYSTORE_BASE64 is truncated or wrong. Regenerate it with [Convert]::ToBase64String([System.IO.File]::ReadAllBytes(\"upload-keystore.jks\")) and reset the GitHub secret from that console output directly - see the README's 'Shipping an Android release' section."
+            exit 1
+          fi
           cat > key.properties <<EOF
           storePassword=$ANDROID_KEYSTORE_PASSWORD
           keyPassword=$ANDROID_KEYSTORE_PASSWORD
