@@ -22,7 +22,7 @@ import 'dart:io';
 /// Asserting this turns a regex that silently stops matching into a loud
 /// build failure instead of a quietly truncated Android roster. Bump it
 /// deliberately when the on-device roster grows.
-const int _expectedRosterSize = 44;
+const int _expectedRosterSize = 66;
 
 void main(List<String> argv) {
   final repoRoot = _findRepoRoot();
