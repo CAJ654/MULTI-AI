@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import 'addons/addon_host.dart';
+import 'android_update_checker.dart';
 import 'backend_process.dart';
 import 'storage_settings_dialog.dart';
 import 'theme.dart';
@@ -33,6 +36,12 @@ class _AppShellState extends State<AppShell> {
   UpdateStatus _updateStatus = UpdateService.instance.status;
   StreamSubscription<UpdateStatus>? _updateSub;
 
+  // Same idea, for the Android checker - see android_update_checker.dart.
+  // Seeded from the checker rather than null, for the same reason as above:
+  // StartupGate's check may have already finished by the time this builds.
+  AndroidUpdateInfo? _androidUpdate = AndroidUpdateChecker.instance.available;
+  StreamSubscription<AndroidUpdateInfo?>? _androidUpdateSub;
+
   AddOnHost get _host => widget.host;
 
   /// Below this width the fixed 280px sidebar would swallow most of the
@@ -46,11 +55,15 @@ class _AppShellState extends State<AppShell> {
     _updateSub = UpdateService.instance.onChange.listen((status) {
       if (mounted) setState(() => _updateStatus = status);
     });
+    _androidUpdateSub = AndroidUpdateChecker.instance.onChange.listen((info) {
+      if (mounted) setState(() => _androidUpdate = info);
+    });
   }
 
   @override
   void dispose() {
     _updateSub?.cancel();
+    _androidUpdateSub?.cancel();
     super.dispose();
   }
 
@@ -97,6 +110,7 @@ class _AppShellState extends State<AppShell> {
                 _buildTopBar(active, showMenuButton: narrow),
                 if (_backendError != null) _buildWarningBanner(_backendError!),
                 if (_updateStatus.state == UpdateState.ready) _buildUpdateBanner(),
+                if (_androidUpdate != null) _buildAndroidUpdateBanner(_androidUpdate!),
                 // The chrome renders on the first frame and the pane catches
                 // up: enabling the add-ons is asynchronous, and holding the
                 // whole window back for it would flash an empty screen over
@@ -344,6 +358,41 @@ class _AppShellState extends State<AppShell> {
             // nothing more useful to do than leave the banner up to retry.
             onPressed: () => UpdateService.instance.applyAndRestart().ignore(),
             child: const Text('Relaunch to Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Android's equivalent of [_buildUpdateBanner] — see
+  /// android_update_checker.dart for why this hands off to the browser
+  /// instead of downloading and applying the update itself.
+  Widget _buildAndroidUpdateBanner(AndroidUpdateInfo info) {
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFF1B2A3A),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Row(
+        children: [
+          const Icon(Icons.download_rounded, size: 16, color: Color(0xFF7DB3E8)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Multi-AI ${info.version} is available.',
+              style: const TextStyle(fontSize: 13, color: Color(0xFF7DB3E8)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => AndroidUpdateChecker.instance.dismiss(info.version),
+            child: const Text('Dismiss'),
+          ),
+          FilledButton(
+            // Opens the system browser on the APK's direct download URL;
+            // Android's own unknown-sources flow takes it from there, same
+            // as a user manually downloading it from the releases page.
+            onPressed: () =>
+                launchUrl(Uri.parse(info.downloadUrl), mode: LaunchMode.externalApplication),
+            child: const Text('Download'),
           ),
         ],
       ),

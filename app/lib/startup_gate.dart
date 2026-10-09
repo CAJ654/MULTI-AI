@@ -13,6 +13,7 @@
 
 import 'package:flutter/material.dart';
 
+import 'android_update_checker.dart';
 import 'backend_process.dart';
 import 'chat_screen.dart';
 import 'update_service.dart';
@@ -54,7 +55,12 @@ class _StartupGateState extends State<StartupGate> with WidgetsBindingObserver {
 
   Future<void> _begin() async {
     if (!BackendRuntime.isBundled) {
-      // Development, or a non-Windows build: nothing to supervise.
+      // Development, or a non-Windows build: nothing to supervise. This is
+      // the branch Android always takes (BackendRuntime.isBundled is
+      // Windows-only), so it's also where its own update check belongs - see
+      // android_update_checker.dart's header comment for why that's a
+      // separate checker rather than reusing UpdateService below.
+      AndroidUpdateChecker.instance.checkNow();
       setState(() => _phase = _Phase.ready);
       return;
     }

@@ -385,7 +385,14 @@ jobs:
             echo "::error::ANDROID_KEYSTORE_BASE64 secret is not set - see the README's Shipping an Android release section"
             exit 1
           fi
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > upload-keystore.jks
+          # tr strips whitespace before decoding: GNU base64 -d (no
+          # --ignore-garbage) rejects any character outside the base64
+          # alphabet, including a stray \r - the usual result of the base64
+          # string picking up CRLF somewhere between PowerShell and the
+          # secret box. This tolerates that without masking a genuinely wrong
+          # or truncated secret, which still fails the "verify signing" step
+          # below with a clear error.
+          echo "$ANDROID_KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > upload-keystore.jks
           cat > key.properties <<EOF
           storePassword=$ANDROID_KEYSTORE_PASSWORD
           keyPassword=$ANDROID_KEYSTORE_PASSWORD
