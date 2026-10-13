@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.1.1+6
+version: 1.1.2+7
 
 environment:
   sdk: ^3.12.2
@@ -68,6 +68,21 @@ dependencies:
   # release tag without a hand-maintained constant that could drift from
   # this file's `version:` above.
   package_info_plus: ^10.2.2
+
+  # The notebook add-on's local SQLite store (`addons/notebook/memory_store.dart`)
+  # — sources, chunk embeddings, notes. Pinned to the 2.x line deliberately,
+  # not the current 3.x: 3.x bundles its native library through Dart's
+  # native-assets build hooks, whose protocol has moved past the `hooks: ^2.0.2`
+  # override below that velopack_flutter's own (older) hook needs — sqlite3
+  # 3.7.0's hook fails to even compile against that pinned `hooks` version
+  # (missing `HookInputUserDefines.baseUri`). 2.x predates native-assets
+  # entirely and gets its native library the old way, via the
+  # sqlite3_flutter_libs plugin below — no hooks-protocol conflict, and it
+  # works identically on Android and Windows. Revisit both once
+  # velopack_flutter ships a release built against the newer hooks protocol
+  # (see that override's own comment).
+  sqlite3: ^2.9.4
+  sqlite3_flutter_libs: ^0.5.42
 
 dev_dependencies:
   flutter_test:

@@ -3,9 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:multi_ai/addons/addon.dart';
 import 'package:multi_ai/addons/addon_host.dart';
+import 'package:multi_ai/addons/notebook/memory_store.dart';
 import 'package:multi_ai/api_client.dart';
 import 'package:multi_ai/app_shell.dart';
 import 'package:multi_ai/model_pool.dart';
+import 'package:sqlite3/sqlite3.dart';
 
 /// Counts its own lifecycle calls, so a test can assert what ran and how often
 /// rather than inferring it from UI.
@@ -17,6 +19,7 @@ class _SpyAddOn extends AddOn {
     this.requires = const [],
     this.essential = false,
     this.useCapability = false,
+    this.useMemoryCapability = false,
   });
 
   final String id;
@@ -28,6 +31,9 @@ class _SpyAddOn extends AddOn {
   /// Reaches for `model_pool` in registerUI. Paired with an empty [requires],
   /// this is the undeclared-use case the contract is supposed to catch.
   final bool useCapability;
+
+  /// Same as [useCapability], but for `memory`.
+  final bool useMemoryCapability;
 
   int installs = 0;
   int enables = 0;
@@ -56,6 +62,7 @@ class _SpyAddOn extends AddOn {
   @override
   AddOnSurface registerUI(AddOnContext context) {
     if (useCapability) context.modelPool;
+    if (useMemoryCapability) context.memory;
     return AddOnSurface(mainPane: (_) => Text('pane:$id'));
   }
 }
@@ -194,6 +201,44 @@ void main() {
       );
       await host.start();
       expect(host.entryFor(spy.id)!.enabled, isTrue);
+    });
+
+    test('memory: missing, undeclared-use, and declared-use behave the same '
+        'way model_pool does', () async {
+      // Missing: no memory given to the host at all.
+      final needsMemory = _SpyAddOn(id: 'needs-memory', requires: [HostCapability.memory]);
+      final hostWithout = AddOnHost(addOns: [needsMemory], store: InMemoryAddOnStateStore());
+      await hostWithout.start();
+      expect(hostWithout.entryFor(needsMemory.id)!.available, isFalse);
+      expect(hostWithout.entryFor(needsMemory.id)!.missingCapabilities, [HostCapability.memory]);
+
+      // Undeclared use: reaching for it without listing it in requires.
+      final memory = MemoryStore(database: sqlite3.openInMemory());
+      final undeclared = _SpyAddOn(id: 'undeclared', useMemoryCapability: true); // requires: []
+      final hostUndeclared = AddOnHost(
+        addOns: [undeclared],
+        memory: memory,
+        store: InMemoryAddOnStateStore(),
+      );
+      await expectLater(
+        hostUndeclared.start(),
+        throwsA(isA<StateError>().having((e) => e.message, 'message',
+            allOf(contains('memory'), contains('requires')))),
+      );
+
+      // Declared use: handed over and the add-on enables normally.
+      final declared = _SpyAddOn(
+        id: 'declared',
+        requires: [HostCapability.memory],
+        useMemoryCapability: true,
+      );
+      final hostDeclared = AddOnHost(
+        addOns: [declared],
+        memory: memory,
+        store: InMemoryAddOnStateStore(),
+      );
+      await hostDeclared.start();
+      expect(hostDeclared.entryFor(declared.id)!.enabled, isTrue);
     });
   });
 

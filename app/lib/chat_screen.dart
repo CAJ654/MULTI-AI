@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:llamadart/llamadart.dart' hide ChatSession;
 
 import 'addons/addon_host.dart';
+import 'addons/notebook/memory_store.dart';
 import 'addons/registry.dart';
 import 'api_client.dart';
 import 'app_shell.dart';
@@ -58,12 +59,19 @@ class _ChatScreenState extends State<ChatScreen> {
     downloadManager: widget._downloadManager,
   );
 
+  // The notebook/memory capability — see addons/notebook/memory_store.dart.
+  // Built here, not in registry.dart, for the same reason _pool is: it's a
+  // HostCapability handed out through AddOnContext, not something
+  // constructor-injected into whichever add-on wants it.
+  late final MemoryStore _memory = MemoryStore();
+
   late final AddOnHost _host = AddOnHost(
     addOns: buildRegistry(
       attachmentSource: widget._attachmentSource,
       onMarkdownLinkTap: widget.onMarkdownLinkTap,
     ),
     modelPool: _pool,
+    memory: _memory,
     store: widget.addOnStateStore,
   );
 
@@ -81,6 +89,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _host.dispose();
     _pool.dispose();
+    _memory.dispose();
     super.dispose();
   }
 

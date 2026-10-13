@@ -5,6 +5,7 @@ import 'code/code_addon.dart';
 import 'components/component_manager.dart';
 import 'components/components_addon.dart';
 import 'models/models_addon.dart';
+import 'notebook/notebook_addon.dart';
 import 'orchestration/orchestration_addon.dart';
 
 /// Every add-on this build ships. Adding a feature means adding one entry here
@@ -35,5 +36,6 @@ List<AddOn> buildRegistry({
     OrchestrationAddOn(),
     CodeAddOn(),
     ComponentsAddOn(manager: components),
+    NotebookAddOn(),
   ];
 }

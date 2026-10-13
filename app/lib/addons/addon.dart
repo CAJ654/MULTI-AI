@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../model_pool.dart';
+import 'notebook/memory_store.dart';
 
 /// A service the host owns and lends to add-ons. An add-on lists the ones it
 /// needs in [AddOnManifest.requires]; reaching for one it didn't declare
 /// throws, so the declaration is enforced rather than documentation.
-///
-/// Deliberately a short list. The next one to land is likely `memory`, once
-/// the SQLite-vs-PocketBase question in the README is settled — adding it is a
-/// new enum case plus a getter on [AddOnContext], not a redesign.
 enum HostCapability {
-  modelPool('model_pool');
+  modelPool('model_pool'),
+
+  /// The notebook/memory store (`notebook/memory_store.dart`) — sources,
+  /// chunk embeddings, notes. Settled the SQLite-vs-PocketBase question this
+  /// enum's doc comment used to flag as open: plain SQLite, no server.
+  memory('memory');
 
   const HostCapability(this.wireName);
 
@@ -112,15 +114,24 @@ abstract class AddOn {
 /// than injected wholesale, so an undeclared use fails loudly at the point of
 /// the mistake instead of silently working.
 class AddOnContext {
-  AddOnContext({required this._manifest, ModelPool? modelPool, this._showTab})
-    : _modelPool = modelPool;
+  AddOnContext({
+    required this._manifest,
+    ModelPool? modelPool,
+    MemoryStore? memory,
+    this._showTab,
+  })  : _modelPool = modelPool,
+        _memory = memory;
 
   final AddOnManifest _manifest;
   final ModelPool? _modelPool;
+  final MemoryStore? _memory;
   final void Function(String addOnId)? _showTab;
 
   /// The shared model roster and the one way to run a model.
   ModelPool get modelPool => _capability(HostCapability.modelPool, _modelPool);
+
+  /// The notebook/memory store — sources, chunk embeddings, notes.
+  MemoryStore get memory => _capability(HostCapability.memory, _memory);
 
   /// Switches to another add-on's tab — chat's "Go to Models" button. Not a
   /// capability: navigating between tabs needs no permission, and an add-on
@@ -149,11 +160,13 @@ class AddOnContext {
   static List<HostCapability> missingFor(
     AddOnManifest manifest, {
     ModelPool? modelPool,
+    MemoryStore? memory,
   }) {
     return [
       for (final capability in manifest.requires)
         if (switch (capability) {
           HostCapability.modelPool => modelPool == null,
+          HostCapability.memory => memory == null,
         })
           capability,
     ];

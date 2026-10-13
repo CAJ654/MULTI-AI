@@ -31,4 +31,14 @@ Set-Location (Join-Path $PSScriptRoot "..\Multi-AI")
 # installed. A bare `python` call resolves to whatever's first on PATH,
 # which silently gives you a working-but-GPU-blind or non-importable server
 # depending on what else happens to be installed there.
-py -3.14 -c "from multi_ai.server import run; run()"
+#
+# The `py` launcher isn't always on PATH (per-user installs put it under
+# %LOCALAPPDATA%\Programs\Python\Launcher), so fall back to that location.
+$py = (Get-Command py -ErrorAction SilentlyContinue).Source
+if (-not $py) {
+    $py = Join-Path $env:LOCALAPPDATA "Programs\Python\Launcher\py.exe"
+}
+if (-not (Test-Path $py)) {
+    throw "Python launcher 'py' not found on PATH or at $py. Install Python 3.14 from python.org."
+}
+& $py -3.14 -c "from multi_ai.server import run; run()"

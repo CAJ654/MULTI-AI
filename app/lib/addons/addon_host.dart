@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../chat_store.dart' show appDataFile;
 import '../model_pool.dart';
 import 'addon.dart';
+import 'notebook/memory_store.dart';
 
 /// One add-on as the host sees it: the add-on itself, whether it can run, and
 /// its UI once built.
@@ -51,18 +52,29 @@ class AddOnHost extends ChangeNotifier {
   AddOnHost({
     required List<AddOn> addOns,
     this.modelPool,
+    this.memory,
     AddOnStateStore? store,
   })  : _store = store ?? AddOnStateStore(),
         _entries = [
           for (final addOn in addOns)
             AddOnEntry._(
               addOn,
-              missingCapabilities:
-                  AddOnContext.missingFor(addOn.manifest, modelPool: modelPool),
+              missingCapabilities: AddOnContext.missingFor(
+                addOn.manifest,
+                modelPool: modelPool,
+                memory: memory,
+              ),
             ),
         ]..sort((a, b) => a.manifest.order.compareTo(b.manifest.order));
 
   final ModelPool? modelPool;
+
+  /// The notebook/memory store — see `notebook/memory_store.dart`. Built and
+  /// owned by the same caller that owns [modelPool] (`chat_screen.dart`),
+  /// not by `registry.dart`: it's a `HostCapability` like `modelPool`, handed
+  /// out through [AddOnContext] rather than constructor-injected into
+  /// whichever add-on wants it.
+  final MemoryStore? memory;
   final AddOnStateStore _store;
   final List<AddOnEntry> _entries;
 
@@ -89,6 +101,7 @@ class AddOnHost extends ChangeNotifier {
   AddOnContext _contextFor(AddOnEntry entry) => AddOnContext(
         manifest: entry.manifest,
         modelPool: modelPool,
+        memory: memory,
         showTab: showTab,
       );
 
