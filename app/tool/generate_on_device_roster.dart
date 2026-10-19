@@ -117,8 +117,9 @@ void main(List<String> argv) {
       if (strengths == null) 'strengths',
       if (speedProfile == null) 'speed_profile',
     ];
-    if (missing.isNotEmpty)
+    if (missing.isNotEmpty) {
       missingFields.add('$id (missing: ${missing.join(", ")})');
+    }
   }
 
   if (entries.length != _expectedRosterSize) {
@@ -204,8 +205,9 @@ num? _extractNumberField(String text, String key) {
 String? _findRepoRoot() {
   var dir = Directory.current;
   for (var i = 0; i < 4; i++) {
-    if (Directory('${dir.path}/Multi-AI/multi_ai/models').existsSync())
+    if (Directory('${dir.path}/Multi-AI/multi_ai/models').existsSync()) {
       return dir.path;
+    }
     final parent = dir.parent;
     if (parent.path == dir.path) break;
     dir = parent;

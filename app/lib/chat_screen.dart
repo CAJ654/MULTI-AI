@@ -20,11 +20,11 @@ class ChatScreen extends StatefulWidget {
   const ChatScreen({
     super.key,
     this._apiClient,
-    ModelDownloadManager? downloadManager,
+    this._downloadManager,
     this._attachmentSource,
     this.onMarkdownLinkTap,
     this.addOnStateStore,
-  }) : _downloadManager = downloadManager;
+  });
 
   // Injectable so widget tests can supply a fake instead of hitting the
   // network; production code leaves this null and gets a real ApiClient.

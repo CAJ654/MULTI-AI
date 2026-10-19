@@ -116,11 +116,10 @@ abstract class AddOn {
 class AddOnContext {
   AddOnContext({
     required this._manifest,
-    ModelPool? modelPool,
+    this._modelPool,
     MemoryStore? memory,
     this._showTab,
-  })  : _modelPool = modelPool,
-        _memory = memory;
+  })  : _memory = memory;
 
   final AddOnManifest _manifest;
   final ModelPool? _modelPool;
