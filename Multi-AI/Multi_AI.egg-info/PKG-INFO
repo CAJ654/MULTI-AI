@@ -1,3 +1,7 @@
 Metadata-Version: 2.4
 Name: Multi-AI
 Version: 0.1
+License-File: LICENSE
+License-File: NOTICE
+License-File: NOTICE-python.txt
+Dynamic: license-file

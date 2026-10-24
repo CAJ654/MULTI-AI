@@ -52,6 +52,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -1042,6 +1043,89 @@ def _chat_reply(
     return f"[{model_id}] is a stub — it can't generate real responses yet. You said: {message!r}"
 
 
+def _openai_text(content) -> str:
+    """An OpenAI message's content as plain text.
+
+    The spec allows either a string or a list of typed parts; only text parts
+    mean anything here, so images and other part types are dropped."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(
+            part["text"]
+            for part in content
+            if isinstance(part, dict) and part.get("type") == "text" and isinstance(part.get("text"), str)
+        )
+    return ""
+
+
+def _openai_chat_request(body) -> tuple[str | None, str, list[dict], str | None]:
+    """Map an OpenAI chat-completions body onto what _chat_reply takes.
+
+    Returns (model, message, history, error). _chat_reply wants the newest user
+    turn separate from prior turns, so the final message must be a user turn.
+    The backend has no system role (_coerce_history drops it), so system text
+    is folded into the front of that final turn instead of being lost.
+    """
+    if not isinstance(body, dict):
+        return None, "", [], "request body must be a JSON object"
+    model = body.get("model")
+    if model not in {m["id"] for m in _list_models() if m.get("available") and "gguf" not in m}:
+        return None, "", [], f"unknown or non-server model: {model!r}"
+    messages = body.get("messages")
+    if not isinstance(messages, list) or not messages:
+        return None, "", [], "messages must be a non-empty list"
+    turns = [m for m in messages if isinstance(m, dict)]
+    system = "\n\n".join(
+        t for t in (_openai_text(m.get("content")).strip() for m in turns if m.get("role") in ("system", "developer")) if t
+    )
+    convo = [m for m in turns if m.get("role") in ("user", "assistant")]
+    if not convo or convo[-1].get("role") != "user":
+        return None, "", [], "the last message must be a user message"
+    message = _openai_text(convo[-1].get("content"))
+    if system:
+        message = f"{system}\n\n{message}"
+    history = [{"role": m["role"], "content": _openai_text(m.get("content"))} for m in convo[:-1]]
+    return model, message, history, None
+
+
+def _openai_completion(model: str, reply: str, completion_id: str, created: int) -> dict:
+    # Token counts aren't tracked on this path; clients that read usage get zeros.
+    return {
+        "id": completion_id,
+        "object": "chat.completion",
+        "created": created,
+        "model": model,
+        "choices": [
+            {"index": 0, "message": {"role": "assistant", "content": reply}, "finish_reason": "stop"}
+        ],
+        "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+    }
+
+
+def _openai_sse_events(model: str, reply: str, completion_id: str, created: int) -> list[bytes]:
+    """The whole reply as an SSE stream: role chunk, one content chunk, stop chunk, [DONE].
+
+    Real token streaming is a separate TODO item; this lets clients that insist
+    on stream=true (opencode does) work against a reply generated in one go."""
+    def chunk(delta: dict, finish) -> bytes:
+        payload = {
+            "id": completion_id,
+            "object": "chat.completion.chunk",
+            "created": created,
+            "model": model,
+            "choices": [{"index": 0, "delta": delta, "finish_reason": finish}],
+        }
+        return f"data: {json.dumps(payload)}\n\n".encode("utf-8")
+
+    return [
+        chunk({"role": "assistant"}, None),
+        chunk({"content": reply}, None),
+        chunk({}, "stop"),
+        b"data: [DONE]\n\n",
+    ]
+
+
 class _Handler(BaseHTTPRequestHandler):
     def _send_json(self, status: int, payload) -> None:
         body = json.dumps(payload).encode("utf-8")
@@ -1064,14 +1148,57 @@ class _Handler(BaseHTTPRequestHandler):
             self._send_json(200, {"models": _list_models()})
         elif self.path == "/api/device":
             self._send_json(200, hardware.detect_specs())
+        elif self.path == "/v1/models":
+            self._send_json(200, {
+                "object": "list",
+                "data": [
+                    {"id": m["id"], "object": "model", "created": 0, "owned_by": "multi-ai"}
+                    for m in _list_models()
+                    if m.get("available") and "gguf" not in m
+                ],
+            })
         elif cache_match:
             self._handle_model_route(cache_match.group(1), _model_cache_status)
         else:
             self._send_json(404, {"error": "not found"})
 
+    def _handle_openai_chat(self) -> None:
+        def fail(status: int, message: str) -> None:
+            self._send_json(status, {"error": {"message": message, "type": "invalid_request_error"}})
+
+        try:
+            body = self._read_json_body()
+        except (json.JSONDecodeError, ValueError):
+            fail(400, "invalid JSON body")
+            return
+        model, message, history, error = _openai_chat_request(body)
+        if error:
+            fail(400, error)
+            return
+        try:
+            reply = _chat_reply(model, message, None, history)
+        except Exception as exc:
+            reply = f"[{model}] unexpected error: {exc}"
+        completion_id = f"chatcmpl-{uuid.uuid4().hex}"
+        created = int(time.time())
+        if body.get("stream"):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            for event in _openai_sse_events(model, reply, completion_id, created):
+                self.wfile.write(event)
+            self.wfile.flush()
+            # No Content-Length on an SSE body, so close to mark the end.
+            self.close_connection = True
+        else:
+            self._send_json(200, _openai_completion(model, reply, completion_id, created))
+
     def do_POST(self) -> None:
         download_match = re.fullmatch(r"/api/models/([^/]+)/download", self.path)
-        if self.path == "/api/chat":
+        if self.path == "/v1/chat/completions":
+            self._handle_openai_chat()
+        elif self.path == "/api/chat":
             try:
                 body = self._read_json_body()
             except json.JSONDecodeError:
