@@ -15,7 +15,7 @@ Open and completed work items for Multi-AI. Checked items are done; unchecked it
 - [ ] **Streaming (`SSE`) in Python Backend** — Implement Server-Sent Events (`text/event-stream`) in `server.pyx`'s `/api/chat` and update `api_client.dart` to yield stream chunks so server generation mirrors on-device streaming.
 - [ ] **On-Device Download Progress Bar** — Thread `llamadart`'s `ModelDownloadProgress.fraction` callback from `OnDeviceEngine` into the chat screen and models tab download UI.
 - [ ] **OpenAI-Compatible Route on Server** — Expose an OpenAI-compatible `/v1/chat/completions` endpoint on `multi_ai/server.pyx` so the Code tab (`opencode`), LibreChat, and external tools can use server-side 4-bit quantized models.
-- [ ] **Environment Doctor Script (`scripts/doctor.ps1`)** — Automated health-check script verifying MSVC compiler, Rust/Cargo, embeddable Python 3.14, and optional tools (`coli`, `opencode`, `llama-server`) with clear pass/fail remediation hints.
+- [x] **Environment Doctor Script (`scripts/doctor.ps1`)** — Automated health-check script verifying Flutter, MSVC compiler and Rust/Cargo (required, exit 1 on failure), plus Python 3.14 and the optional tools (`coli`, `opencode`, `llama-server`) as warnings, each with a remediation hint.
 - [ ] **Documentation Site (GitHub Pages)** — Setup a static docs site (VitePress or Starlight) to host guides, model fit benchmarks, architecture diagrams, and installation workflows.
 
 ## Extend on-device (GGUF/llama.cpp) model support
