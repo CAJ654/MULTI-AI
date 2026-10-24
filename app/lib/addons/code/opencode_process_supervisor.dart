@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
+import '../../api_client.dart' show apiBaseUrl;
 import '../../chat_store.dart' show appDataFile;
 import 'llama_server_supervisor.dart';
 
@@ -32,7 +33,18 @@ class OpencodeProcessSupervisor {
   static const providerId = 'multiai-local';
   static const modelId = 'local';
 
+  /// A second custom provider, pointing at the Python backend's
+  /// OpenAI-compatible route (`/v1/chat/completions` in `server.pyx`). Unlike
+  /// [providerId]'s single `local` model, each server model is registered
+  /// under its own id here, since the backend picks the model from the request.
+  static const serverProviderId = 'multiai-server';
+
   Process? _process;
+
+  /// The server model ids the running process's config registered. A server
+  /// model outside this set can't be selected without rewriting the config,
+  /// which opencode only reads at startup — see [start].
+  Set<String> _registeredServerModels = const {};
 
   bool get isRunning => _process != null;
 
@@ -67,7 +79,7 @@ class OpencodeProcessSupervisor {
   /// set this) was confirmed to write a `config.json` straight into that
   /// directory — fine for opencode's own projects, not something this app
   /// should drop into an arbitrary user project.
-  Future<File> _writeConfig() async {
+  Future<File> _writeConfig(Set<String> serverModelIds) async {
     final file = await appDataFile('opencode_config.json');
     await file.writeAsString(jsonEncode({
       r'$schema': 'https://opencode.ai/config.json',
@@ -80,6 +92,15 @@ class OpencodeProcessSupervisor {
             modelId: {'name': 'On-device GGUF'},
           },
         },
+        if (serverModelIds.isNotEmpty)
+          serverProviderId: {
+            'npm': '@ai-sdk/openai-compatible',
+            'name': 'MULTI-AI (server)',
+            'options': {'baseURL': '$apiBaseUrl/v1'},
+            'models': {
+              for (final id in serverModelIds) id: {'name': id},
+            },
+          },
       },
       'permission': {
         'edit': 'ask',
@@ -92,13 +113,23 @@ class OpencodeProcessSupervisor {
   }
 
   /// Starts `opencode serve` if nothing is already answering on [port]. See
-  /// this class's doc comment for why a project-root or model change never
-  /// needs a restart here.
+  /// this class's doc comment for why a project-root or on-device model change
+  /// never needs a restart here.
+  ///
+  /// [serverModelIds] are the backend models to register under
+  /// [serverProviderId]. The config is only read at startup, so a process this
+  /// supervisor started earlier is restarted when it's asked for a server model
+  /// it didn't register (the backend was down on first start, say). A process
+  /// it didn't start is left alone, as before.
   ///
   /// Throws [StateError] if the binary isn't on PATH, [Exception] if the
   /// process exits during startup, and [TimeoutException] if it never
   /// becomes healthy in time.
-  Future<void> start({Duration timeout = const Duration(seconds: 20)}) async {
+  Future<void> start({
+    Set<String> serverModelIds = const {},
+    Duration timeout = const Duration(seconds: 20),
+  }) async {
+    if (isRunning && !_registeredServerModels.containsAll(serverModelIds)) await stop();
     if (await ping()) return;
 
     if (!await _onPath()) {
@@ -109,7 +140,8 @@ class OpencodeProcessSupervisor {
       );
     }
 
-    final configFile = await _writeConfig();
+    final configFile = await _writeConfig(serverModelIds);
+    _registeredServerModels = serverModelIds;
 
     _process = await Process.start(
       'opencode',

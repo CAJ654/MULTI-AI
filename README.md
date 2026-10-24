@@ -404,13 +404,18 @@ first message is sent. `opencode_client.dart` is the HTTP/SSE client —
 approval flow, which now maps directly onto opencode's own permission system
 (`edit`/`bash`: ask; everything else: allow) instead of a hand-rolled gate.
 
-**Scope boundary:** only on-device (GGUF) models get this. Server-side
-(`_REPO_ID`) transformers models have no OpenAI-compatible tool-calling
-endpoint today — bridging them in would mean building one on top of
-`server.pyx`'s `/api/chat`, a separate, not-yet-started project. The Code
-tab's model list is filtered to `ModelPool.localSourceOf(m) != null`
-accordingly, the same kind of explicit scope line the Android section draws
-around on-device-only chat.
+**Server-side models:** a model the Python backend manages weights for
+(`hasServerWeights`, no BYO `externalEndpoint`) can drive the tab too. The
+backend serves `GET /v1/models` and `POST /v1/chat/completions` from
+`server.pyx`; for such a model `CodeEngine` skips `llama-server` and registers
+the backend's models in opencode's config as a second provider
+(`multiai-server`, `baseURL` = the backend). Opencode reads that config only at
+startup, so the supervisor restarts the process it owns if asked for a server
+model it didn't register. **Caveat:** that route has no tool calling yet — it
+flattens the conversation to text and returns plain text — so a server model
+can chat in the tab but opencode's file/shell tools won't fire. On-device
+models are the ones with real tool calls. The list is filtered accordingly in
+`CodeAgentController.availableModels`.
 
 Ports in use: see `searxng_supervisor.dart`'s header comment (backend 8000,
 Colibri 8010, SearXNG 8891) — this adds `llama-server` on 8100 and `opencode

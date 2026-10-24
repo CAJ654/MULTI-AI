@@ -199,13 +199,16 @@ class CodeAgentController extends ChangeNotifier {
   StreamSubscription<OpencodeEvent>? _eventSub;
   String? _eventSubProjectRoot;
 
-  /// Models this device actually has on-device weights for. Narrower than
-  /// the old `pool.downloaded`: the Code tab only works against on-device
-  /// (GGUF) models — server-side (`_REPO_ID`) transformers models have no
-  /// OpenAI-compatible tool-calling endpoint for opencode to use. See the
-  /// README's "Code tab" section.
-  List<ModelInfo> get availableModels =>
-      pool.downloaded.where((m) => ModelPool.localSourceOf(m) != null).toList();
+  /// Downloaded models the Code tab can run: on-device (GGUF) ones, plus
+  /// server-side models whose weights the backend manages, reached through its
+  /// OpenAI-compatible route. A BYO external endpoint (no managed weights) is
+  /// excluded — nothing here knows it speaks OpenAI. See the README's "Code
+  /// tab" section.
+  List<ModelInfo> get availableModels => pool.downloaded
+      .where((m) =>
+          ModelPool.localSourceOf(m) != null ||
+          (m.hasServerWeights && m.externalEndpoint == null))
+      .toList();
 
   bool get canSend => !_running && _projectRoot != null && _selectedModel != null;
 
@@ -333,8 +336,8 @@ class CodeAgentController extends ChangeNotifier {
       await _engine.client.sendMessageAsync(
         projectRoot: projectRoot,
         sessionId: sessionId,
-        providerId: _engine.providerId,
-        modelId: _engine.modelId,
+        providerId: _engine.providerIdFor(model),
+        modelId: _engine.modelIdFor(model),
         text: trimmed,
       );
       if (generation != _runGeneration) return;

@@ -83,8 +83,13 @@ Possible directions, none investigated yet:
 ### AI Coding Tool Portion
   - [x] Create coding page — the Code tab, backed by `opencode` + `llama-server`
     rather than a hand-rolled agent loop, see "Code tab" above
-  - [ ] Bridge server-side (`_REPO_ID`) models into the Code tab — currently
-    on-device (GGUF) models only, see that section's scope boundary
+  - [x] Bridge server-side (`_REPO_ID`) models into the Code tab — wired
+    through the backend's `/v1/chat/completions`, see "Server-side models" in
+    that section. Not run end to end (needs opencode + a real model).
+  - [ ] Tool calling on the server's OpenAI route — it takes only the text of
+    each message and returns plain text, so a server model in the Code tab
+    chats but opencode's tools never fire. Needs `tools`/`tool_calls` passed
+    through the chat template and parsed back out of the generation.
 
 ### Docs & info site (GitHub Pages)
   - [ ] A public docs/marketing site along the lines of flutter.dev — project
@@ -660,7 +665,7 @@ ship.
 - [ ] **Resource management** — `OnDeviceEngine._ensureLoaded` (`app/lib/on_device_engine.dart`) enforces one resident model and evicts on switch, which covers "which model is loaded". There is no RAM/VRAM *budget* — just single-tenancy.
 - [ ] **Desktop vs. mobile catalog split** — models split by `_REPO_ID` (server, 4-bit GPU) vs. `_GGUF_SOURCE` (in-app), but that's a *where it runs* distinction, not the hardware-aware gating layer the spec describes. No `platform_support` field, no per-device labelling.
 - [x] **Orchestration tab** — a working Model Council, see "Orchestration" above. Only the manifest-preset and multi-round pieces remain.
-- [x] **Code tab** — a working local coding agent backed by `opencode` + `llama-server`, see "Code tab" above. Server-side (`_REPO_ID`) models aren't bridged in yet — on-device (GGUF) only.
+- [x] **Code tab** — a working local coding agent backed by `opencode` + `llama-server`, see "Code tab" above. Server-side (`_REPO_ID`) models are bridged for chat via the backend's OpenAI route, but without tool calling — on-device (GGUF) models are the ones that can use tools.
 - [x] **Plugin/add-on interface contract** (spec #3) — landed; see "Add-on architecture" above. One capability so far (`model_pool`); `memory` is deliberately absent until the memory layer (spec #2) is built, and adding it is a new enum case plus a getter, not a redesign.
 
 ### Not started
