@@ -404,6 +404,19 @@ first message is sent. `opencode_client.dart` is the HTTP/SSE client —
 approval flow, which now maps directly onto opencode's own permission system
 (`edit`/`bash`: ask; everything else: allow) instead of a hand-rolled gate.
 
+**Which models actually call tools.** Checked against real `llama-server` +
+opencode (Windows, llama.cpp b11193, 2026-10-24): **Gemma 4 E2B** returned a real
+tool call 5 times out of 5 and completed a full read-a-file turn through the
+Code tab. **Qwen2.5-Coder** (1.5B and 7B) did not — despite the name and a
+tool-aware chat template, it writes the call as text in an invented format
+(`<function .../>`, `<xml>{...}</xml>`, a bare JSON block) that llama.cpp can't
+parse, so no tool ever runs. A model has to be *trained* for tool calling for
+this tab to work; the code-specialised ones aren't necessarily. All 68 roster
+models are sorted into works / should work / uncertain / should not in
+[CODE-TAB-MODELS.md](CODE-TAB-MODELS.md), with the evidence for each.
+`real_code_run_test.dart` repeats the end-to-end check — see its header for how
+to run it against a model of your choice.
+
 **Server-side models:** a model the Python backend manages weights for
 (`hasServerWeights`, no BYO `externalEndpoint`) can drive the tab too. The
 backend serves `GET /v1/models` and `POST /v1/chat/completions` from

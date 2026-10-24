@@ -179,7 +179,15 @@ class OpencodeProcessSupervisor {
     final process = _process;
     _process = null;
     if (process == null) return;
-    process.kill();
+    if (Platform.isWindows) {
+      // `start` runs opencode through the shell on Windows, so `process` is
+      // that shell, not opencode itself: `kill()` ends the shell and leaves
+      // opencode running, still holding [port] — the next launch would adopt
+      // it. /T takes the whole tree down with it.
+      await Process.run('taskkill', ['/T', '/F', '/PID', '${process.pid}']);
+    } else {
+      process.kill();
+    }
     await process.exitCode.timeout(
       const Duration(seconds: 5),
       onTimeout: () {

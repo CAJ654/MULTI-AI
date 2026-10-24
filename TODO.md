@@ -86,6 +86,21 @@ Possible directions, none investigated yet:
   - [x] Bridge server-side (`_REPO_ID`) models into the Code tab — wired
     through the backend's `/v1/chat/completions`, see "Server-side models" in
     that section. Not run end to end (needs opencode + a real model).
+  - [x] Real run of the Code tab on an on-device model (2026-10-24) — works
+    end to end with Gemma 4 E2B; Qwen2.5-Coder 1.5B/7B don't emit parseable
+    tool calls (see the README's "Which models actually call tools"). Fixed a
+    Windows bug found on the way: `stop()` left `opencode.exe` running. Still
+    unrun: the server-model path (needs torch + a CUDA build for the GPU).
+  - [x] Show each model's Code-tab verdict on its detail page — a model like
+    Qwen2.5-Coder prints its call as text with no hint why, and Gemma 3 invents
+    file contents. `app/lib/code_tool_support.dart` holds the per-model table
+    (evidence in [CODE-TAB-MODELS.md](CODE-TAB-MODELS.md)); tests fail if a new
+    model file lacks an entry.
+  - [x] Warn where the model is *picked* — choosing a model the table rates
+    "unlikely" in the Code tab's picker now opens a confirm dialog ("Choose
+    another" / "Use anyway", shown once per model per run). An "uncertain" model
+    selects without a warning. The picker's empty-state text no longer
+    recommends Qwen2.5-Coder, which doesn't call tools.
   - [x] Tool calling on the server's OpenAI route — `tools` go through the
     model's chat template and `tool_calls` are parsed back out (Hermes/Qwen,
     Llama, Mistral shapes). Tested with a fake tokenizer/model only; **still

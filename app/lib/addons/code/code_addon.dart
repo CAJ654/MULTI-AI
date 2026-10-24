@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../api_client.dart';
+import '../../code_tool_support.dart';
 import '../../model_pool.dart';
 import '../../theme.dart';
 import '../addon.dart';
@@ -137,8 +138,9 @@ class CodeSidebarPanel extends StatelessWidget {
               const Padding(
                 padding: EdgeInsets.all(16),
                 child: Text(
-                  'Download a model from the Models tab — a Qwen2.5-Coder '
-                  'model is recommended for tool use.',
+                  'Download a model from the Models tab — one trained for tool '
+                  'calling, such as Qwen3 or Gemma 4, works best. Qwen2.5-Coder '
+                  'does not.',
                   style: TextStyle(fontSize: 12, height: 1.4, color: Colors.white38),
                 ),
               )
@@ -270,6 +272,62 @@ class _ProjectRootButton extends StatelessWidget {
   }
 }
 
+/// Models the user already chose to use despite the warning below, so it shows
+/// once per model per app run rather than on every click.
+final Set<String> _acknowledgedIncompatible = {};
+
+/// Asks before the Code tab switches to a model that can't call tools. Such a
+/// model doesn't fail loudly: it prints its tool call as text (or, worse,
+/// invents what the file said), so the tab looks like it's working while doing
+/// nothing. Returns true to proceed — straight away for any model that isn't
+/// known to be incompatible, or once the user confirms. Only a verdict of
+/// [CodeToolSupport.unlikely] warns; an uncertain model is a coin flip worth
+/// trying, and its detail page already says so. See `code_tool_support.dart`.
+Future<bool> confirmCodeModel(BuildContext context, ModelInfo model) async {
+  final verdict = codeToolVerdictFor(model.id);
+  if (verdict == null || verdict.support != CodeToolSupport.unlikely) return true;
+  if (_acknowledgedIncompatible.contains(model.id)) return true;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: cardColor,
+      title: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: fitNotRecommendedColor, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              verdict.tested
+                  ? "${model.name} can't use tools"
+                  : "${model.name} probably can't use tools",
+              style: const TextStyle(color: Colors.white, fontSize: 17),
+            ),
+          ),
+        ],
+      ),
+      content: Text(
+        '${verdict.detail}\n\n'
+        "In the Code tab it won't be able to read or edit files or run "
+        'commands. Expect it to describe what it would do instead, and '
+        "don't trust any file contents it reports.",
+        style: const TextStyle(color: Colors.white70, height: 1.45),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Choose another'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('Use anyway'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed == true) _acknowledgedIncompatible.add(model.id);
+  return confirmed ?? false;
+}
+
 class _ModelTile extends StatelessWidget {
   const _ModelTile({required this.controller, required this.model});
 
@@ -284,7 +342,11 @@ class _ModelTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: controller.running ? null : () => controller.selectModel(model.id),
+        onTap: controller.running
+            ? null
+            : () async {
+                if (await confirmCodeModel(context, model)) controller.selectModel(model.id);
+              },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Row(

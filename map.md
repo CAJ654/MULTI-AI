@@ -161,6 +161,7 @@ sibling (`_GGUF_SOURCE`) for the same weights.
 |---|---|
 | [app/lib/model_detail_screen.dart](app/lib/model_detail_screen.dart) | Full-page breakdown of one model + its download/delete flow. |
 | [app/lib/model_fit_badge.dart](app/lib/model_fit_badge.dart) | The coloured fit badge + its explanatory text. |
+| [app/lib/code_tool_support.dart](app/lib/code_tool_support.dart) | Per-model table of whether the Code tab's tools work with it (tested / inferred), shown on the detail page. Evidence in CODE-TAB-MODELS.md. |
 
 ### `app/lib/addons/` — the tab-per-feature architecture
 
@@ -273,6 +274,8 @@ sibling (`_GGUF_SOURCE`) for the same weights.
 | [code_agent_controller_test.dart](app/test/code_agent_controller_test.dart) | Code agent turn logic against a fake `CodeEngine`. |
 | [code_session_store_test.dart](app/test/code_session_store_test.dart) | Code conversation persistence. |
 | [opencode_client_test.dart](app/test/opencode_client_test.dart) | opencode HTTP/SSE client + event parsing. |
+| [code_model_warning_test.dart](app/test/code_model_warning_test.dart) | The Code tab picker's warning dialog: silent for working/uncertain/unknown models, confirm-or-cancel for an incompatible one, not repeated after "Use anyway". |
+| [code_tool_support_test.dart](app/test/code_tool_support_test.dart) | The Code-tab verdict table: every model file has an entry, ids resolve across `_on_device` siblings, and the detail page renders the verdict. |
 | [code_engine_test.dart](app/test/code_engine_test.dart) | `LocalCodeEngine`'s on-device vs. server-model routing (provider/model ids, llama-server skipped, backend errors). |
 | [model_pool_download_test.dart](app/test/model_pool_download_test.dart) | Roster / download / cache logic. |
 | [orchestration_controller_test.dart](app/test/orchestration_controller_test.dart) | Council deliberation modes. |
