@@ -416,6 +416,40 @@ Ports in use: see `searxng_supervisor.dart`'s header comment (backend 8000,
 Colibri 8010, SearXNG 8891) — this adds `llama-server` on 8100 and `opencode
 serve` on 8101.
 
+## Antigravity tab: your models behind a local OpenAI-compatible endpoint
+
+**Experimental, Windows only.** The tab ([antigravity_addon.dart](app/lib/addons/antigravity/antigravity_addon.dart))
+runs a small HTTP server on `127.0.0.1:8200` (port configurable) that serves the
+downloaded models as `GET /v1/models` and `POST /v1/chat/completions`, so a
+client that speaks the OpenAI API can use them. It is off until you press Start
+(or turn on "Start automatically").
+
+Google Antigravity itself has **no supported way to use outside models** (no BYOK
+or custom-provider setting), so this only provides the endpoint. Whether
+Antigravity can use it depends on third-party software. The community
+[antigravity-proxy](https://github.com/12errh/antigravity-proxy) translates
+Antigravity 2.0's Gemini calls to OpenAI-style providers, but its README
+documents only per-provider API keys and auto-discovery of local servers, not a
+custom base URL, so that combination is **untested**. It also needs administrator
+rights and intercepts Antigravity's traffic on port 443 — read what it does
+before installing it.
+
+What the endpoint does and doesn't do:
+
+- Every request needs `Authorization: Bearer <key>` (a random key generated on
+  first use, shown in the tab, regenerable). Requests with an `Origin` header or a
+  non-loopback `Host` are refused, and the server binds loopback only. Any local
+  program holding the key can use your models while it runs.
+- **No tool calling.** `tools` in a request are ignored and replies are plain text
+  (`ModelPool.generate` has no tool-call path), so Antigravity's agent features
+  won't work. Small local models are weak at agent work regardless.
+- **No token-by-token streaming.** `stream: true` sends the whole reply as one
+  chunk once the model finishes, with SSE keep-alive comments while waiting.
+- A request naming a model this app doesn't have (every proxied request will) runs
+  the tab's default model instead.
+- A client hanging up mid-generation cancels it only for streamed requests, and
+  only when it's the sole request in flight.
+
 ## File Architecture
 
 ```

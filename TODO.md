@@ -2,6 +2,22 @@
 
 Open and completed work items for Multi-AI. Checked items are done; unchecked items are open.
 
+## Priority Roadmap
+
+| Priority | Feature / Improvement | Impact |
+|---|---|---|
+| **High** | **Streaming (SSE) in Python Backend** | Eliminates long blank waits for 7B+ server models; brings server UX to parity with on-device streaming. |
+| **High** | **On-Device Download Progress Bar** | Threading `llamadart`'s `ModelDownloadProgress.fraction` into the UI prevents multi-GB downloads from looking like frozen UI spinners. |
+| **Medium** | **OpenAI-Compatible Route on Server** | Lets the Code tab, LibreChat, or external tools use the server-side 4-bit quantized models directly. |
+| **Medium** | **Environment Doctor Script (`doctor.ps1`)** | Validates MSVC, Rust/Cargo, Python 3.14 embed, `coli`, and `opencode` to simplify developer setup. |
+| **Low / Polish** | **Documentation Site (GitHub Pages)** | Publishing your architecture guides and model fit benchmarks to a clean documentation site (VitePress/Starlight) would attract strong community interest. |
+
+- [ ] **Streaming (`SSE`) in Python Backend** — Implement Server-Sent Events (`text/event-stream`) in `server.pyx`'s `/api/chat` and update `api_client.dart` to yield stream chunks so server generation mirrors on-device streaming.
+- [ ] **On-Device Download Progress Bar** — Thread `llamadart`'s `ModelDownloadProgress.fraction` callback from `OnDeviceEngine` into the chat screen and models tab download UI.
+- [ ] **OpenAI-Compatible Route on Server** — Expose an OpenAI-compatible `/v1/chat/completions` endpoint on `multi_ai/server.pyx` so the Code tab (`opencode`), LibreChat, and external tools can use server-side 4-bit quantized models.
+- [ ] **Environment Doctor Script (`scripts/doctor.ps1`)** — Automated health-check script verifying MSVC compiler, Rust/Cargo, embeddable Python 3.14, and optional tools (`coli`, `opencode`, `llama-server`) with clear pass/fail remediation hints.
+- [ ] **Documentation Site (GitHub Pages)** — Setup a static docs site (VitePress or Starlight) to host guides, model fit benchmarks, architecture diagrams, and installation workflows.
+
 ## Extend on-device (GGUF/llama.cpp) model support
 
 Mobile can't run the `transformers`/`torch`/`bitsandbytes` server backend (no CUDA, no mobile builds of those libs) — the on-device path is GGUF weights run through `llamadart`/llama.cpp, already proven with the built-in Qwen2.5 0.5B (`app/lib/on_device_engine.dart`). The `_GGUF_SOURCE` → `"gguf"` JSON field → `ModelInfo.gguf` routing in `chat_screen.dart` is already generic (any model with a `gguf` field auto-routes through `OnDeviceEngine`, no Dart changes needed) — only one model (`gpt_oss_20b.pyx`) currently uses it.
@@ -579,6 +595,15 @@ Two things worth knowing before extending this:
 
 Still open here: nothing calls `AddOnHost.setEnabled` yet — the persistence and
 gating work, but there is no settings UI to turn a tab off.
+
+### Antigravity: local OpenAI-compatible endpoint (done, experimental, Windows only)
+
+`addons/antigravity/` serves `ModelPool` over loopback HTTP; see the README's
+Antigravity section for scope. Antigravity has no supported custom-model hook, so
+whether it can use this depends on a community proxy that is untested here.
+Open: tool calling (needs a `llama-server --jinja` route like the Code tab's, since
+`ModelPool.generate` has none), real token streaming, and cancelling on disconnect
+for non-streamed requests.
 
 ### Orchestration: the Model Council (done)
 

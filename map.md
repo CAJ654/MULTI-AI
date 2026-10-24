@@ -198,6 +198,16 @@ sibling (`_GGUF_SOURCE`) for the same weights.
 | [orchestration_controller.dart](app/lib/addons/orchestration/orchestration_controller.dart) | Runs the council — parallel or sequential member answers, then lead synthesis (`DeliberationMode`). |
 | [orchestration_store.dart](app/lib/addons/orchestration/orchestration_store.dart) | Persists past council runs (`File…` real impl, `InMemory…` for tests). |
 
+#### `addons/antigravity/` — the Antigravity tab (local OpenAI-compatible endpoint, Windows only)
+
+| File | Purpose |
+|---|---|
+| [antigravity_addon.dart](app/lib/addons/antigravity/antigravity_addon.dart) | The tab (Windows only; other platforms get an "unavailable" pane). |
+| [antigravity_controller.dart](app/lib/addons/antigravity/antigravity_controller.dart) | Server state, settings, request log; starts/stops the server. |
+| [local_model_server.dart](app/lib/addons/antigravity/local_model_server.dart) | The loopback `HttpServer`: `/v1/models`, `/v1/chat/completions` (SSE faked from a whole reply), bearer-token auth, Origin/Host checks, body cap. |
+| [antigravity_settings.dart](app/lib/addons/antigravity/antigravity_settings.dart) | Port, default model, auto-start and key, in `antigravity_settings.json`. |
+| [antigravity_main_pane.dart](app/lib/addons/antigravity/antigravity_main_pane.dart) | The tab UI. |
+
 #### `addons/code/` — the Code tab (local coding agent via opencode + llama-server)
 
 | File | Purpose |
@@ -256,6 +266,9 @@ sibling (`_GGUF_SOURCE`) for the same weights.
 | [chat_controller_test.dart](app/test/chat_controller_test.dart) | Chat turn logic, history trimming, routing. |
 | [chat_screen_test.dart](app/test/chat_screen_test.dart) | Chat screen widget assembly. |
 | [chat_store_test.dart](app/test/chat_store_test.dart) | History persistence. |
+| [local_model_server_test.dart](app/test/local_model_server_test.dart) | Antigravity endpoint: auth, hardening, completions, SSE, disconnect. |
+| [antigravity_controller_test.dart](app/test/antigravity_controller_test.dart) | Antigravity tab controller against a fake pool. |
+| [antigravity_settings_test.dart](app/test/antigravity_settings_test.dart) | Antigravity settings + token. |
 | [code_addon_test.dart](app/test/code_addon_test.dart) | Code tab add-on. |
 | [code_agent_controller_test.dart](app/test/code_agent_controller_test.dart) | Code agent turn logic against a fake `CodeEngine`. |
 | [code_session_store_test.dart](app/test/code_session_store_test.dart) | Code conversation persistence. |
