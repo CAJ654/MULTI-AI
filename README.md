@@ -411,11 +411,26 @@ backend serves `GET /v1/models` and `POST /v1/chat/completions` from
 the backend's models in opencode's config as a second provider
 (`multiai-server`, `baseURL` = the backend). Opencode reads that config only at
 startup, so the supervisor restarts the process it owns if asked for a server
-model it didn't register. **Caveat:** that route has no tool calling yet — it
-flattens the conversation to text and returns plain text — so a server model
-can chat in the tab but opencode's file/shell tools won't fire. On-device
-models are the ones with real tool calls. The list is filtered accordingly in
-`CodeAgentController.availableModels`.
+model it didn't register.
+
+That route does tool calling for transformers (`_REPO_ID`) models: a request
+with `tools` skips the plain-text chat path and hands the tool definitions to
+the model's own chat template (`apply_chat_template(..., tools=...)`) with the
+full message history intact — system prompt, the assistant's earlier calls, and
+tool results — then parses the output back into `tool_calls`. The parser
+recognises Hermes/Qwen `<tool_call>` blocks and bare JSON in Llama's
+(`parameters`) and Mistral's (`[TOOL_CALLS]` list) shapes, and only accepts a
+call to a tool the request defined. The prompt may use up to 16384 tokens
+(`_MAX_TOOL_PROMPT_TOKENS`, a VRAM ceiling like the chat's 4096) since an
+agent's system prompt and tool definitions are large; older turns are trimmed
+first, whole units at a time, never the system prompt or the current task.
+
+**Caveats:** this is tested against a fake tokenizer and model, not a real
+checkpoint — whether a given model's template renders tools and its output
+parses depends on the model family, and a model whose template ignores `tools`
+will just answer in prose. A model with no chat template, or a non-transformers
+server model (Colibri), falls back to plain chat with no tool calls. Calls come
+back whole, not token-streamed.
 
 Ports in use: see `searxng_supervisor.dart`'s header comment (backend 8000,
 Colibri 8010, SearXNG 8891) — this adds `llama-server` on 8100 and `opencode

@@ -748,6 +748,176 @@ def _hf_generate(
     return text
 
 
+# ------------------------------------------------------------ tool calling
+#
+# The OpenAI route's tool path. A request that carries `tools` can't go through
+# _hf_generate: that flattens the conversation to plain user/assistant text,
+# which has nowhere to put a tool definition, a tool result, or the assistant's
+# own earlier calls. This path keeps full OpenAI-shaped messages and hands the
+# tool definitions to the model's own chat template — the same hook every
+# tool-capable instruct model (Qwen, Llama 3.1+, Mistral...) ships its tool
+# format in. Whatever the model then writes is parsed back into tool calls.
+
+# An agent's system prompt plus its tool definitions alone run to several
+# thousand tokens, so the plain chat's _MAX_HISTORY_TOKENS (4096) would leave
+# no room for the conversation itself. Like that cap this is a VRAM ceiling, not
+# a model limit: the KV cache grows with the prompt, so raise it only if the
+# card can carry it.
+_MAX_TOOL_PROMPT_TOKENS = 16384
+
+_TOOL_CALL_BLOCK = re.compile(r"<tool_call>\s*(.*?)\s*</tool_call>", re.DOTALL)
+# Framing some families put before a bare JSON call (Llama's python tag,
+# Mistral's [TOOL_CALLS] — usually stripped as a special token, but not always).
+_TOOL_CALL_PREFIXES = ("<|python_tag|>", "[TOOL_CALLS]")
+
+
+def _normalize_tool_call(obj) -> dict | None:
+    """One parsed JSON call as {"name": str, "arguments": dict}, or None.
+
+    Accepts the shapes models actually emit: {"name", "arguments"} (Hermes/Qwen,
+    Mistral), {"name", "parameters"} (Llama 3.1), and OpenAI's own
+    {"function": {...}} wrapper. `arguments` may arrive as a JSON string."""
+    if not isinstance(obj, dict):
+        return None
+    fn = obj["function"] if isinstance(obj.get("function"), dict) else obj
+    name = fn.get("name")
+    args = fn.get("arguments", fn.get("parameters", {}))
+    if isinstance(args, str):
+        try:
+            args = json.loads(args)
+        except json.JSONDecodeError:
+            return None
+    if not isinstance(name, str) or not name or not isinstance(args, dict):
+        return None
+    return {"name": name, "arguments": args}
+
+
+def _parse_tool_calls(text: str, tool_names: set[str]) -> tuple[str, list[dict]]:
+    """Split a generation into (leftover text, tool calls).
+
+    Only calls to a tool the request actually defined count — a model answering
+    with some JSON object that happens to have a "name" key is an answer, not a
+    call. Anything unrecognised is left in the text untouched."""
+    calls = []
+    for block in _TOOL_CALL_BLOCK.findall(text):
+        try:
+            call = _normalize_tool_call(json.loads(block))
+        except json.JSONDecodeError:
+            continue
+        if call and call["name"] in tool_names:
+            calls.append(call)
+    if calls:
+        return _TOOL_CALL_BLOCK.sub("", text).strip(), calls
+
+    bare = text.strip()
+    for prefix in _TOOL_CALL_PREFIXES:
+        if bare.startswith(prefix):
+            bare = bare[len(prefix):].strip()
+    if bare[:1] in ("{", "["):
+        try:
+            parsed = json.loads(bare)
+        except json.JSONDecodeError:
+            return text, []
+        items = parsed if isinstance(parsed, list) else [parsed]
+        normalized = [_normalize_tool_call(item) for item in items]
+        if items and all(c and c["name"] in tool_names for c in normalized):
+            return "", normalized
+    return text, []
+
+
+def _drop_oldest_messages(body: list[dict]) -> list[dict] | None:
+    """One step of trimming a tool conversation, or None if nothing can go.
+
+    Drops whole units so what's left stays valid for a chat template, which
+    rejects (or confuses) a tool result whose call is gone and wants a user turn
+    first: an earlier user message with everything up to the next one, and —
+    once only the current task is left — the oldest assistant step (the
+    assistant message plus the tool results answering it), always keeping the
+    task itself and the newest step."""
+    if not body:
+        return None
+    if body[0]["role"] != "user":
+        return body[1:]
+    users = [i for i, m in enumerate(body) if m["role"] == "user"]
+    if len(users) > 1:
+        return body[users[1]:]
+    steps = [i for i, m in enumerate(body) if m["role"] == "assistant"]
+    if len(steps) > 1:
+        return body[:1] + body[steps[1]:]
+    return None
+
+
+def _fit_messages(tokenizer, messages: list[dict], tools: list[dict], budget: int) -> list[dict]:
+    """Trim the oldest of [messages] until the templated prompt, tool
+    definitions included, fits in [budget] tokens. System messages are never
+    dropped. Stops (still over budget) when only the current task is left —
+    the caller reports that rather than silently cutting the task."""
+    head = [m for m in messages if m["role"] == "system"]
+    body = [m for m in messages if m["role"] != "system"]
+
+    def token_len(subset: list[dict]) -> int:
+        return len(
+            tokenizer.apply_chat_template(
+                subset,
+                tools=tools,
+                add_generation_prompt=True,
+                tokenize=True,
+                enable_thinking=False,
+            )
+        )
+
+    while body and token_len(head + body) > budget:
+        smaller = _drop_oldest_messages(body)
+        if smaller is None:
+            break
+        body = smaller
+    return head + body
+
+
+def _hf_generate_chat(
+    repo_id: str,
+    messages: list[dict],
+    tools: list[dict],
+    max_new_tokens: int | None = None,
+) -> str:
+    """Raw generation for a tool-carrying conversation; see the section note.
+
+    Returns the model's text exactly as written (reasoning stripped) so the
+    caller can parse tool calls out of it."""
+    tokenizer, model = _get_or_load_hf_model(repo_id)
+    if not getattr(tokenizer, "chat_template", None):
+        raise ValueError("this model has no chat template, so it can't be given tool definitions")
+    window = _model_context_window(model)
+    prompt_budget = _MAX_TOOL_PROMPT_TOKENS
+    if window:
+        prompt_budget = max(0, min(prompt_budget, window - _reply_reserve(model, max_new_tokens)))
+    fitted = _fit_messages(tokenizer, messages, tools, prompt_budget)
+    inputs = tokenizer.apply_chat_template(
+        fitted,
+        tools=tools,
+        add_generation_prompt=True,
+        return_dict=True,
+        return_tensors="pt",
+        enable_thinking=False,
+    ).to(model.device)
+    prompt_len = inputs["input_ids"].shape[1]
+    token_budget = _reply_budget(window, prompt_len, max_new_tokens)
+    if token_budget <= 0:
+        return "(the conversation and tool definitions are too long for this model's context window)"
+    pad_token_id = tokenizer.pad_token_id
+    if pad_token_id is None:
+        pad_token_id = tokenizer.eos_token_id
+    output = model.generate(
+        **inputs,
+        max_new_tokens=token_budget,
+        do_sample=True,
+        temperature=0.7,
+        pad_token_id=pad_token_id,
+    )
+    text = tokenizer.decode(output[0][prompt_len:], skip_special_tokens=True)
+    return _strip_reasoning(text.strip())
+
+
 def _resolve_server_model(model_id: str):
     """Return (repo_id, kind, None) or (None, None, (message, status)) for a
     model_id that has server-managed weights: kind is "transformers" for a
@@ -989,6 +1159,18 @@ def _colibri_generate(port: int, model_id: str, message: str, history: list | No
         return f"[{model_id}] Colibri returned an unexpected response: {exc}"
 
 
+def _generation_failure(model_id: str, exc: Exception) -> str:
+    reply = f"[{model_id}] failed to generate: {exc}"
+    if "CUDA error" in str(exc):
+        # A device-side assert corrupts the process's CUDA context;
+        # every model fails from then on until a clean restart.
+        reply += (
+            "\n\nA CUDA error poisons the server's GPU state — restart the "
+            "server before trying any model again."
+        )
+    return reply
+
+
 def _chat_reply(
     model_id: str,
     message: str,
@@ -1015,15 +1197,7 @@ def _chat_reply(
         try:
             return _hf_generate(repo_id, message, decoded_attachments=decoded, history=history)
         except Exception as exc:
-            reply = f"[{model_id}] failed to generate: {exc}"
-            if "CUDA error" in str(exc):
-                # A device-side assert corrupts the process's CUDA context;
-                # every model fails from then on until a clean restart.
-                reply += (
-                    "\n\nA CUDA error poisons the server's GPU state — restart the "
-                    "server before trying any model again."
-                )
-            return reply
+            return _generation_failure(model_id, exc)
         finally:
             _cleanup_attachments(decoded)
     if gguf:
@@ -1043,6 +1217,34 @@ def _chat_reply(
     return f"[{model_id}] is a stub — it can't generate real responses yet. You said: {message!r}"
 
 
+def _chat_reply_with_tools(model_id: str, messages: list[dict], tools: list[dict]) -> tuple[str, list[dict]]:
+    """(reply text, tool calls) for a conversation that carries tool definitions.
+
+    Only a transformers (_REPO_ID) model can take tools: they go through its
+    chat template. Every other kind of server model falls back to plain chat
+    over the text turns, with no tool calls — it answers, it just can't act."""
+    module = _load_model_module(model_id)
+    repo_id = getattr(module, "_REPO_ID", None)
+    if not repo_id:
+        turns = [m for m in messages if m["role"] in ("user", "assistant") and m.get("content")]
+        system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
+        last_user = next((i for i in range(len(turns) - 1, -1, -1) if turns[i]["role"] == "user"), None)
+        if last_user is None:
+            return f"[{model_id}] got no user message to answer.", []
+        message = turns[last_user]["content"]
+        if system:
+            message = f"{system}\n\n{message}"
+        return _chat_reply(model_id, message, None, turns[:last_user]), []
+    try:
+        text = _hf_generate_chat(repo_id, messages, tools)
+    except Exception as exc:
+        return _generation_failure(model_id, exc), []
+    text, calls = _parse_tool_calls(text, {t["function"]["name"] for t in tools})
+    for call in calls:
+        call["id"] = f"call_{uuid.uuid4().hex[:24]}"
+    return text, calls
+
+
 def _openai_text(content) -> str:
     """An OpenAI message's content as plain text.
 
@@ -1059,6 +1261,100 @@ def _openai_text(content) -> str:
     return ""
 
 
+def _openai_model_error(model) -> str | None:
+    if model in {m["id"] for m in _list_models() if m.get("available") and "gguf" not in m}:
+        return None
+    return f"unknown or non-server model: {model!r}"
+
+
+def _openai_tools(body) -> list[dict]:
+    """The request's usable tool definitions; empty means "plain chat".
+
+    `tool_choice: "none"` is honoured by dropping the tools. Forcing a specific
+    tool isn't supported — the model decides, as with "auto"."""
+    if not isinstance(body, dict) or body.get("tool_choice") == "none":
+        return []
+    tools = body.get("tools")
+    if not isinstance(tools, list):
+        return []
+    return [
+        t for t in tools
+        if isinstance(t, dict)
+        and isinstance(t.get("function"), dict)
+        and isinstance(t["function"].get("name"), str)
+        and t["function"]["name"]
+    ]
+
+
+def _openai_tool_messages(messages: list) -> list[dict]:
+    """OpenAI messages as the role/content dicts a chat template takes.
+
+    Unlike _openai_chat_request, nothing is flattened: system stays a system
+    message, an assistant's tool calls stay attached to it (their `arguments`
+    decoded from the wire's JSON string to a dict, which is what templates
+    render), and a tool result keeps the id — and, where the originating call
+    is known, the name — it answers."""
+    names: dict[str, str] = {}
+    out = []
+    for m in messages:
+        if not isinstance(m, dict):
+            continue
+        role = m.get("role")
+        text = _openai_text(m.get("content"))
+        if role in ("system", "developer"):
+            if text.strip():
+                out.append({"role": "system", "content": text})
+        elif role == "user":
+            out.append({"role": "user", "content": text})
+        elif role == "assistant":
+            calls = []
+            for call in m.get("tool_calls") or []:
+                normalized = _normalize_tool_call(call) if isinstance(call, dict) else None
+                if not normalized:
+                    continue
+                call_id = call.get("id") if isinstance(call.get("id"), str) else f"call_{len(names)}"
+                names[call_id] = normalized["name"]
+                calls.append({
+                    "id": call_id,
+                    "type": "function",
+                    "function": {"name": normalized["name"], "arguments": normalized["arguments"]},
+                })
+            if text.strip() or calls:
+                msg = {"role": "assistant", "content": text}
+                if calls:
+                    msg["tool_calls"] = calls
+                out.append(msg)
+        elif role == "tool":
+            call_id = m.get("tool_call_id")
+            msg = {"role": "tool", "content": text}
+            if isinstance(call_id, str):
+                msg["tool_call_id"] = call_id
+                if call_id in names:
+                    msg["name"] = names[call_id]
+            out.append(msg)
+    return out
+
+
+def _openai_agent_request(body) -> tuple[str | None, list[dict], list[dict], str | None]:
+    """The tool-carrying counterpart of _openai_chat_request.
+
+    Returns (model, messages, tools, error). The conversation may end on a tool
+    result — that's the normal shape of an agent loop's next step — so the only
+    requirement is that it ends on something the model can answer."""
+    if not isinstance(body, dict):
+        return None, [], [], "request body must be a JSON object"
+    model = body.get("model")
+    if _openai_model_error(model):
+        return None, [], [], _openai_model_error(model)
+    messages = body.get("messages")
+    if not isinstance(messages, list) or not messages:
+        return None, [], [], "messages must be a non-empty list"
+    converted = _openai_tool_messages(messages)
+    if not converted or converted[-1]["role"] not in ("user", "tool"):
+        return None, [], [], "the last message must be a user message or a tool result"
+    return model, converted, _openai_tools(body), None
+
+
 def _openai_chat_request(body) -> tuple[str | None, str, list[dict], str | None]:
     """Map an OpenAI chat-completions body onto what _chat_reply takes.
 
@@ -1070,8 +1366,8 @@ def _openai_chat_request(body) -> tuple[str | None, str, list[dict], str | None]
     if not isinstance(body, dict):
         return None, "", [], "request body must be a JSON object"
     model = body.get("model")
-    if model not in {m["id"] for m in _list_models() if m.get("available") and "gguf" not in m}:
-        return None, "", [], f"unknown or non-server model: {model!r}"
+    if _openai_model_error(model):
+        return None, "", [], _openai_model_error(model)
     messages = body.get("messages")
     if not isinstance(messages, list) or not messages:
         return None, "", [], "messages must be a non-empty list"
@@ -1089,25 +1385,62 @@ def _openai_chat_request(body) -> tuple[str | None, str, list[dict], str | None]
     return model, message, history, None
 
 
-def _openai_completion(model: str, reply: str, completion_id: str, created: int) -> dict:
+def _openai_wire_tool_calls(tool_calls: list[dict]) -> list[dict]:
+    """Parsed calls ({"id", "name", "arguments": dict}) in OpenAI's wire shape,
+    where `arguments` is a JSON *string*."""
+    return [
+        {
+            "id": call["id"],
+            "type": "function",
+            "function": {"name": call["name"], "arguments": json.dumps(call["arguments"])},
+        }
+        for call in tool_calls
+    ]
+
+
+def _openai_completion(
+    model: str,
+    reply: str,
+    completion_id: str,
+    created: int,
+    tool_calls: list[dict] | None = None,
+) -> dict:
+    message = {"role": "assistant", "content": reply}
+    finish = "stop"
+    if tool_calls:
+        # The spec's shape for a pure tool turn: null content, not "".
+        message = {
+            "role": "assistant",
+            "content": reply or None,
+            "tool_calls": _openai_wire_tool_calls(tool_calls),
+        }
+        finish = "tool_calls"
     # Token counts aren't tracked on this path; clients that read usage get zeros.
     return {
         "id": completion_id,
         "object": "chat.completion",
         "created": created,
         "model": model,
-        "choices": [
-            {"index": 0, "message": {"role": "assistant", "content": reply}, "finish_reason": "stop"}
-        ],
+        "choices": [{"index": 0, "message": message, "finish_reason": finish}],
         "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
     }
 
 
-def _openai_sse_events(model: str, reply: str, completion_id: str, created: int) -> list[bytes]:
-    """The whole reply as an SSE stream: role chunk, one content chunk, stop chunk, [DONE].
+def _openai_sse_events(
+    model: str,
+    reply: str,
+    completion_id: str,
+    created: int,
+    tool_calls: list[dict] | None = None,
+) -> list[bytes]:
+    """The whole reply as an SSE stream: role chunk, one content chunk (if
+    any), one chunk carrying every tool call whole (if any), a finish chunk,
+    [DONE].
 
     Real token streaming is a separate TODO item; this lets clients that insist
-    on stream=true (opencode does) work against a reply generated in one go."""
+    on stream=true (opencode does) work against a reply generated in one go.
+    Each call goes out complete in a single delta, which streaming clients
+    accept: they finish a call as soon as its arguments parse as JSON."""
     def chunk(delta: dict, finish) -> bytes:
         payload = {
             "id": completion_id,
@@ -1118,12 +1451,18 @@ def _openai_sse_events(model: str, reply: str, completion_id: str, created: int)
         }
         return f"data: {json.dumps(payload)}\n\n".encode("utf-8")
 
-    return [
-        chunk({"role": "assistant"}, None),
-        chunk({"content": reply}, None),
-        chunk({}, "stop"),
-        b"data: [DONE]\n\n",
-    ]
+    events = [chunk({"role": "assistant"}, None)]
+    if reply or not tool_calls:
+        events.append(chunk({"content": reply}, None))
+    if tool_calls:
+        events.append(chunk({
+            "tool_calls": [
+                {"index": i, **call} for i, call in enumerate(_openai_wire_tool_calls(tool_calls))
+            ]
+        }, None))
+    events.append(chunk({}, "tool_calls" if tool_calls else "stop"))
+    events.append(b"data: [DONE]\n\n")
+    return events
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -1171,14 +1510,25 @@ class _Handler(BaseHTTPRequestHandler):
         except (json.JSONDecodeError, ValueError):
             fail(400, "invalid JSON body")
             return
-        model, message, history, error = _openai_chat_request(body)
-        if error:
-            fail(400, error)
-            return
-        try:
-            reply = _chat_reply(model, message, None, history)
-        except Exception as exc:
-            reply = f"[{model}] unexpected error: {exc}"
+        tool_calls: list[dict] = []
+        if _openai_tools(body):
+            model, messages, tools, error = _openai_agent_request(body)
+            if error:
+                fail(400, error)
+                return
+            try:
+                reply, tool_calls = _chat_reply_with_tools(model, messages, tools)
+            except Exception as exc:
+                reply = f"[{model}] unexpected error: {exc}"
+        else:
+            model, message, history, error = _openai_chat_request(body)
+            if error:
+                fail(400, error)
+                return
+            try:
+                reply = _chat_reply(model, message, None, history)
+            except Exception as exc:
+                reply = f"[{model}] unexpected error: {exc}"
         completion_id = f"chatcmpl-{uuid.uuid4().hex}"
         created = int(time.time())
         if body.get("stream"):
@@ -1186,13 +1536,13 @@ class _Handler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/event-stream")
             self.send_header("Cache-Control", "no-cache")
             self.end_headers()
-            for event in _openai_sse_events(model, reply, completion_id, created):
+            for event in _openai_sse_events(model, reply, completion_id, created, tool_calls):
                 self.wfile.write(event)
             self.wfile.flush()
             # No Content-Length on an SSE body, so close to mark the end.
             self.close_connection = True
         else:
-            self._send_json(200, _openai_completion(model, reply, completion_id, created))
+            self._send_json(200, _openai_completion(model, reply, completion_id, created, tool_calls))
 
     def do_POST(self) -> None:
         download_match = re.fullmatch(r"/api/models/([^/]+)/download", self.path)
