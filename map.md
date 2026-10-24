@@ -60,7 +60,7 @@ see [README.md](README.md).
 | [Multi-AI/pyproject.toml](Multi-AI/pyproject.toml) | Package metadata + the heavy chat-time dependency set (torch, transformers, accelerate, bitsandbytes, …). |
 | [Multi-AI/requirements.txt](Multi-AI/requirements.txt) | Flat pip requirements for a dev environment. |
 | [Multi-AI/multi_ai/__init__.pyx](Multi-AI/multi_ai/__init__.pyx) | Package init (compiled like everything else). |
-| [Multi-AI/multi_ai/server.pyx](Multi-AI/multi_ai/server.pyx) | **The backend.** Stdlib-only HTTP server: `/api/hello`, `/api/models`, `/api/chat`, `/api/device`, and per-model `cache`/`download`/`delete` routes. Lazily imports torch/transformers; resolves each model stub; runs the 4-bit-quantized generation pipeline; downloads Colibri weights and spawns/stops `coli serve`. |
+| [Multi-AI/multi_ai/server.pyx](Multi-AI/multi_ai/server.pyx) | **The backend.** Stdlib-only HTTP server: `/api/hello`, `/api/models`, `/api/chat`, `/api/device`, an OpenAI-compatible `/v1/models` + `/v1/chat/completions` (with tool calling via the model's chat template; SSE is faked from a whole reply), and per-model `cache`/`download`/`delete` routes. Lazily imports torch/transformers; resolves each model stub; runs the 4-bit-quantized generation pipeline; downloads Colibri weights and spawns/stops `coli serve`. |
 | [Multi-AI/multi_ai/hardware.pyx](Multi-AI/multi_ai/hardware.pyx) | Machine sizing (RAM via stdlib, VRAM via lazily-imported torch) and per-model green/yellow/red/unknown fit ratings — separate formulas for `_REPO_ID` (VRAM, 4-bit), `_GGUF_SOURCE` (on-device, 3 regimes), and Colibri external models (RAM + disk). |
 
 ### `Multi-AI/multi_ai/models/` — one declarative stub per model
@@ -161,6 +161,7 @@ sibling (`_GGUF_SOURCE`) for the same weights.
 |---|---|
 | [app/lib/model_detail_screen.dart](app/lib/model_detail_screen.dart) | Full-page breakdown of one model + its download/delete flow. |
 | [app/lib/model_fit_badge.dart](app/lib/model_fit_badge.dart) | The coloured fit badge + its explanatory text. |
+| [app/lib/code_tool_support.dart](app/lib/code_tool_support.dart) | Per-model table of whether the Code tab's tools work with it (tested / inferred), shown on the detail page. Evidence in CODE-TAB-MODELS.md. |
 
 ### `app/lib/addons/` — the tab-per-feature architecture
 
@@ -198,6 +199,16 @@ sibling (`_GGUF_SOURCE`) for the same weights.
 | [orchestration_controller.dart](app/lib/addons/orchestration/orchestration_controller.dart) | Runs the council — parallel or sequential member answers, then lead synthesis (`DeliberationMode`). |
 | [orchestration_store.dart](app/lib/addons/orchestration/orchestration_store.dart) | Persists past council runs (`File…` real impl, `InMemory…` for tests). |
 
+#### `addons/antigravity/` — the Antigravity tab (local OpenAI-compatible endpoint, Windows only)
+
+| File | Purpose |
+|---|---|
+| [antigravity_addon.dart](app/lib/addons/antigravity/antigravity_addon.dart) | The tab (Windows only; other platforms get an "unavailable" pane). |
+| [antigravity_controller.dart](app/lib/addons/antigravity/antigravity_controller.dart) | Server state, settings, request log; starts/stops the server. |
+| [local_model_server.dart](app/lib/addons/antigravity/local_model_server.dart) | The loopback `HttpServer`: `/v1/models`, `/v1/chat/completions` (SSE faked from a whole reply), bearer-token auth, Origin/Host checks, body cap. |
+| [antigravity_settings.dart](app/lib/addons/antigravity/antigravity_settings.dart) | Port, default model, auto-start and key, in `antigravity_settings.json`. |
+| [antigravity_main_pane.dart](app/lib/addons/antigravity/antigravity_main_pane.dart) | The tab UI. |
+
 #### `addons/code/` — the Code tab (local coding agent via opencode + llama-server)
 
 | File | Purpose |
@@ -207,7 +218,7 @@ sibling (`_GGUF_SOURCE`) for the same weights.
 | [code_agent_pane.dart](app/lib/addons/code/code_agent_pane.dart) | The tab UI — transcript, collapsible tool-call rows (icon per opencode tool), approval dialog. |
 | [code_engine.dart](app/lib/addons/code/code_engine.dart) | `CodeEngine` interface + `LocalCodeEngine` — composes the two supervisors behind one `ensureRunning({model})`. Abstract for testability. |
 | [llama_server_supervisor.dart](app/lib/addons/code/llama_server_supervisor.dart) | Owns the `llama-server` child process (port **8100**) serving the selected GGUF model over an OpenAI-compatible API with `--jinja`. Restarts only when the model changes. |
-| [opencode_process_supervisor.dart](app/lib/addons/code/opencode_process_supervisor.dart) | Owns the single `opencode serve` process (port **8101**), started once lazily and kept for the app's life; hosts all project dirs via a `directory` query param. Writes opencode's config pointing at llama-server. |
+| [opencode_process_supervisor.dart](app/lib/addons/code/opencode_process_supervisor.dart) | Owns the single `opencode serve` process (port **8101**), started once lazily and kept for the app's life; hosts all project dirs via a `directory` query param. Writes opencode's config pointing at llama-server, plus a second provider for the Python backend's server models (restarts if asked for one it didn't register). |
 | [opencode_client.dart](app/lib/addons/code/opencode_client.dart) | HTTP/SSE client for opencode — `POST /session`, `/session/:id/prompt_async`, the shared `/event` stream, `/permission/:id/reply`. `OpencodeEvent.tryParse` narrows the 80+ event types to the few acted on. |
 | [code_session_store.dart](app/lib/addons/code/code_session_store.dart) | Persists one conversation: display transcript + the opencode session id (so reopening actually continues it) + last project/model. |
 | [project_root_source.dart](app/lib/addons/code/project_root_source.dart) | Directory picker for the project folder, behind an interface (real picker blocks under `flutter test`). |
@@ -256,10 +267,16 @@ sibling (`_GGUF_SOURCE`) for the same weights.
 | [chat_controller_test.dart](app/test/chat_controller_test.dart) | Chat turn logic, history trimming, routing. |
 | [chat_screen_test.dart](app/test/chat_screen_test.dart) | Chat screen widget assembly. |
 | [chat_store_test.dart](app/test/chat_store_test.dart) | History persistence. |
+| [local_model_server_test.dart](app/test/local_model_server_test.dart) | Antigravity endpoint: auth, hardening, completions, SSE, disconnect. |
+| [antigravity_controller_test.dart](app/test/antigravity_controller_test.dart) | Antigravity tab controller against a fake pool. |
+| [antigravity_settings_test.dart](app/test/antigravity_settings_test.dart) | Antigravity settings + token. |
 | [code_addon_test.dart](app/test/code_addon_test.dart) | Code tab add-on. |
 | [code_agent_controller_test.dart](app/test/code_agent_controller_test.dart) | Code agent turn logic against a fake `CodeEngine`. |
 | [code_session_store_test.dart](app/test/code_session_store_test.dart) | Code conversation persistence. |
 | [opencode_client_test.dart](app/test/opencode_client_test.dart) | opencode HTTP/SSE client + event parsing. |
+| [code_model_warning_test.dart](app/test/code_model_warning_test.dart) | The Code tab picker's warning dialog: silent for working/uncertain/unknown models, confirm-or-cancel for an incompatible one, not repeated after "Use anyway". |
+| [code_tool_support_test.dart](app/test/code_tool_support_test.dart) | The Code-tab verdict table: every model file has an entry, ids resolve across `_on_device` siblings, and the detail page renders the verdict. |
+| [code_engine_test.dart](app/test/code_engine_test.dart) | `LocalCodeEngine`'s on-device vs. server-model routing (provider/model ids, llama-server skipped, backend errors). |
 | [model_pool_download_test.dart](app/test/model_pool_download_test.dart) | Roster / download / cache logic. |
 | [orchestration_controller_test.dart](app/test/orchestration_controller_test.dart) | Council deliberation modes. |
 | [orchestration_store_test.dart](app/test/orchestration_store_test.dart) | Council run persistence. |

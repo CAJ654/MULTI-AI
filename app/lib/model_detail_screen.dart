@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:llamadart/llamadart.dart';
 
 import 'api_client.dart';
+import 'code_tool_support.dart';
 import 'model_fit_badge.dart';
 import 'model_pool.dart' show ModelPool, androidModelCacheDirectory, isAndroidPlatform;
 import 'theme.dart';
@@ -345,6 +346,7 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
               children: [
                 _buildStatsRow(),
                 _buildFitSection(),
+                _buildCodeToolSection(),
                 const SizedBox(height: 24),
                 _buildInstallSection(),
                 _buildServerInstallSection(),
@@ -439,6 +441,56 @@ class _ModelDetailScreenState extends State<ModelDetailScreen> {
                 const SizedBox(height: 4),
                 Text(fit.reason,
                     style: const TextStyle(fontSize: 12, height: 1.45, color: Colors.white70)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Whether the Code tab's tools (read, edit, shell) will work with this
+  /// model — a model that can't call tools just prints its call as text, or
+  /// worse invents the result, so it's worth knowing before the download.
+  /// Absent for a model that wasn't assessed. See `code_tool_support.dart`.
+  Widget _buildCodeToolSection() {
+    final verdict = codeToolVerdictFor(widget.model.id);
+    if (verdict == null) return const SizedBox.shrink();
+    final (color, icon) = switch (verdict.support) {
+      CodeToolSupport.works => (fitOptimalColor, Icons.check_circle),
+      CodeToolSupport.shouldWork => (fitOptimalColor, Icons.check_circle_outline),
+      CodeToolSupport.uncertain => (fitPossibleColor, Icons.help_outline),
+      CodeToolSupport.unlikely => (fitNotRecommendedColor, Icons.block_outlined),
+    };
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'In the Code tab: ${verdict.label}',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+                ),
+                const SizedBox(height: 4),
+                Text(verdict.detail,
+                    style: const TextStyle(fontSize: 12, height: 1.45, color: Colors.white70)),
+                const SizedBox(height: 6),
+                Text(
+                  verdict.tested ? 'Tested' : "Not tested — inferred from the model's family",
+                  style: const TextStyle(fontSize: 11, color: Colors.white38),
+                ),
               ],
             ),
           ),

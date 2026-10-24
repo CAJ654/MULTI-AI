@@ -404,17 +404,84 @@ first message is sent. `opencode_client.dart` is the HTTP/SSE client —
 approval flow, which now maps directly onto opencode's own permission system
 (`edit`/`bash`: ask; everything else: allow) instead of a hand-rolled gate.
 
-**Scope boundary:** only on-device (GGUF) models get this. Server-side
-(`_REPO_ID`) transformers models have no OpenAI-compatible tool-calling
-endpoint today — bridging them in would mean building one on top of
-`server.pyx`'s `/api/chat`, a separate, not-yet-started project. The Code
-tab's model list is filtered to `ModelPool.localSourceOf(m) != null`
-accordingly, the same kind of explicit scope line the Android section draws
-around on-device-only chat.
+**Which models actually call tools.** Checked against real `llama-server` +
+opencode (Windows, llama.cpp b11193, 2026-10-24): **Gemma 4 E2B** returned a real
+tool call 5 times out of 5 and completed a full read-a-file turn through the
+Code tab. **Qwen2.5-Coder** (1.5B and 7B) did not — despite the name and a
+tool-aware chat template, it writes the call as text in an invented format
+(`<function .../>`, `<xml>{...}</xml>`, a bare JSON block) that llama.cpp can't
+parse, so no tool ever runs. A model has to be *trained* for tool calling for
+this tab to work; the code-specialised ones aren't necessarily. All 68 roster
+models are sorted into works / should work / uncertain / should not in
+[CODE-TAB-MODELS.md](CODE-TAB-MODELS.md), with the evidence for each.
+`real_code_run_test.dart` repeats the end-to-end check — see its header for how
+to run it against a model of your choice.
+
+**Server-side models:** a model the Python backend manages weights for
+(`hasServerWeights`, no BYO `externalEndpoint`) can drive the tab too. The
+backend serves `GET /v1/models` and `POST /v1/chat/completions` from
+`server.pyx`; for such a model `CodeEngine` skips `llama-server` and registers
+the backend's models in opencode's config as a second provider
+(`multiai-server`, `baseURL` = the backend). Opencode reads that config only at
+startup, so the supervisor restarts the process it owns if asked for a server
+model it didn't register.
+
+That route does tool calling for transformers (`_REPO_ID`) models: a request
+with `tools` skips the plain-text chat path and hands the tool definitions to
+the model's own chat template (`apply_chat_template(..., tools=...)`) with the
+full message history intact — system prompt, the assistant's earlier calls, and
+tool results — then parses the output back into `tool_calls`. The parser
+recognises Hermes/Qwen `<tool_call>` blocks and bare JSON in Llama's
+(`parameters`) and Mistral's (`[TOOL_CALLS]` list) shapes, and only accepts a
+call to a tool the request defined. The prompt may use up to 16384 tokens
+(`_MAX_TOOL_PROMPT_TOKENS`, a VRAM ceiling like the chat's 4096) since an
+agent's system prompt and tool definitions are large; older turns are trimmed
+first, whole units at a time, never the system prompt or the current task.
+
+**Caveats:** this is tested against a fake tokenizer and model, not a real
+checkpoint — whether a given model's template renders tools and its output
+parses depends on the model family, and a model whose template ignores `tools`
+will just answer in prose. A model with no chat template, or a non-transformers
+server model (Colibri), falls back to plain chat with no tool calls. Calls come
+back whole, not token-streamed.
 
 Ports in use: see `searxng_supervisor.dart`'s header comment (backend 8000,
 Colibri 8010, SearXNG 8891) — this adds `llama-server` on 8100 and `opencode
 serve` on 8101.
+
+## Antigravity tab: your models behind a local OpenAI-compatible endpoint
+
+**Experimental, Windows only.** The tab ([antigravity_addon.dart](app/lib/addons/antigravity/antigravity_addon.dart))
+runs a small HTTP server on `127.0.0.1:8200` (port configurable) that serves the
+downloaded models as `GET /v1/models` and `POST /v1/chat/completions`, so a
+client that speaks the OpenAI API can use them. It is off until you press Start
+(or turn on "Start automatically").
+
+Google Antigravity itself has **no supported way to use outside models** (no BYOK
+or custom-provider setting), so this only provides the endpoint. Whether
+Antigravity can use it depends on third-party software. The community
+[antigravity-proxy](https://github.com/12errh/antigravity-proxy) translates
+Antigravity 2.0's Gemini calls to OpenAI-style providers, but its README
+documents only per-provider API keys and auto-discovery of local servers, not a
+custom base URL, so that combination is **untested**. It also needs administrator
+rights and intercepts Antigravity's traffic on port 443 — read what it does
+before installing it.
+
+What the endpoint does and doesn't do:
+
+- Every request needs `Authorization: Bearer <key>` (a random key generated on
+  first use, shown in the tab, regenerable). Requests with an `Origin` header or a
+  non-loopback `Host` are refused, and the server binds loopback only. Any local
+  program holding the key can use your models while it runs.
+- **No tool calling.** `tools` in a request are ignored and replies are plain text
+  (`ModelPool.generate` has no tool-call path), so Antigravity's agent features
+  won't work. Small local models are weak at agent work regardless.
+- **No token-by-token streaming.** `stream: true` sends the whole reply as one
+  chunk once the model finishes, with SSE keep-alive comments while waiting.
+- A request naming a model this app doesn't have (every proxied request will) runs
+  the tab's default model instead.
+- A client hanging up mid-generation cancels it only for streamed requests, and
+  only when it's the sole request in flight.
 
 ## File Architecture
 

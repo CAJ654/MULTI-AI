@@ -2,3 +2,5 @@
 import 'dart:io' as io;
 
 bool get isAndroidHost => io.Platform.isAndroid;
+
+bool get isWindowsHost => io.Platform.isWindows;

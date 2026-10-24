@@ -104,9 +104,9 @@ class _FakeCodeEngine implements CodeEngine {
   @override
   final OpencodeClient client;
   @override
-  final providerId = 'fake-provider';
+  String providerIdFor(ModelInfo model) => 'fake-provider';
   @override
-  final modelId = 'fake-model';
+  String modelIdFor(ModelInfo model) => 'fake-model';
 
   @override
   Future<void> ensureRunning({required ModelInfo model}) async {}

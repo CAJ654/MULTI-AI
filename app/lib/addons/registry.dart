@@ -1,5 +1,6 @@
 import '../attachment_input.dart';
 import 'addon.dart';
+import 'antigravity/antigravity_addon.dart';
 import 'chat/chat_addon.dart';
 import 'code/code_addon.dart';
 import 'components/component_manager.dart';
@@ -37,5 +38,6 @@ List<AddOn> buildRegistry({
     CodeAddOn(),
     ComponentsAddOn(manager: components),
     NotebookAddOn(),
+    AntigravityAddOn(),
   ];
 }

@@ -2,6 +2,22 @@
 
 Open and completed work items for Multi-AI. Checked items are done; unchecked items are open.
 
+## Priority Roadmap
+
+| Priority | Feature / Improvement | Impact |
+|---|---|---|
+| **High** | **Streaming (SSE) in Python Backend** | Eliminates long blank waits for 7B+ server models; brings server UX to parity with on-device streaming. |
+| **High** | **On-Device Download Progress Bar** | Threading `llamadart`'s `ModelDownloadProgress.fraction` into the UI prevents multi-GB downloads from looking like frozen UI spinners. |
+| **Medium** | **OpenAI-Compatible Route on Server** | Lets the Code tab, LibreChat, or external tools use the server-side 4-bit quantized models directly. |
+| **Medium** | **Environment Doctor Script (`doctor.ps1`)** | Validates MSVC, Rust/Cargo, Python 3.14 embed, `coli`, and `opencode` to simplify developer setup. |
+| **Low / Polish** | **Documentation Site (GitHub Pages)** | Publishing your architecture guides and model fit benchmarks to a clean documentation site (VitePress/Starlight) would attract strong community interest. |
+
+- [ ] **Streaming (`SSE`) in Python Backend** — Implement Server-Sent Events (`text/event-stream`) in `server.pyx`'s `/api/chat` and update `api_client.dart` to yield stream chunks so server generation mirrors on-device streaming.
+- [ ] **On-Device Download Progress Bar** — Thread `llamadart`'s `ModelDownloadProgress.fraction` callback from `OnDeviceEngine` into the chat screen and models tab download UI.
+- [x] **OpenAI-Compatible Route on Server** — `multi_ai/server.pyx` now serves `GET /v1/models` and `POST /v1/chat/completions` for server-side models (system text is folded into the last user turn; `stream: true` gets the whole reply as one SSE chunk, pending real streaming). Tested (`tests/test_openai_route.pyx`, plus live HTTP checks of both the plain and SSE paths) but only with generation stubbed — never against a real model, since that needs torch/transformers. The Code tab still isn't pointed at it; that wiring remains.
+- [x] **Environment Doctor Script (`scripts/doctor.ps1`)** — Automated health-check script verifying Flutter, MSVC compiler and Rust/Cargo (required, exit 1 on failure), plus Python 3.14 and the optional tools (`coli`, `opencode`, `llama-server`) as warnings, each with a remediation hint.
+- [ ] **Documentation Site (GitHub Pages)** — Setup a static docs site (VitePress or Starlight) to host guides, model fit benchmarks, architecture diagrams, and installation workflows.
+
 ## Extend on-device (GGUF/llama.cpp) model support
 
 Mobile can't run the `transformers`/`torch`/`bitsandbytes` server backend (no CUDA, no mobile builds of those libs) — the on-device path is GGUF weights run through `llamadart`/llama.cpp, already proven with the built-in Qwen2.5 0.5B (`app/lib/on_device_engine.dart`). The `_GGUF_SOURCE` → `"gguf"` JSON field → `ModelInfo.gguf` routing in `chat_screen.dart` is already generic (any model with a `gguf` field auto-routes through `OnDeviceEngine`, no Dart changes needed) — only one model (`gpt_oss_20b.pyx`) currently uses it.
@@ -67,8 +83,28 @@ Possible directions, none investigated yet:
 ### AI Coding Tool Portion
   - [x] Create coding page — the Code tab, backed by `opencode` + `llama-server`
     rather than a hand-rolled agent loop, see "Code tab" above
-  - [ ] Bridge server-side (`_REPO_ID`) models into the Code tab — currently
-    on-device (GGUF) models only, see that section's scope boundary
+  - [x] Bridge server-side (`_REPO_ID`) models into the Code tab — wired
+    through the backend's `/v1/chat/completions`, see "Server-side models" in
+    that section. Not run end to end (needs opencode + a real model).
+  - [x] Real run of the Code tab on an on-device model (2026-10-24) — works
+    end to end with Gemma 4 E2B; Qwen2.5-Coder 1.5B/7B don't emit parseable
+    tool calls (see the README's "Which models actually call tools"). Fixed a
+    Windows bug found on the way: `stop()` left `opencode.exe` running. Still
+    unrun: the server-model path (needs torch + a CUDA build for the GPU).
+  - [x] Show each model's Code-tab verdict on its detail page — a model like
+    Qwen2.5-Coder prints its call as text with no hint why, and Gemma 3 invents
+    file contents. `app/lib/code_tool_support.dart` holds the per-model table
+    (evidence in [CODE-TAB-MODELS.md](CODE-TAB-MODELS.md)); tests fail if a new
+    model file lacks an entry.
+  - [x] Warn where the model is *picked* — choosing a model the table rates
+    "unlikely" in the Code tab's picker now opens a confirm dialog ("Choose
+    another" / "Use anyway", shown once per model per run). An "uncertain" model
+    selects without a warning. The picker's empty-state text no longer
+    recommends Qwen2.5-Coder, which doesn't call tools.
+  - [x] Tool calling on the server's OpenAI route — `tools` go through the
+    model's chat template and `tool_calls` are parsed back out (Hermes/Qwen,
+    Llama, Mistral shapes). Tested with a fake tokenizer/model only; **still
+    needs a real run** against an actual checkpoint (see below).
 
 ### Docs & info site (GitHub Pages)
   - [ ] A public docs/marketing site along the lines of flutter.dev — project
@@ -580,6 +616,15 @@ Two things worth knowing before extending this:
 Still open here: nothing calls `AddOnHost.setEnabled` yet — the persistence and
 gating work, but there is no settings UI to turn a tab off.
 
+### Antigravity: local OpenAI-compatible endpoint (done, experimental, Windows only)
+
+`addons/antigravity/` serves `ModelPool` over loopback HTTP; see the README's
+Antigravity section for scope. Antigravity has no supported custom-model hook, so
+whether it can use this depends on a community proxy that is untested here.
+Open: tool calling (needs a `llama-server --jinja` route like the Code tab's, since
+`ModelPool.generate` has none), real token streaming, and cancelling on disconnect
+for non-streamed requests.
+
 ### Orchestration: the Model Council (done)
 
 The Orchestration tab is a real add-on now
@@ -635,7 +680,7 @@ ship.
 - [ ] **Resource management** — `OnDeviceEngine._ensureLoaded` (`app/lib/on_device_engine.dart`) enforces one resident model and evicts on switch, which covers "which model is loaded". There is no RAM/VRAM *budget* — just single-tenancy.
 - [ ] **Desktop vs. mobile catalog split** — models split by `_REPO_ID` (server, 4-bit GPU) vs. `_GGUF_SOURCE` (in-app), but that's a *where it runs* distinction, not the hardware-aware gating layer the spec describes. No `platform_support` field, no per-device labelling.
 - [x] **Orchestration tab** — a working Model Council, see "Orchestration" above. Only the manifest-preset and multi-round pieces remain.
-- [x] **Code tab** — a working local coding agent backed by `opencode` + `llama-server`, see "Code tab" above. Server-side (`_REPO_ID`) models aren't bridged in yet — on-device (GGUF) only.
+- [x] **Code tab** — a working local coding agent backed by `opencode` + `llama-server`, see "Code tab" above. Server-side (`_REPO_ID`) models are bridged through the backend's OpenAI route, including tool calling (not yet verified against a real model).
 - [x] **Plugin/add-on interface contract** (spec #3) — landed; see "Add-on architecture" above. One capability so far (`model_pool`); `memory` is deliberately absent until the memory layer (spec #2) is built, and adding it is a new enum case plus a getter, not a redesign.
 
 ### Not started

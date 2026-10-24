@@ -1,6 +1,9 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:llamadart/llamadart.dart';
 
-import '../../api_client.dart' show ModelInfo;
+import '../../api_client.dart' show ModelInfo, apiBaseUrl;
 import '../../model_pool.dart';
 import 'llama_server_supervisor.dart';
 import 'opencode_client.dart';
@@ -14,17 +17,20 @@ import 'opencode_process_supervisor.dart';
 /// reason. [LocalCodeEngine] is the real implementation.
 abstract class CodeEngine {
   OpencodeClient get client;
-  String get providerId;
-  String get modelId;
 
-  /// Resolves [model]'s cached GGUF file, starts/reuses `llama-server` for
-  /// it, then starts/reuses `opencode serve` — in that order, so opencode is
+  /// The provider/model ids [model] is registered under in opencode's config —
+  /// they differ by where the model runs, so they're per model, not fixed.
+  String providerIdFor(ModelInfo model);
+  String modelIdFor(ModelInfo model);
+
+  /// Makes sure everything [model] needs is running, then `opencode serve`:
+  /// for an on-device model, resolves its cached GGUF file and starts/reuses
+  /// `llama-server`; for a server-side model, checks the Python backend
+  /// serves it over its OpenAI-compatible route. Opencode comes last so it's
   /// never asked to relay a message before there's a model behind it.
   ///
-  /// Throws [StateError] if [model] isn't an on-device model — the Code tab
-  /// only supports on-device (GGUF) models; server-side (`_REPO_ID`)
-  /// transformers models have no OpenAI-compatible tool-calling endpoint
-  /// today. See the README's "Code tab" section.
+  /// Throws [StateError] if [model] is neither on-device nor served by the
+  /// backend, or if the backend can't be reached for a server-side model.
   Future<void> ensureRunning({required ModelInfo model});
 
   Future<void> stop();
@@ -41,33 +47,79 @@ class LocalCodeEngine implements CodeEngine {
     LlamaServerSupervisor? llamaServer,
     OpencodeProcessSupervisor? opencode,
     OpencodeClient? client,
+    Future<Set<String>> Function()? fetchServerModelIds,
   })  : _llamaServer = llamaServer ?? LlamaServerSupervisor(),
         _opencode = opencode ?? OpencodeProcessSupervisor(),
+        _fetchServerModelIds = fetchServerModelIds ?? _fetchBackendModelIds,
         client = client ?? HttpOpencodeClient(baseUrl: OpencodeProcessSupervisor.baseUrl);
 
   final LlamaServerSupervisor _llamaServer;
   final OpencodeProcessSupervisor _opencode;
+  final Future<Set<String>> Function() _fetchServerModelIds;
 
   @override
   final OpencodeClient client;
 
   @override
-  String get providerId => OpencodeProcessSupervisor.providerId;
+  String providerIdFor(ModelInfo model) => _isOnDevice(model)
+      ? OpencodeProcessSupervisor.providerId
+      : OpencodeProcessSupervisor.serverProviderId;
+
   @override
-  String get modelId => OpencodeProcessSupervisor.modelId;
+  String modelIdFor(ModelInfo model) =>
+      _isOnDevice(model) ? OpencodeProcessSupervisor.modelId : model.id;
+
+  static bool _isOnDevice(ModelInfo model) => ModelPool.localSourceOf(model) != null;
+
+  /// The ids the Python backend's `GET /v1/models` lists.
+  static Future<Set<String>> _fetchBackendModelIds() async {
+    final response = await http
+        .get(Uri.parse('$apiBaseUrl/v1/models'))
+        .timeout(const Duration(seconds: 5));
+    if (response.statusCode != 200) {
+      throw StateError('the backend answered /v1/models with HTTP ${response.statusCode}');
+    }
+    final data = (jsonDecode(response.body) as Map<String, dynamic>)['data'] as List<dynamic>;
+    return {for (final m in data) (m as Map<String, dynamic>)['id'] as String};
+  }
 
   @override
   Future<void> ensureRunning({required ModelInfo model}) async {
     final source = ModelPool.localSourceOf(model);
-    if (source == null) {
+    if (source != null) {
+      final ggufPath = await _resolveGgufPath(source);
+      await _llamaServer.start(ggufPath);
+      // Opencode still gets every server model registered, so switching to
+      // one later doesn't force a restart. Best effort: with the backend
+      // down there are simply none, which only matters if one is picked.
+      await _opencode.start(serverModelIds: await _serverModelIdsOrEmpty());
+      return;
+    }
+
+    final Set<String> served;
+    try {
+      served = await _fetchServerModelIds();
+    } catch (e) {
       throw StateError(
-        '${model.name} has no on-device weights — the Code tab only works '
-        'with on-device (GGUF) models.',
+        "Couldn't reach the Multi-AI backend at $apiBaseUrl to use ${model.name} "
+        '($e). Start it, or pick an on-device model.',
       );
     }
-    final ggufPath = await _resolveGgufPath(source);
-    await _llamaServer.start(ggufPath);
-    await _opencode.start();
+    if (!served.contains(model.id)) {
+      throw StateError(
+        "The backend doesn't serve ${model.name} over its OpenAI-compatible "
+        'route — it needs server-side weights.',
+      );
+    }
+    await _opencode.start(serverModelIds: served);
+  }
+
+  Future<Set<String>> _serverModelIdsOrEmpty() async {
+    try {
+      return await _fetchServerModelIds();
+    } catch (_) {
+      return const {};
+    }
   }
 
   Future<String> _resolveGgufPath(String hfSource) async {

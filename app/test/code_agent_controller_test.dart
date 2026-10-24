@@ -152,9 +152,9 @@ class _FakeCodeEngine implements CodeEngine {
   @override
   final OpencodeClient client;
   @override
-  final providerId = 'fake-provider';
+  String providerIdFor(ModelInfo model) => 'fake-provider';
   @override
-  final modelId = 'fake-model';
+  String modelIdFor(ModelInfo model) => 'fake-model';
 
   int ensureRunningCalls = 0;
 
@@ -253,14 +253,24 @@ void main() {
     expect(controller.canSend, isTrue);
   });
 
-  test('availableModels only lists on-device (GGUF) models', () async {
+  test('availableModels lists on-device models and server models with managed weights', () async {
     const onDevice = ModelInfo(
       id: 'on-device',
       name: 'On-device',
       gguf: 'hf://x/y/z.gguf',
     );
+    const serverWeights = ModelInfo(
+      id: 'server-weights',
+      name: 'Server weights',
+      hasServerWeights: true,
+    );
+    const byoEndpoint = ModelInfo(
+      id: 'byo-endpoint',
+      name: 'BYO endpoint',
+      externalEndpoint: 'http://localhost:8010',
+    );
     const serverOnly = ModelInfo(id: 'server-only', name: 'Server-only');
-    final api = _FakeApi([onDevice, serverOnly]);
+    final api = _FakeApi([onDevice, serverWeights, byoEndpoint, serverOnly]);
     // Both need to report as downloaded for this to test the filter this
     // controller applies rather than ModelPool's own download gate —
     // serverOnly via _FakeApi.getServerModelCacheStatus (cached: true),
@@ -281,6 +291,8 @@ void main() {
     // list, so this doesn't couple to that roster detail.
     final ids = controller.availableModels.map((m) => m.id).toSet();
     expect(ids, contains('on-device'));
+    expect(ids, contains('server-weights'));
+    expect(ids, isNot(contains('byo-endpoint')));
     expect(ids, isNot(contains('server-only')));
   });
 
